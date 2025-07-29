@@ -1,0 +1,14 @@
+{
+  "name": "flashpod",
+  "scripts": {
+    "build-css": "postcss ./static/css/input.css -o ./static/css/style.css --watch",
+    "build-css-prod": "postcss -i ./static/css/input.css -o ./static/css/style.css --minify"
+  },
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.1.11",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "postcss-cli": "^11.0.1",
+    "tailwindcss": "^4.1.11"
+  }
+}
