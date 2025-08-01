@@ -1,13 +1,16 @@
 # app/main.py
-from sanic import Sanic
+from datetime import datetime
+from sanic import Sanic, response
 from sanic.response import html, json
 from sanic_ext import Extend
+from sanic.log import logger
 import os
 import aiosqlite
 from pathlib import Path
 
 # Get the project root (parent of app/ folder)
 PROJECT_ROOT = Path(__file__).parent.parent
+TEMPLATE_PATH = PROJECT_ROOT / "templates"
 
 app = Sanic("FlashPod")
 
@@ -32,12 +35,23 @@ app.static("/static", str(PROJECT_ROOT / "static"))
 
 @app.route("/")
 async def index(request):
-    """Serve the main dashboard page"""
+    """Serve login page"""
     template_path = PROJECT_ROOT / "templates" / "index.html"
-    with open(template_path, "r") as f:
-        content = f.read()
-    return html(content)
+    # with open(template_path, "r") as f:
+    #     content = f.read()
+    # return html(content)
+    return await response.file_stream(template_path)
 
+@app.route("/dashboard")
+async def dashboard(request):
+    """Main dashboard page"""
+    return await response.file_stream(TEMPLATE_PATH / "dashboard.html")
+
+
+@app.route("/api/health")
+async def health_check(request):
+    """Health check endpoint"""
+    return json({"status": "ok", "timestamp": datetime.now().isoformat()})
  
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
