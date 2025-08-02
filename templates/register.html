@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlashPod - Register</title>
+    <link href="/static/css/style.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-green-50 to-blue-100 min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full space-y-8 p-8">
+        <!-- Logo/Header -->
+        <div class="text-center">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">FlashPod</h1>
+            <p class="text-gray-600">Create your account</p>
+        </div>
+
+        <!-- Registration Form -->
+        <div class="bg-white rounded-lg shadow-md p-8">
+            <form id="registerForm" class="space-y-6">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700">
+                        Username
+                    </label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        required 
+                        minlength="3"
+                        maxlength="50"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                        placeholder="Choose a username"
+                    >
+                    <p class="mt-1 text-xs text-gray-500">3-50 characters, letters and numbers only</p>
+                </div>
+
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700">
+                        Email Address
+                    </label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        required 
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                        placeholder="Enter your email"
+                    >
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">
+                        Password
+                    </label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        required 
+                        minlength="6"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                        placeholder="Choose a secure password"
+                    >
+                    <p class="mt-1 text-xs text-gray-500">At least 6 characters</p>
+                </div>
+
+                <div>
+                    <label for="confirmPassword" class="block text-sm font-medium text-gray-700">
+                        Confirm Password
+                    </label>
+                    <input 
+                        type="password" 
+                        id="confirmPassword" 
+                        required 
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                        placeholder="Confirm your password"
+                    >
+                </div>
+
+                <div>
+                    <button 
+                        type="submit" 
+                        id="registerBtn"
+                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Create Account
+                    </button>
+                </div>
+            </form>
+
+            <!-- Login Link -->
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-600">
+                    Already have an account? 
+                    <a href="/login" class="font-medium text-green-600 hover:text-green-500">
+                        Sign in here
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg p-6 text-center">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+            <p class="text-gray-600">Creating account...</p>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    <div id="messages" class="fixed top-4 right-4 z-50"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+
+        // Show message function
+        function showMessage(message, type = 'info') {
+            const messagesContainer = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            const bgColor = type === 'error' ? 'bg-red-500' : type === 'success' ? 'bg-green-500' : 'bg-blue-500';
+            
+            messageDiv.className = `${bgColor} text-white px-4 py-2 rounded-md shadow-md mb-2 max-w-sm`;
+            messageDiv.textContent = message;
+            
+            messagesContainer.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+
+        // Show/hide loading
+        function setLoading(loading) {
+            const overlay = document.getElementById('loadingOverlay');
+            const btn = document.getElementById('registerBtn');
+            
+            if (loading) {
+                overlay.classList.remove('hidden');
+                btn.disabled = true;
+                btn.textContent = 'Creating account...';
+            } else {
+                overlay.classList.add('hidden');
+                btn.disabled = false;
+                btn.textContent = 'Create Account';
+            }
+        }
+
+        // Validate form
+        function validateForm() {
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // Check if all fields are filled
+            if (!username || !email || !password || !confirmPassword) {
+                showMessage('Please fill in all fields', 'error');
+                return false;
+            }
+
+            // Validate username (basic check)
+            if (username.length < 3 || username.length > 50) {
+                showMessage('Username must be 3-50 characters long', 'error');
+                return false;
+            }
+
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                showMessage('Username can only contain letters, numbers, and underscores', 'error');
+                return false;
+            }
+
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showMessage('Please enter a valid email address', 'error');
+                return false;
+            }
+
+            // Validate password
+            if (password.length < 6) {
+                showMessage('Password must be at least 6 characters long', 'error');
+                return false;
+            }
+
+            // Check password confirmation
+            if (password !== confirmPassword) {
+                showMessage('Passwords do not match', 'error');
+                return false;
+            }
+
+            return true;
+        }
+
+        // Registration form submission
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!validateForm()) {
+                return;
+            }
+            
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            setLoading(true);
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage('Account created successfully! Redirecting to login...', 'success');
+                    
+                    // Redirect to login after short delay
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
+                } else {
+                    showMessage(data.error || 'Registration failed', 'error');
+                }
+            } catch (error) {
+                showMessage('Network error: ' + error.message, 'error');
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // Real-time password confirmation validation
+        document.getElementById('confirmPassword').addEventListener('input', () => {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const confirmInput = document.getElementById('confirmPassword');
+            
+            if (confirmPassword && password !== confirmPassword) {
+                confirmInput.classList.add('border-red-500');
+                confirmInput.classList.remove('border-gray-300');
+            } else {
+                confirmInput.classList.remove('border-red-500');
+                confirmInput.classList.add('border-gray-300');
+            }
+        });
+
+        // Check if already logged in
+        window.addEventListener('load', () => {
+            const savedUser = localStorage.getItem('flashpod_user');
+            const loginTime = localStorage.getItem('flashpod_login_time');
+            
+            if (savedUser && loginTime) {
+                // Check if login is less than 24 hours old
+                const hoursSinceLogin = (Date.now() - parseInt(loginTime)) / (1000 * 60 * 60);
+                if (hoursSinceLogin < 24) {
+                    window.location.href = '/dashboard';
+                    return;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

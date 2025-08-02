@@ -1,22 +1,47 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>FlashPod</title>
-        <link href="/static/css/style.css" rel="stylesheet">
-    </head>
-<body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlashPod - Dashboard</title>
+    <link href="/static/css/style.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-gray-900">FlashPod</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span id="userGreeting" class="text-gray-600"></span>
+                    <button id="logoutBtn" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
     <div class="container mx-auto px-4 py-8">
-         <!-- User Info -->
-        <div id="userInfo" class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 class="text-2xl font-semibold mb-4">User Created</h2>
-            <p class="text-gray-600 mb-2">User ID: <span id="userId" class="font-mono"></span></p>
-            <p class="text-gray-600 mb-4">Username: <span id="displayUsername" class="font-semibold"></span></p>
+        <!-- Quick Actions -->
+        <div class="max-w-4xl mx-auto mb-8">
+            <div class="grid gap-4 md:grid-cols-3">
+                <button id="showDeckForm" class="bg-green-600 text-white py-4 px-6 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                    + Create New Deck
+                </button>
+                <button id="showCardForm" class="bg-purple-600 text-white py-4 px-6 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2">
+                    + Add Card to Deck
+                </button>
+                <button id="showPodForm" class="bg-blue-600 text-white py-4 px-6 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    + Create New Pod
+                </button>
+            </div>
         </div>
 
         <!-- Deck Creation Form -->
-        <div id="deckSection" class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6 mb-8">
+        <div id="deckSection" class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6 mb-8 hidden">
             <h2 class="text-2xl font-semibold mb-4">Create Deck</h2>
             <form id="deckForm" class="space-y-4">
                 <div>
@@ -27,14 +52,19 @@
                     <label class="block text-sm font-medium text-gray-700">Description</label>
                     <textarea id="deckDescription" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" rows="3"></textarea>
                 </div>
-                <button type="submit" class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                    Create Deck
-                </button>
+                <div class="flex gap-2">
+                    <button type="submit" class="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                        Create Deck
+                    </button>
+                    <button type="button" id="cancelDeck" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                        Cancel
+                    </button>
+                </div>
             </form>
         </div>
 
         <!-- Card Creation Form -->
-        <div id="cardSection" class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6 mb-8">
+        <div id="cardSection" class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6 mb-8 hidden">
             <h2 class="text-2xl font-semibold mb-4">Add Card</h2>
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700">Select Deck</label>
@@ -62,13 +92,369 @@
             </form>
         </div>
 
-        <!-- Decks List -->
-        <div id="decksList" class="max-w-4xl mx-auto">
-            <h2 class="text-2xl font-semibold mb-4">Your Decks</h2>
-            <div id="decksContainer" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <!-- Decks will be loaded here -->
+        <!-- Pod Creation Form -->
+        <div id="podSection" class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6 mb-8 hidden">
+            <h2 class="text-2xl font-semibold mb-4">Create Pod</h2>
+            <form id="podForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Pod Name</label>
+                    <input type="text" id="podName" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Description</label>
+                    <textarea id="podDescription" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" rows="3"></textarea>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        Create Pod
+                    </button>
+                    <button type="button" id="cancelPod" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Decks and Pods Lists -->
+        <div class="max-w-6xl mx-auto grid gap-8 lg:grid-cols-2">
+            <!-- Decks List -->
+            <div>
+                <h2 class="text-2xl font-semibold mb-4">Your Decks</h2>
+                <div id="decksContainer" class="space-y-4">
+                    <!-- Decks will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Pods List -->
+            <div>
+                <h2 class="text-2xl font-semibold mb-4">Your Pods</h2>
+                <div id="podsContainer" class="space-y-4">
+                    <!-- Pods will be loaded here -->
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Messages -->
+    <div id="messages" class="fixed top-4 right-4 z-50"></div>
+
+    <script>
+        let currentUser = null;
+        const API_BASE = 'http://localhost:8000/api';
+
+        function checkAuth() {
+            const savedUser = localStorage.getItem('flashpod_user');
+            const loginTime = localStorage.getItem('flashpod_login_time');
+            
+            if (!savedUser || !loginTime) {
+                window.location.replace('/login');
+                return false;
+            }
+            
+            const hoursSinceLogin = (Date.now() - parseInt(loginTime)) / (1000 * 60 * 60);
+            if (hoursSinceLogin > 24) {
+                localStorage.removeItem('flashpod_user');
+                localStorage.removeItem('flashpod_login_time');
+                window.location.replace('/login');
+                return false;
+            }
+            
+            currentUser = JSON.parse(savedUser);
+            document.getElementById('userGreeting').textContent = `Welcome, ${currentUser.username}!`;
+            return true;
+        }
+
+        function logout() {
+            localStorage.removeItem('flashpod_user');
+            localStorage.removeItem('flashpod_login_time');
+            window.location.replace('/login');
+        }
+
+        function showMessage(message, type = 'info') {
+            const messagesContainer = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            const bgColor = type === 'error' ? 'bg-red-500' : type === 'success' ? 'bg-green-500' : 'bg-blue-500';
+            
+            messageDiv.className = `${bgColor} text-white px-4 py-2 rounded-md shadow-md mb-2`;
+            messageDiv.textContent = message;
+            
+            messagesContainer.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+
+        document.getElementById('showDeckForm').addEventListener('click', () => {
+            document.getElementById('deckSection').classList.remove('hidden');
+            document.getElementById('cardSection').classList.add('hidden');
+            document.getElementById('podSection').classList.add('hidden');
+        });
+
+        document.getElementById('showCardForm').addEventListener('click', () => {
+            document.getElementById('cardSection').classList.remove('hidden');
+            document.getElementById('deckSection').classList.add('hidden');
+            document.getElementById('podSection').classList.add('hidden');
+            populateDeckSelect();
+        });
+
+        document.getElementById('showPodForm').addEventListener('click', () => {
+            document.getElementById('podSection').classList.remove('hidden');
+            document.getElementById('deckSection').classList.add('hidden');
+            document.getElementById('cardSection').classList.add('hidden');
+        });
+
+        document.getElementById('cancelDeck').addEventListener('click', () => {
+            document.getElementById('deckSection').classList.add('hidden');
+            document.getElementById('deckForm').reset();
+        });
+
+        document.getElementById('cancelCard').addEventListener('click', () => {
+            document.getElementById('cardSection').classList.add('hidden');
+            document.getElementById('cardForm').reset();
+        });
+
+        document.getElementById('cancelPod').addEventListener('click', () => {
+            document.getElementById('podSection').classList.add('hidden');
+            document.getElementById('podForm').reset();
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+
+        document.getElementById('deckForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('deckName').value;
+            const description = document.getElementById('deckDescription').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/decks`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_id: currentUser.id,
+                        name,
+                        description
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('deckForm').reset();
+                    document.getElementById('deckSection').classList.add('hidden');
+                    showMessage('Deck created successfully!', 'success');
+                    loadDecks();
+                } else {
+                    showMessage(data.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Network error: ' + error.message, 'error');
+            }
+        });
+
+        document.getElementById('cardForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const deckId = document.getElementById('deckSelect').value;
+            if (!deckId) {
+                showMessage('Please select a deck first', 'error');
+                return;
+            }
+            
+            const frontContent = document.getElementById('frontContent').value;
+            const backContent = document.getElementById('backContent').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/cards/deck/${deckId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        front_content: frontContent,
+                        back_content: backContent
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('cardForm').reset();
+                    document.getElementById('cardSection').classList.add('hidden');
+                    showMessage('Card added successfully!', 'success');
+                    loadDecks();
+                } else {
+                    showMessage(data.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Network error: ' + error.message, 'error');
+            }
+        });
+
+        document.getElementById('podForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('podName').value;
+            const description = document.getElementById('podDescription').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/pods`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_id: currentUser.id,
+                        name,
+                        description
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('podForm').reset();
+                    document.getElementById('podSection').classList.add('hidden');
+                    showMessage('Pod created successfully!', 'success');
+                    loadPods();
+                } else {
+                    showMessage(data.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Network error: ' + error.message, 'error');
+            }
+        });
+
+        async function populateDeckSelect() {
+            try {
+                const response = await fetch(`${API_BASE}/decks/users/${currentUser.id}`);
+                const data = await response.json();
+                
+                const select = document.getElementById('deckSelect');
+                select.innerHTML = '<option value="">Choose a deck...</option>';
+                
+                if (response.ok && data.decks.length > 0) {
+                    data.decks.forEach(deck => {
+                        const option = document.createElement('option');
+                        option.value = deck.id;
+                        option.textContent = `${deck.name} (${deck.card_count} cards)`;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                showMessage('Error loading decks: ' + error.message, 'error');
+            }
+        }
+
+        async function loadDecks() {
+            try {
+                const response = await fetch(`${API_BASE}/decks/users/${currentUser.id}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displayDecks(data.decks);
+                } else {
+                    showMessage(data.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Network error: ' + error.message, 'error');
+            }
+        }
+
+        async function loadPods() {
+            try {
+                const response = await fetch(`${API_BASE}/pods/users/${currentUser.id}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displayPods(data.pods);
+                } else {
+                    showMessage(data.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Network error: ' + error.message, 'error');
+            }
+        }
+
+        function displayDecks(decks) {
+            const container = document.getElementById('decksContainer');
+            
+            if (decks.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center">No decks yet. Create your first deck above!</p>';
+                return;
+            }
+            
+            container.innerHTML = decks.map(deck => `
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <h3 class="text-lg font-semibold mb-2">${deck.name}</h3>
+                    <p class="text-gray-600 mb-3">${deck.description || 'No description'}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-500">${deck.card_count} cards</span>
+                        <div class="space-x-2">
+                            <button onclick="viewDeck(${deck.id})" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                                View
+                            </button>
+                            <button onclick="studyDeck(${deck.id})" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">
+                                Study
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function displayPods(pods) {
+            const container = document.getElementById('podsContainer');
+            
+            if (pods.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center">No pods yet. Create your first pod above!</p>';
+                return;
+            }
+            
+            container.innerHTML = pods.map(pod => `
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <h3 class="text-lg font-semibold mb-2">${pod.name}</h3>
+                    <p class="text-gray-600 mb-3">${pod.description || 'No description'}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-500">${pod.deck_count} decks • ${pod.total_card_count} cards</span>
+                        <div class="space-x-2">
+                            <button onclick="viewPod(${pod.id})" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                                View
+                            </button>
+                            <button onclick="studyPod(${pod.id})" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">
+                                Study
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function viewDeck(deckId) {
+            showMessage(`View deck ${deckId} - Coming soon!`, 'info');
+        }
+
+        function studyDeck(deckId) {
+            showMessage(`Study deck ${deckId} - Coming soon!`, 'info');
+        }
+
+        function viewPod(podId) {
+            showMessage(`View pod ${podId} - Coming soon!`, 'info');
+        }
+
+        function studyPod(podId) {
+            showMessage(`Study pod ${podId} - Coming soon!`, 'info');
+        }
+
+        window.addEventListener('load', () => {
+            if (checkAuth()) {
+                loadDecks();
+                loadPods();
+            }
+        });
+    </script>
 </body>
 </html>

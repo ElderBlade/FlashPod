@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlashPod - Login</title>
+    <link href="/static/css/style.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full space-y-8 p-8">
+        <!-- Logo/Header -->
+        <div class="text-center">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">FlashPod</h1>
+            <p class="text-gray-600">Sign in to your account</p>
+        </div>
+
+        <!-- Login Form -->
+        <div class="bg-white rounded-lg shadow-md p-8">
+            <form id="loginForm" class="space-y-6">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700">
+                        Username or Email
+                    </label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        required 
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter your username or email"
+                    >
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">
+                        Password
+                    </label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        required 
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter your password"
+                    >
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <input 
+                            id="remember-me" 
+                            name="remember-me" 
+                            type="checkbox" 
+                            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        >
+                        <label for="remember-me" class="ml-2 block text-sm text-gray-900">
+                            Remember me
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <button 
+                        type="submit" 
+                        id="loginBtn"
+                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Sign in
+                    </button>
+                </div>
+            </form>
+
+            <!-- Demo Account Info -->
+            <div class="mt-6 p-4 bg-gray-50 rounded-md">
+                <h3 class="text-sm font-medium text-gray-700 mb-2">Demo Account:</h3>
+                <p class="text-sm text-gray-600">Username: <span class="font-mono">testuser</span></p>
+                <p class="text-sm text-gray-600">Password: <span class="font-mono">password123</span></p>
+                <button 
+                    id="useDemoBtn" 
+                    class="mt-2 text-xs bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded"
+                >
+                    Use Demo Account
+                </button>
+            </div>
+
+            <!-- Register Link -->
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-600">
+                    Don't have an account? 
+                    <a href="/register" class="font-medium text-blue-600 hover:text-blue-500">
+                        Sign up here
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg p-6 text-center">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p class="text-gray-600">Signing in...</p>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    <div id="messages" class="fixed top-4 right-4 z-50"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+
+        // Show message function
+        function showMessage(message, type = 'info') {
+            const messagesContainer = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            const bgColor = type === 'error' ? 'bg-red-500' : type === 'success' ? 'bg-green-500' : 'bg-blue-500';
+            
+            messageDiv.className = `${bgColor} text-white px-4 py-2 rounded-md shadow-md mb-2 max-w-sm`;
+            messageDiv.textContent = message;
+            
+            messagesContainer.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+
+        // Show/hide loading
+        function setLoading(loading) {
+            const overlay = document.getElementById('loadingOverlay');
+            const btn = document.getElementById('loginBtn');
+            
+            if (loading) {
+                overlay.classList.remove('hidden');
+                btn.disabled = true;
+                btn.textContent = 'Signing in...';
+            } else {
+                overlay.classList.add('hidden');
+                btn.disabled = false;
+                btn.textContent = 'Sign in';
+            }
+        }
+
+        // Save user session
+        function saveUserSession(user) {
+            localStorage.setItem('flashpod_user', JSON.stringify(user));
+            localStorage.setItem('flashpod_login_time', Date.now().toString());
+        }
+
+        // Check if already logged in
+        function checkExistingLogin() {
+            const savedUser = localStorage.getItem('flashpod_user');
+            const loginTime = localStorage.getItem('flashpod_login_time');
+            
+            if (savedUser && loginTime) {
+                // Check if login is less than 24 hours old
+                const hoursSinceLogin = (Date.now() - parseInt(loginTime)) / (1000 * 60 * 60);
+                if (hoursSinceLogin < 24) {
+                    // Only redirect if we're sure there's a valid session
+                    console.log('Found existing session, redirecting to dashboard');
+                    window.location.replace('/dashboard'); // Use replace to avoid back button issues
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Login form submission
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                showMessage('Please fill in all fields', 'error');
+                return;
+            }
+            
+            setLoading(true);
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage('Login successful! Redirecting...', 'success');
+                    saveUserSession(data.user);
+                    
+                    // Redirect after short delay
+                    setTimeout(() => {
+                        window.location.replace('/dashboard');
+                    }, 1000);
+                } else {
+                    showMessage(data.error || 'Login failed', 'error');
+                }
+            } catch (error) {
+                showMessage('Network error: ' + error.message, 'error');
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // Demo account button
+        document.getElementById('useDemoBtn').addEventListener('click', () => {
+            document.getElementById('username').value = 'testuser';
+            document.getElementById('password').value = 'password123';
+        });
+
+        // Check for existing login on page load - but don't auto-redirect
+        window.addEventListener('load', () => {
+            // Only check and redirect if this is a fresh page load, not a redirect
+            if (!document.referrer.includes('/dashboard')) {
+                checkExistingLogin();
+            }
+        });
+
+        // Handle Enter key in form fields
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.target.closest('#loginForm')) {
+                e.preventDefault();
+                document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+            }
+        });
+    </script>
+</body>
+</html>
