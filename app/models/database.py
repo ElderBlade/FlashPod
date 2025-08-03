@@ -79,7 +79,7 @@ def create_test_user_if_needed():
             print(f"👤 Test user exists (ID: {existing_user.id})")
             return
         
-        # Create test user
+        # Create test user with proper password hash
         test_user = User(
             username="testuser",
             email="test@example.com",
@@ -95,5 +95,7 @@ def create_test_user_if_needed():
     except Exception as e:
         session.rollback()
         print(f"❌ Error creating test user: {e}")
+        # Try to debug what went wrong
+        print(f"   Error details: {type(e).__name__}: {str(e)}")
     finally:
         session.close()

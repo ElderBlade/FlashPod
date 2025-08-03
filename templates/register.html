@@ -246,19 +246,9 @@
             }
         });
 
-        // Check if already logged in
+        // Check if already logged in - remove the complex localStorage logic
         window.addEventListener('load', () => {
-            const savedUser = localStorage.getItem('flashpod_user');
-            const loginTime = localStorage.getItem('flashpod_login_time');
-            
-            if (savedUser && loginTime) {
-                // Check if login is less than 24 hours old
-                const hoursSinceLogin = (Date.now() - parseInt(loginTime)) / (1000 * 60 * 60);
-                if (hoursSinceLogin < 24) {
-                    window.location.href = '/dashboard';
-                    return;
-                }
-            }
+            // Server will handle redirects if already authenticated
         });
     </script>
 </body>

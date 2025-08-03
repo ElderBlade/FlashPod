@@ -1,9 +1,18 @@
-# app/middleware/auth.py
+# app/middleware/auth.py - Secure server-side authentication
 from sanic import redirect
-from functools import wraps
+from sanic.response import json
+import jwt
+from datetime import datetime, timedelta
+from models.database import get_db_session
+from models.user import User
+
+# JWT Configuration
+JWT_SECRET = "your-super-secret-jwt-key-change-this-in-production"
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRATION_HOURS = 24
 
 # Routes that don't require authentication
-EXEMPT_ROUTES = {
+PUBLIC_ROUTES = {
     "/",
     "/login", 
     "/register",
@@ -13,100 +22,117 @@ EXEMPT_ROUTES = {
 }
 
 # Static file patterns that don't require auth
-EXEMPT_PATTERNS = [
+STATIC_PATTERNS = [
     "/static/",
     "/favicon.ico"
 ]
 
-def auth_required(f):
-    """Decorator to require authentication for specific routes"""
-    @wraps(f)
-    async def wrapper(request, *args, **kwargs):
-        # Check if user is authenticated (you'll implement this based on your auth strategy)
-        if not is_authenticated(request):
-            if request.path.startswith('/api/'):
-                # API routes return JSON error
-                from sanic.response import json
-                return json({"error": "Authentication required"}, status=401)
-            else:
-                # Web routes redirect to login
-                return redirect("/login")
-        
-        return await f(request, *args, **kwargs)
-    return wrapper
+def create_jwt_token(user_id: int, username: str) -> str:
+    """Create a JWT token for user"""
+    payload = {
+        'user_id': user_id,
+        'username': username,
+        'exp': datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS),
+        'iat': datetime.utcnow()
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
-def is_authenticated(request):
-    """
-    Check if request is authenticated.
-    This is a simple implementation - you might want to use JWT tokens,
-    session cookies, or other authentication methods in production.
-    """
-    # For now, we'll check for a simple session cookie or header
-    # In a real app, you'd validate JWT tokens or session data
+def verify_jwt_token(token: str) -> dict:
+    """Verify and decode JWT token"""
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        return None  # Token expired
+    except jwt.InvalidTokenError:
+        return None  # Invalid token
+
+def get_user_from_request(request) -> dict:
+    """Extract user from request authentication"""
+    # Check for JWT token in cookie
+    token = request.cookies.get('auth_token')
     
-    # Check for Authorization header (for API requests)
-    auth_header = request.headers.get("Authorization")
-    if auth_header and auth_header.startswith("Bearer "):
-        # In a real app, validate the token here
+    # Also check Authorization header for API requests
+    if not token:
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header.split(' ')[1]
+    
+    if not token:
+        return None
+    
+    # Verify token
+    payload = verify_jwt_token(token)
+    if not payload:
+        return None
+    
+    # Verify user still exists and is active
+    session = get_db_session()
+    try:
+        user = session.query(User).filter_by(
+            id=payload['user_id'], 
+            is_active=True
+        ).first()
+        
+        if not user:
+            return None
+        
+        return {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email
+        }
+    finally:
+        session.close()
+
+def is_public_route(path: str) -> bool:
+    """Check if route is public (doesn't require auth)"""
+    # Check exact matches
+    if path in PUBLIC_ROUTES:
         return True
     
-    # Check for session cookie (for web requests)
-    session_cookie = request.cookies.get("flashpod_session")
-    if session_cookie:
-        # In a real app, validate the session here
-        return True
-    
-    # For demo purposes, we'll also check a simple user_id parameter
-    # This is NOT secure and only for development
-    user_id = request.args.get("user_id") or request.json.get("user_id") if request.json else None
-    if user_id:
-        return True
+    # Check static file patterns
+    for pattern in STATIC_PATTERNS:
+        if path.startswith(pattern):
+            return True
     
     return False
 
-def should_redirect_to_login(request):
-    """Determine if request should be redirected to login"""
-    path = request.path
-    
-    # Don't redirect exempt routes
-    if path in EXEMPT_ROUTES:
-        return False
-    
-    # Don't redirect static files
-    for pattern in EXEMPT_PATTERNS:
-        if path.startswith(pattern):
-            return False
-    
-    # Don't redirect API routes (they should return 401)
-    if path.startswith('/api/'):
-        return False
-    
-    return True
-
 async def auth_middleware(request):
     """Middleware to handle authentication for all requests"""
-    # Skip authentication for exempt routes
-    if not should_redirect_to_login(request):
-        return
-    
-    # Check if user is authenticated
-    if not is_authenticated(request):
-        # Redirect to login page
-        return redirect("/login")
-
-async def api_auth_middleware(request):
-    """Middleware specifically for API routes"""
     path = request.path
     
-    # Only apply to API routes
-    if not path.startswith('/api/'):
+    # Skip authentication for public routes
+    if is_public_route(path):
         return
     
-    # Skip auth routes
-    if path in ["/api/auth/login", "/api/auth/register", "/api/health"]:
-        return
+    # Get user from request
+    user = get_user_from_request(request)
     
-    # Check authentication
-    if not is_authenticated(request):
-        from sanic.response import json
-        return json({"error": "Authentication required"}, status=401)
+    # Check if authentication is required
+    if not user:
+        # API routes return 401 JSON
+        if path.startswith('/api/'):
+            return json({'error': 'Authentication required'}, status=401)
+        
+        # Web routes redirect to login
+        return redirect('/login')
+    
+    # Add user to request context for use in route handlers
+    request.ctx.user = user
+
+def require_auth(f):
+    """Decorator to require authentication for specific routes"""
+    async def wrapper(request, *args, **kwargs):
+        user = get_user_from_request(request)
+        if not user:
+            if request.path.startswith('/api/'):
+                return json({'error': 'Authentication required'}, status=401)
+            else:
+                return redirect('/login')
+        
+        request.ctx.user = user
+        return await f(request, *args, **kwargs)
+    
+    wrapper.__name__ = f.__name__
+    return wrapper
