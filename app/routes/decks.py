@@ -4,26 +4,24 @@ from sanic.response import json
 from models.database import get_db_session
 from models.user import User
 from models.deck import Deck
+from middleware.auth import require_auth
 
 decks_bp = Blueprint("decks", url_prefix="/api/decks")
 
 @decks_bp.route("", methods=["POST"])
+@require_auth
 async def create_deck(request):
     """Create a new deck"""
     session = get_db_session()
     try:
         data = request.json
-        user_id = data.get("user_id")
+        # Get user_id from authenticated user instead of request body
+        user_id = request.ctx.user['id']  # ← This should be here
         name = data.get("name")
         description = data.get("description", "")
         
-        if not all([user_id, name]):
-            return json({"error": "Missing required fields: user_id, name"}, status=400)
-        
-        # Verify user exists
-        user = session.query(User).filter_by(id=user_id).first()
-        if not user:
-            return json({"error": "User not found"}, status=404)
+        if not name:  # ← Only check for name, not user_id
+            return json({"error": "Missing required field: name"}, status=400)
         
         # Create new deck
         new_deck = Deck(
@@ -121,6 +119,26 @@ async def delete_deck(request, deck_id):
         session.close()
 
 # User-specific deck routes
+
+@decks_bp.route("/my-decks", methods=["GET"])
+@require_auth
+async def get_my_decks(request):
+    """Get current user's decks"""
+    session = get_db_session()
+    try:
+        # Get user ID from authenticated context
+        user_id = request.ctx.user['id']
+        
+        decks = session.query(Deck).filter_by(user_id=user_id).order_by(Deck.created_at.desc()).all()
+        decks_data = [deck.to_dict() for deck in decks]
+        
+        return json({"decks": decks_data})
+    
+    except Exception as e:
+        return json({"error": str(e)}, status=500)
+    finally:
+        session.close()
+        
 @decks_bp.route("/users/<user_id:int>", methods=["GET"])
 async def get_user_decks(request, user_id):
     """Get all decks for a user"""
