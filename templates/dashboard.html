@@ -6,132 +6,266 @@
     <title>FlashPod - Dashboard</title>
     <link href="/static/css/style.css" rel="stylesheet">
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <!-- Navigation Bar -->
-    <nav class="bg-white shadow-sm border-b">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
+<body class="bg-gray-50 min-h-screen">
+    <div class="flex h-screen">
+        <!-- Sidebar Navigation -->
+        <div class="bg-white w-64 shadow-lg flex flex-col">
+            <!-- App Header -->
+            <div class="px-6 py-6 border-b border-gray-200">
+                <h1 class="text-2xl font-bold text-gray-900">FlashPod</h1>
+                <p class="text-sm text-gray-500 mt-1">Smart Flashcard Learning</p>
+            </div>
+
+            <!-- User Info -->
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
                 <div class="flex items-center">
-                    <h1 class="text-2xl font-bold text-gray-900">FlashPod</h1>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <span id="userGreeting" class="text-gray-600"></span>
-                    <button id="logoutBtn" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
-                        Logout
-                    </button>
+                    <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                        <span id="userInitials" class="text-white font-semibold text-sm"></span>
+                    </div>
+                    <div class="ml-3">
+                        <p id="userGreeting" class="text-sm font-medium text-gray-900"></p>
+                        <p class="text-xs text-gray-500">Premium User</p>
+                    </div>
                 </div>
             </div>
-        </div>
-    </nav>
 
-    <div class="container mx-auto px-4 py-8">
-        <!-- Quick Actions -->
-        <div class="max-w-4xl mx-auto mb-8">
-            <div class="grid gap-4 md:grid-cols-3">
-                <button id="showDeckForm" class="bg-green-600 text-white py-4 px-6 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                    + Create New Deck
+            <!-- Navigation Menu -->
+            <nav class="flex-1 px-4 py-6">
+                <ul class="space-y-2">
+                    <li>
+                        <a href="#" id="nav-home" class="nav-item active flex items-center px-4 py-3 text-sm font-medium rounded-lg">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z"></path>
+                            </svg>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-library" class="nav-item flex items-center px-4 py-3 text-sm font-medium rounded-lg">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                            </svg>
+                            Library
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-flashcards" class="nav-item flex items-center px-4 py-3 text-sm font-medium rounded-lg">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            Flash Cards
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-new-deck" class="nav-item flex items-center px-4 py-3 text-sm font-medium rounded-lg">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            New Deck
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-import" class="nav-item flex items-center px-4 py-3 text-sm font-medium rounded-lg">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+                            </svg>
+                            Import
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- Logout Button -->
+            <div class="px-4 py-4 border-t border-gray-200">
+                <button id="logoutBtn" class="w-full flex items-center px-4 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                    </svg>
+                    Logout
                 </button>
-                <button id="showCardForm" class="bg-purple-600 text-white py-4 px-6 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2">
-                    + Add Card to Deck
-                </button>
-                <button id="showPodForm" class="bg-blue-600 text-white py-4 px-6 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    + Create New Pod
-                </button>
             </div>
         </div>
 
-        <!-- Deck Creation Form -->
-        <div id="deckSection" class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6 mb-8 hidden">
-            <h2 class="text-2xl font-semibold mb-4">Create Deck</h2>
-            <form id="deckForm" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Deck Name</label>
-                    <input type="text" id="deckName" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top Header -->
+            <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 id="page-title" class="text-2xl font-bold text-gray-900">Dashboard</h2>
+                        <p id="page-subtitle" class="text-sm text-gray-500 mt-1">Welcome back! Here's your learning progress.</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                            Start Studying
+                        </button>
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Description</label>
-                    <textarea id="deckDescription" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" rows="3"></textarea>
-                </div>
-                <div class="flex gap-2">
-                    <button type="submit" class="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                        Create Deck
-                    </button>
-                    <button type="button" id="cancelDeck" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
-                        Cancel
-                    </button>
-                </div>
-            </form>
-        </div>
+            </header>
 
-        <!-- Card Creation Form -->
-        <div id="cardSection" class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6 mb-8 hidden">
-            <h2 class="text-2xl font-semibold mb-4">Add Card</h2>
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700">Select Deck</label>
-                <select id="deckSelect" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                    <option value="">Choose a deck...</option>
-                </select>
-            </div>
-            <form id="cardForm" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Front (Question)</label>
-                    <textarea id="frontContent" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" rows="3"></textarea>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Back (Answer)</label>
-                    <textarea id="backContent" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" rows="3"></textarea>
-                </div>
-                <div class="flex gap-2">
-                    <button type="submit" class="flex-1 bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2">
-                        Add Card
-                    </button>
-                    <button type="button" id="cancelCard" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
-                        Cancel
-                    </button>
-                </div>
-            </form>
-        </div>
+            <!-- Main Content -->
+            <main class="flex-1 overflow-y-auto">
+                <!-- Dashboard View -->
+                <div id="dashboard-view" class="page-view p-6">
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <!-- Cards Learned -->
+                        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                            <div class="flex items-center">
+                                <div class="p-2 bg-green-100 rounded-lg">
+                                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-500">Cards Learned</p>
+                                    <p id="cards-learned" class="text-2xl font-bold text-gray-900">127</p>
+                                </div>
+                            </div>
+                        </div>
 
-        <!-- Pod Creation Form -->
-        <div id="podSection" class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6 mb-8 hidden">
-            <h2 class="text-2xl font-semibold mb-4">Create Pod</h2>
-            <form id="podForm" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Pod Name</label>
-                    <input type="text" id="podName" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Description</label>
-                    <textarea id="podDescription" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" rows="3"></textarea>
-                </div>
-                <div class="flex gap-2">
-                    <button type="submit" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                        Create Pod
-                    </button>
-                    <button type="button" id="cancelPod" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
-                        Cancel
-                    </button>
-                </div>
-            </form>
-        </div>
+                        <!-- Retention Rate -->
+                        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                            <div class="flex items-center">
+                                <div class="p-2 bg-blue-100 rounded-lg">
+                                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                                    </svg>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-500">Retention Rate</p>
+                                    <p id="retention-rate" class="text-2xl font-bold text-gray-900">84%</p>
+                                </div>
+                            </div>
+                        </div>
 
-        <!-- Decks and Pods Lists -->
-        <div class="max-w-6xl mx-auto grid gap-8 lg:grid-cols-2">
-            <!-- Decks List -->
-            <div>
-                <h2 class="text-2xl font-semibold mb-4">Your Decks</h2>
-                <div id="decksContainer" class="space-y-4">
-                    <!-- Decks will be loaded here -->
-                </div>
-            </div>
+                        <!-- Total Reviews -->
+                        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                            <div class="flex items-center">
+                                <div class="p-2 bg-purple-100 rounded-lg">
+                                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                    </svg>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-500">Total Reviews</p>
+                                    <p id="total-reviews" class="text-2xl font-bold text-gray-900">1,247</p>
+                                </div>
+                            </div>
+                        </div>
 
-            <!-- Pods List -->
-            <div>
-                <h2 class="text-2xl font-semibold mb-4">Your Pods</h2>
-                <div id="podsContainer" class="space-y-4">
-                    <!-- Pods will be loaded here -->
+                        <!-- Review Time -->
+                        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                            <div class="flex items-center">
+                                <div class="p-2 bg-orange-100 rounded-lg">
+                                    <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-500">Review Time</p>
+                                    <p id="review-time" class="text-2xl font-bold text-gray-900">2.3h</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recently Reviewed Decks -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">Recently Reviewed Decks</h3>
+                            <p class="text-sm text-gray-500 mt-1">Your 6 most recently studied decks</p>
+                        </div>
+                        <div class="p-6">
+                            <div id="recent-decks" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <!-- Recent decks will be loaded here -->
+                                <div class="text-center py-8 text-gray-500">
+                                    <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                    </svg>
+                                    <p>Loading recent decks...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+
+                <!-- Other Views (Hidden by default) -->
+                <div id="library-view" class="page-view hidden p-6">
+                    <h2 class="text-2xl font-bold mb-6">Library</h2>
+                    <div id="decks-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Decks will be loaded here -->
+                    </div>
+                </div>
+
+                <div id="flashcards-view" class="page-view hidden p-6">
+                    <h2 class="text-2xl font-bold mb-6">Flash Cards</h2>
+                    <p>Flash card study interface coming soon...</p>
+                </div>
+
+                <div id="new-deck-view" class="page-view hidden p-6">
+                    <h2 class="text-2xl font-bold mb-6">Create New Deck</h2>
+                    
+                    <!-- New Deck Form -->
+                    <div class="max-w-4xl bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <form id="deckForm" class="space-y-6">
+                            <!-- Deck Info Section -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Deck Name</label>
+                                    <input type="text" id="deckName" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                                    <textarea id="deckDescription" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" rows="3"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Import Section -->
+                            <div class="border-t pt-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-medium text-gray-900">Flashcards</h3>
+                                    <button type="button" id="importCardsBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors flex items-center">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+                                        </svg>
+                                        Import Cards
+                                    </button>
+                                </div>
+
+                                <!-- Cards Container -->
+                                <div id="cardsContainer" class="space-y-3 mb-4">
+                                    <!-- Card rows will be added here -->
+                                </div>
+
+                                <!-- Add Card Button -->
+                                <button type="button" id="addCardBtn" class="w-full border-2 border-dashed border-gray-300 rounded-lg px-4 py-3 text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors flex items-center justify-center">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                    </svg>
+                                    Add Another Card
+                                </button>
+                            </div>
+
+                            <!-- Form Actions -->
+                            <div class="flex gap-4 pt-6 border-t">
+                                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                                    Create Deck
+                                </button>
+                                <button type="button" id="cancelDeck" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="import-view" class="page-view hidden p-6">
+                    <h2 class="text-2xl font-bold mb-6">Import Decks</h2>
+                    <p>Import functionality coming soon...</p>
+                </div>
+            </main>
         </div>
     </div>
 
