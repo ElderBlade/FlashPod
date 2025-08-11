@@ -208,6 +208,24 @@ function displayAllDecks(decks) {
     `).join('');
 }
 
+function setupAutoResize(textarea) {
+    function adjustHeight() {
+        // Reset height to auto to get the correct scrollHeight
+        textarea.style.height = 'auto';
+        // Set height based on scroll height, with min height of 2.5rem (40px)
+        textarea.style.height = Math.max(40, textarea.scrollHeight) + 'px';
+    }
+    
+    // Adjust height on input
+    textarea.addEventListener('input', adjustHeight);
+    
+    // Adjust height on focus (in case content was set programmatically)
+    textarea.addEventListener('focus', adjustHeight);
+    
+    // Initial adjustment
+    adjustHeight();
+}
+
 // Card management for new deck form
 let cardCounter = 0;
 
@@ -221,7 +239,7 @@ function createCardRow(term = '', definition = '') {
     cardRow.dataset.cardId = cardId;
     
     cardRow.innerHTML = `
-        <div class="drag-handle cursor-move text-gray-400 hover:text-gray-600">
+        <div class="drag-handle cursor-move text-gray-400 hover:text-gray-600 mt-8"> <!-- Added mt-8 to align with inputs -->
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
             </svg>
@@ -233,15 +251,20 @@ function createCardRow(term = '', definition = '') {
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Definition</label>
-                <input type="text" name="definition" value="${definition}" placeholder="Enter definition or answer" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <textarea name="definition" placeholder="Enter definition or answer" class="auto-resize w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden" rows="1">${definition}</textarea>
             </div>
         </div>
-        <button type="button" class="remove-card text-red-500 hover:text-red-700 p-1">
+        <button type="button" class="remove-card text-red-500 hover:text-red-700 p-1 mt-8"> <!-- Added mt-8 to align with inputs -->
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
             </svg>
         </button>
     `;
+
+    // Add auto-resize functionality to textarea
+    const textarea = cardRow.querySelector('textarea[name="definition"]');
+    setupAutoResize(textarea);
+
 
     // Add remove functionality
     cardRow.querySelector('.remove-card').addEventListener('click', () => {
