@@ -485,4 +485,8 @@ window.addEventListener('load', () => {
     document.getElementById('nav-library').addEventListener('click', () => {
         loadAllDecks();
     });
+
+    document.querySelector('#importCardsBtn').addEventListener('click', () => {
+        document.querySelector('#nav-import').click();
+    });
 });
