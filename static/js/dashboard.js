@@ -346,86 +346,126 @@ function getCardData() {
     return cards;
 }
 
-// Form handling
-document.getElementById('deckForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
 
-    const name = document.getElementById('deckName').value;
-    const description = document.getElementById('deckDescription').value;
-    const cards = getCardData();
-
-    if (cards.length === 0) {
-        showMessage('Please add at least one card to your deck', 'error');
-        return;
-    }
-
-    try {
-        // First create the deck
-        const deckResponse = await fetch(`${API_BASE}/decks`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ name, description })
+// Import functionality
+function parseImportData(text) {
+    const lines = text.split('\n').filter(line => line.trim() !== '');
+    const cards = [];
+    
+    lines.forEach((line, index) => {
+        const trimmedLine = line.trim();
+        if (!trimmedLine) return;
+        
+        let term, definition;
+        
+        // Try tab delimiter first, then comma
+        if (trimmedLine.includes('\t')) {
+            const parts = trimmedLine.split('\t');
+            term = parts[0]?.trim() || '';
+            definition = parts.slice(1).join('\t').trim() || '';
+        } else if (trimmedLine.includes(',')) {
+            const commaIndex = trimmedLine.indexOf(',');
+            term = trimmedLine.substring(0, commaIndex).trim();
+            definition = trimmedLine.substring(commaIndex + 1).trim();
+        } else {
+            // No delimiter found, treat entire line as term with empty definition
+            term = trimmedLine;
+            definition = '';
+        }
+        
+        if (term) {
+            cards.push({ term, definition, originalLine: line });
+        }
     });
+    
+    return cards;
+}
 
-    if (deckResponse.ok) {
-        const deckData = await deckResponse.json();
-        const deckId = deckData.deck_id;
+function createImportCardRow(term, definition, index) {
+    const cardRow = document.createElement('div');
+    cardRow.className = 'import-card-row flex items-start gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200';
+    cardRow.dataset.cardIndex = index;
+    
+    cardRow.innerHTML = `
+        <div class="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mt-2">
+            <span class="text-xs font-medium text-blue-600">${index + 1}</span>
+        </div>
+        <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Term</label>
+                <input type="text" name="import-term" value="${term}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Definition</label>
+                <textarea name="import-definition" class="auto-resize w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden" rows="1">${definition}</textarea>
+            </div>
+        </div>
+        <button type="button" class="remove-import-card text-red-500 hover:text-red-700 p-1 mt-8">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+        </button>
+    `;
+    
+    // Setup auto-resize for textarea
+    const textarea = cardRow.querySelector('textarea[name="import-definition"]');
+    setupAutoResize(textarea);
+    
+    // Setup remove functionality
+    cardRow.querySelector('.remove-import-card').addEventListener('click', () => {
+        cardRow.remove();
+        updateCardCount();
+        renumberImportCards();
+    });
+    
+    return cardRow;
+}
+
+function displayParsedCards(cards) {
+    const container = document.getElementById('importCardsContainer');
+    container.innerHTML = '';
+    
+    cards.forEach((card, index) => {
+        const cardRow = createImportCardRow(card.term, card.definition, index);
+        container.appendChild(cardRow);
+    });
+    
+    updateCardCount();
+}
+
+function updateCardCount() {
+    const count = document.querySelectorAll('.import-card-row').length;
+    document.getElementById('cardCount').textContent = count;
+}
+
+function renumberImportCards() {
+    const cardRows = document.querySelectorAll('.import-card-row');
+    cardRows.forEach((row, index) => {
+        row.dataset.cardIndex = index;
+        const numberElement = row.querySelector('.bg-blue-100 span');
+        if (numberElement) {
+            numberElement.textContent = index + 1;
+        }
+    });
+}
+
+function getImportCardData() {
+    const cardRows = document.querySelectorAll('.import-card-row');
+    const cards = [];
+    
+    cardRows.forEach(row => {
+        const term = row.querySelector('input[name="import-term"]').value.trim();
+        const definition = row.querySelector('textarea[name="import-definition"]').value.trim();
         
-        // Then add all the cards
-        let successCount = 0;
-        
-        // Use Promise.all to handle multiple async card creations
-        const cardPromises = cards.map(async (card) => {
-            try {
-                const cardResponse = await fetch(`${API_BASE}/cards/deck/${deckId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({
-                        front_content: card.term,
-                        back_content: card.definition
-                    })
-                });
-                
-                if (cardResponse.ok) {
-                    return true;
-                } else {
-                    console.error('Failed to add card:', await cardResponse.json());
-                    return false;
-                }
-            } catch (cardError) {
-                console.error('Error adding card:', cardError);
-                return false;
-            }
-        });
-        
-        // Wait for all cards to be created
-        const results = await Promise.all(cardPromises);
-        successCount = results.filter(result => result === true).length;
-        
-        document.getElementById('deckForm').reset();
-        initializeCardRows(); // Reset card rows
-        showMessage(`Deck created successfully with ${successCount} cards!`, 'success');
-        
-        // Refresh data
-        loadRecentDecks();
-        loadAllDecks();
-        
-        // Switch to library view to see the new deck
-        document.getElementById('nav-library').click();
-    } else {
-        const data = await deckResponse.json();
-        showMessage(data.error || 'Failed to create deck', 'error');
-    }
-    } catch (error) {
-    showMessage('Network error: ' + error.message, 'error');
-    }
-});
+        if (term && definition) {
+            cards.push({ term, definition });
+        }
+    });
+    
+    return cards;
+}
+
+
 
 // Add card button event listener
 document.getElementById('addCardBtn').addEventListener('click', () => {
@@ -488,5 +528,211 @@ window.addEventListener('load', () => {
 
     document.querySelector('#importCardsBtn').addEventListener('click', () => {
         document.querySelector('#nav-import').click();
+    });
+
+    // Event listeners for import functionality
+    document.getElementById('parseDataBtn').addEventListener('click', () => {
+        const importText = document.getElementById('importDataField').value.trim();
+        
+        if (!importText) {
+            showMessage('Please enter some data to parse', 'error');
+            return;
+        }
+        
+        const parsedCards = parseImportData(importText);
+        
+        if (parsedCards.length === 0) {
+            showMessage('No valid cards found. Please check your format.', 'error');
+            return;
+        }
+        
+        // Show step 2
+        document.getElementById('import-step-1').classList.add('hidden');
+        document.getElementById('import-step-2').classList.remove('hidden');
+        
+        // Display parsed cards
+        displayParsedCards(parsedCards);
+        
+        showMessage(`Successfully parsed ${parsedCards.length} cards`, 'success');
+    });
+
+    document.getElementById('backToImportBtn').addEventListener('click', () => {
+        document.getElementById('import-step-2').classList.add('hidden');
+        document.getElementById('import-step-1').classList.remove('hidden');
+    });
+
+    document.getElementById('cancelImportBtn').addEventListener('click', () => {
+        document.getElementById('importDataField').value = '';
+        document.getElementById('nav-home').click();
+    });
+
+    document.getElementById('addImportCardBtn').addEventListener('click', () => {
+        const container = document.getElementById('importCardsContainer');
+        const currentCount = container.children.length;
+        const newCardRow = createImportCardRow('', '', currentCount);
+        container.appendChild(newCardRow);
+        updateCardCount();
+        
+        // Focus on the term input
+        const termInput = newCardRow.querySelector('input[name="import-term"]');
+        termInput.focus();
+    });
+
+    document.getElementById('createImportedDeckBtn').addEventListener('click', async () => {
+        const name = document.getElementById('importDeckName').value.trim();
+        const description = document.getElementById('importDeckDescription').value.trim();
+        const cards = getImportCardData();
+        
+        if (!name) {
+            showMessage('Please enter a deck name', 'error');
+            return;
+        }
+        
+        if (cards.length === 0) {
+            showMessage('Please add at least one valid card', 'error');
+            return;
+        }
+        
+        try {
+            // Create the deck
+            const deckResponse = await fetch(`${API_BASE}/decks`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({ name, description })
+            });
+            
+            if (deckResponse.ok) {
+                const deckData = await deckResponse.json();
+                const deckId = deckData.deck_id;
+                
+                // Add all cards
+                const cardPromises = cards.map(async (card) => {
+                    try {
+                        const cardResponse = await fetch(`${API_BASE}/cards/deck/${deckId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            credentials: 'include',
+                            body: JSON.stringify({
+                                front_content: card.term,
+                                back_content: card.definition
+                            })
+                        });
+                        
+                        return cardResponse.ok;
+                    } catch (error) {
+                        console.error('Error adding card:', error);
+                        return false;
+                    }
+                });
+                
+                const results = await Promise.all(cardPromises);
+                const successCount = results.filter(result => result === true).length;
+                
+                // Reset form
+                document.getElementById('importDataField').value = '';
+                document.getElementById('importDeckName').value = '';
+                document.getElementById('importDeckDescription').value = '';
+                document.getElementById('import-step-2').classList.add('hidden');
+                document.getElementById('import-step-1').classList.remove('hidden');
+                
+                showMessage(`Deck "${name}" created with ${successCount} cards!`, 'success');
+                
+                // Refresh data and go to library
+                loadRecentDecks();
+                loadAllDecks();
+                document.getElementById('nav-library').click();
+            } else {
+                const data = await deckResponse.json();
+                showMessage(data.error || 'Failed to create deck', 'error');
+            }
+        } catch (error) {
+            showMessage('Network error: ' + error.message, 'error');
+        }
+    });
+
+    // Form handling
+    document.getElementById('deckForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const name = document.getElementById('deckName').value;
+        const description = document.getElementById('deckDescription').value;
+        const cards = getCardData();
+
+        if (cards.length === 0) {
+            showMessage('Please add at least one card to your deck', 'error');
+            return;
+        }
+
+        try {
+            // First create the deck
+            const deckResponse = await fetch(`${API_BASE}/decks`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ name, description })
+        });
+
+        if (deckResponse.ok) {
+            const deckData = await deckResponse.json();
+            const deckId = deckData.deck_id;
+            
+            // Then add all the cards
+            let successCount = 0;
+            
+            // Use Promise.all to handle multiple async card creations
+            const cardPromises = cards.map(async (card) => {
+                try {
+                    const cardResponse = await fetch(`${API_BASE}/cards/deck/${deckId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            front_content: card.term,
+                            back_content: card.definition
+                        })
+                    });
+                    
+                    if (cardResponse.ok) {
+                        return true;
+                    } else {
+                        console.error('Failed to add card:', await cardResponse.json());
+                        return false;
+                    }
+                } catch (cardError) {
+                    console.error('Error adding card:', cardError);
+                    return false;
+                }
+            });
+            
+            // Wait for all cards to be created
+            const results = await Promise.all(cardPromises);
+            successCount = results.filter(result => result === true).length;
+            
+            document.getElementById('deckForm').reset();
+            initializeCardRows(); // Reset card rows
+            showMessage(`Deck created successfully with ${successCount} cards!`, 'success');
+            
+            // Refresh data
+            loadRecentDecks();
+            loadAllDecks();
+            
+            // Switch to library view to see the new deck
+            document.getElementById('nav-library').click();
+        } else {
+            const data = await deckResponse.json();
+            showMessage(data.error || 'Failed to create deck', 'error');
+        }
+        } catch (error) {
+        showMessage('Network error: ' + error.message, 'error');
+        }
     });
 });
