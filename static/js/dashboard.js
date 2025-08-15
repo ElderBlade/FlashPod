@@ -265,7 +265,6 @@ function createCardRow(term = '', definition = '') {
     const textarea = cardRow.querySelector('textarea[name="definition"]');
     setupAutoResize(textarea);
 
-
     // Add remove functionality
     cardRow.querySelector('.remove-card').addEventListener('click', () => {
         const container = document.getElementById('cardsContainer');
@@ -335,19 +334,18 @@ function getCardData() {
     const cards = [];
 
     cardRows.forEach(row => {
-    const term = row.querySelector('input[name="term"]').value.trim();
-    const definition = row.querySelector('input[name="definition"]').value.trim();
+        const term = row.querySelector('input[name="term"]').value.trim();
+        const definition = row.querySelector('textarea[name="definition"]').value.trim();
 
-    if (term && definition) {
-        cards.push({ term, definition });
+        if (term && definition) {
+            cards.push({ term, definition });
         }
     });
 
     return cards;
 }
 
-
-// Import functionality
+// Import functionality - Original version restored
 function parseImportData(text) {
     const lines = text.split('\n').filter(line => line.trim() !== '');
     const cards = [];
@@ -465,212 +463,85 @@ function getImportCardData() {
     return cards;
 }
 
+// Initialize import functionality
+function initializeImportFunctionality() {
+    const parseBtn = document.getElementById('parseImportBtn');
+    const importBtn = document.getElementById('importToDeckBtn');
+    const clearBtn = document.getElementById('clearImportBtn');
+    const importField = document.getElementById('importDataField');
 
-
-// Add card button event listener
-document.getElementById('addCardBtn').addEventListener('click', () => {
-    const container = document.getElementById('cardsContainer');
-    const newCardRow = createCardRow(); // Create empty row (no parameters = empty)
-    container.appendChild(newCardRow);
-    
-    // Focus on the term input of the new row for better UX
-    const termInput = newCardRow.querySelector('input[name="term"]');
-    termInput.focus();
-});
-
-// Cancel button
-document.getElementById('cancelDeck').addEventListener('click', () => {
-    document.getElementById('deckForm').reset();
-    document.getElementById('nav-home').click(); // Go back to dashboard
-});
-
-// Placeholder functions
-function viewDeck(deckId) {
-    showMessage(`View deck ${deckId} - Coming soon!`, 'info');
-}
-
-function studyDeck(deckId) {
-    showMessage(`Study deck ${deckId} - Coming soon!`, 'info');
-}
-
-// Event listeners
-document.getElementById('logoutBtn').addEventListener('click', logout);
-
-// CSS for active navigation
-const style = document.createElement('style');
-style.textContent = `
-    .nav-item {
-        color: #6b7280;
-        transition: all 0.2s;
+    if (parseBtn) {
+        parseBtn.addEventListener('click', () => {
+            const text = importField.value;
+            const cards = parseImportData(text);
+            
+            if (cards.length === 0) {
+                showMessage('No valid cards found. Please check your format.', 'error');
+                return;
+            }
+            
+            displayParsedCards(cards);
+            document.getElementById('importCardsSection').classList.remove('hidden');
+            showMessage(`Parsed ${cards.length} cards successfully!`, 'success');
+        });
     }
-    .nav-item:hover {
-        color: #374151;
-        background-color: #f3f4f6;
-    }
-    .nav-item.active {
-        color: #2563eb;
-        background-color: #dbeafe;
-    }
-`;
-document.head.appendChild(style);
 
-// Initialize page
-window.addEventListener('load', () => {
-    loadUserInfo();
-    setupNavigation();
-    loadRecentDecks();
-    initializeCardRows(); // Initialize card rows for new deck form
-    
-    // Load library data when library nav is clicked
-    document.getElementById('nav-library').addEventListener('click', () => {
-        loadAllDecks();
-    });
-
-    document.querySelector('#importCardsBtn').addEventListener('click', () => {
-        document.querySelector('#nav-import').click();
-    });
-
-    // Event listeners for import functionality
-    document.getElementById('parseDataBtn').addEventListener('click', () => {
-        const importText = document.getElementById('importDataField').value.trim();
-        
-        if (!importText) {
-            showMessage('Please enter some data to parse', 'error');
-            return;
-        }
-        
-        const parsedCards = parseImportData(importText);
-        
-        if (parsedCards.length === 0) {
-            showMessage('No valid cards found. Please check your format.', 'error');
-            return;
-        }
-        
-        // Show step 2
-        document.getElementById('import-step-1').classList.add('hidden');
-        document.getElementById('import-step-2').classList.remove('hidden');
-        
-        // Display parsed cards
-        displayParsedCards(parsedCards);
-        
-        showMessage(`Successfully parsed ${parsedCards.length} cards`, 'success');
-    });
-
-    document.getElementById('backToImportBtn').addEventListener('click', () => {
-        document.getElementById('import-step-2').classList.add('hidden');
-        document.getElementById('import-step-1').classList.remove('hidden');
-    });
-
-    document.getElementById('cancelImportBtn').addEventListener('click', () => {
-        document.getElementById('importDataField').value = '';
-        document.getElementById('nav-home').click();
-    });
-
-    document.getElementById('addImportCardBtn').addEventListener('click', () => {
-        const container = document.getElementById('importCardsContainer');
-        const currentCount = container.children.length;
-        const newCardRow = createImportCardRow('', '', currentCount);
-        container.appendChild(newCardRow);
-        updateCardCount();
-        
-        // Focus on the term input
-        const termInput = newCardRow.querySelector('input[name="import-term"]');
-        termInput.focus();
-    });
-
-    document.getElementById('createImportedDeckBtn').addEventListener('click', async () => {
-        const name = document.getElementById('importDeckName').value.trim();
-        const description = document.getElementById('importDeckDescription').value.trim();
-        const cards = getImportCardData();
-        
-        if (!name) {
-            showMessage('Please enter a deck name', 'error');
-            return;
-        }
-        
-        if (cards.length === 0) {
-            showMessage('Please add at least one valid card', 'error');
-            return;
-        }
-        
-        try {
-            // Create the deck
-            const deckResponse = await fetch(`${API_BASE}/decks`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-                body: JSON.stringify({ name, description })
+    if (importBtn) {
+        importBtn.addEventListener('click', () => {
+            const cards = getImportCardData();
+            
+            if (cards.length === 0) {
+                showMessage('No cards to import. Please add some cards first.', 'error');
+                return;
+            }
+            
+            // Switch to new deck view
+            document.getElementById('nav-new-deck').click();
+            
+            // Clear existing cards in the form
+            const cardsContainer = document.getElementById('cardsContainer');
+            cardsContainer.innerHTML = '';
+            
+            // Add imported cards using existing createCardRow function
+            cards.forEach(card => {
+                const cardRow = createCardRow(card.term, card.definition);
+                cardsContainer.appendChild(cardRow);
             });
             
-            if (deckResponse.ok) {
-                const deckData = await deckResponse.json();
-                const deckId = deckData.deck_id;
-                
-                // Add all cards
-                const cardPromises = cards.map(async (card) => {
-                    try {
-                        const cardResponse = await fetch(`${API_BASE}/cards/deck/${deckId}`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            credentials: 'include',
-                            body: JSON.stringify({
-                                front_content: card.term,
-                                back_content: card.definition
-                            })
-                        });
-                        
-                        return cardResponse.ok;
-                    } catch (error) {
-                        console.error('Error adding card:', error);
-                        return false;
-                    }
-                });
-                
-                const results = await Promise.all(cardPromises);
-                const successCount = results.filter(result => result === true).length;
-                
-                // Reset form
-                document.getElementById('importDataField').value = '';
-                document.getElementById('importDeckName').value = '';
-                document.getElementById('importDeckDescription').value = '';
-                document.getElementById('import-step-2').classList.add('hidden');
-                document.getElementById('import-step-1').classList.remove('hidden');
-                
-                showMessage(`Deck "${name}" created with ${successCount} cards!`, 'success');
-                
-                // Refresh data and go to library
-                loadRecentDecks();
-                loadAllDecks();
-                document.getElementById('nav-library').click();
-            } else {
-                const data = await deckResponse.json();
-                showMessage(data.error || 'Failed to create deck', 'error');
-            }
-        } catch (error) {
-            showMessage('Network error: ' + error.message, 'error');
-        }
-    });
+            showMessage(`Imported ${cards.length} cards to new deck form`, 'success');
+            
+            // Clear import data
+            importField.value = '';
+            document.getElementById('importCardsSection').classList.add('hidden');
+            document.getElementById('importCardsContainer').innerHTML = '';
+        });
+    }
 
-    // Form handling
-    document.getElementById('deckForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            importField.value = '';
+            document.getElementById('importCardsSection').classList.add('hidden');
+            document.getElementById('importCardsContainer').innerHTML = '';
+        });
+    }
+}
 
-        const name = document.getElementById('deckName').value;
-        const description = document.getElementById('deckDescription').value;
-        const cards = getCardData();
+// Form handling
+document.getElementById('deckForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-        if (cards.length === 0) {
-            showMessage('Please add at least one card to your deck', 'error');
-            return;
-        }
+    const name = document.getElementById('deckName').value;
+    const description = document.getElementById('deckDescription').value;
+    const cards = getCardData();
 
-        try {
-            // First create the deck
-            const deckResponse = await fetch(`${API_BASE}/decks`, {
+    if (cards.length === 0) {
+        showMessage('Please add at least one card to your deck', 'error');
+        return;
+    }
+
+    try {
+        // First create the deck
+        const deckResponse = await fetch(`${API_BASE}/decks`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -731,8 +602,73 @@ window.addEventListener('load', () => {
             const data = await deckResponse.json();
             showMessage(data.error || 'Failed to create deck', 'error');
         }
-        } catch (error) {
+    } catch (error) {
         showMessage('Network error: ' + error.message, 'error');
-        }
+    }
+});
+
+// Add card button event listener
+document.getElementById('addCardBtn').addEventListener('click', () => {
+    const container = document.getElementById('cardsContainer');
+    const newCardRow = createCardRow(); // Create empty row (no parameters = empty)
+    container.appendChild(newCardRow);
+    
+    // Focus on the term input of the new row for better UX
+    const termInput = newCardRow.querySelector('input[name="term"]');
+    termInput.focus();
+});
+
+// Cancel button
+document.getElementById('cancelDeck').addEventListener('click', () => {
+    document.getElementById('deckForm').reset();
+    document.getElementById('nav-home').click(); // Go back to dashboard
+});
+
+// Placeholder functions
+function viewDeck(deckId) {
+    showMessage(`View deck ${deckId} - Coming soon!`, 'info');
+}
+
+function studyDeck(deckId) {
+    showMessage(`Study deck ${deckId} - Coming soon!`, 'info');
+}
+
+// Event listeners
+document.getElementById('logoutBtn').addEventListener('click', logout);
+
+// CSS for active navigation
+const style = document.createElement('style');
+style.textContent = `
+    .nav-item {
+        color: #6b7280;
+        transition: all 0.2s;
+    }
+    .nav-item:hover {
+        color: #374151;
+        background-color: #f3f4f6;
+    }
+    .nav-item.active {
+        color: #2563eb;
+        background-color: #dbeafe;
+    }
+`;
+document.head.appendChild(style);
+
+// Initialize page
+window.addEventListener('load', () => {
+    loadUserInfo();
+    setupNavigation();
+    loadRecentDecks();
+    initializeCardRows(); // Initialize card rows for new deck form
+    initializeImportFunctionality(); // Initialize import functionality
+    
+    // Load library data when library nav is clicked
+    document.getElementById('nav-library').addEventListener('click', () => {
+        loadAllDecks();
+    });
+
+    // Update the existing import cards button click handler
+    document.querySelector('#importCardsBtn').addEventListener('click', () => {
+        document.querySelector('#nav-import').click();
     });
 });
