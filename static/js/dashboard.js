@@ -199,6 +199,9 @@ function displayAllDecks(decks) {
                     <button onclick="viewDeck(${deck.id})" class="bg-gray-100 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-200">
                         View
                     </button>
+                    <button onclick="editDeck(${deck.id})" class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded text-sm hover:bg-yellow-200">
+                        Edit
+                    </button>
                     <button onclick="studyDeck(${deck.id})" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
                         Study
                     </button>
@@ -653,6 +656,327 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+
+/* EDIT DECK FUNCTIONS */
+let editingDeckId = null;
+let editingCards = [];
+
+async function editDeck(deckId) {
+    editingDeckId = deckId;
+    
+    try {
+        // Load deck info
+        const deckResponse = await fetch(`${API_BASE}/decks/${deckId}`, {
+            credentials: 'include'
+        });
+        
+        if (!deckResponse.ok) {
+            showMessage('Failed to load deck', 'error');
+            return;
+        }
+        
+        const deckData = await deckResponse.json();
+        const deck = deckData.deck;
+        
+        // Load deck cards
+        const cardsResponse = await fetch(`${API_BASE}/cards/deck/${deckId}`, {
+            credentials: 'include'
+        });
+        
+        if (!cardsResponse.ok) {
+            showMessage('Failed to load cards', 'error');
+            return;
+        }
+        
+        const cardsData = await cardsResponse.json();
+        editingCards = cardsData.cards || [];
+        
+        // Populate form
+        document.getElementById('editDeckId').value = deck.id;
+        document.getElementById('editDeckName').value = deck.name;
+        document.getElementById('editDeckDescription').value = deck.description || '';
+        
+        // Display cards
+        displayEditCards();
+        
+        // Switch to edit view
+        document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+        document.querySelectorAll('.page-view').forEach(view => view.classList.add('hidden'));
+        document.getElementById('edit-deck-view').classList.remove('hidden');
+        updatePageHeader('edit-deck');
+        
+    } catch (error) {
+        showMessage('Error loading deck: ' + error.message, 'error');
+    }
+}
+
+function displayEditCards() {
+    const container = document.getElementById('editCardsContainer');
+    
+    if (editingCards.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+                <p>No cards in this deck yet.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = editingCards.map((card, index) => `
+        <div class="card-row flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200" data-card-id="${card.id}">
+            <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Term</label>
+                    <input type="text" name="term" value="${card.front_content}" placeholder="Enter term or question" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Definition</label>
+                    <textarea name="definition" placeholder="Enter definition or answer" class="auto-resize w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden" rows="1">${card.back_content}</textarea>
+                </div>
+            </div>
+            <button type="button" class="remove-card text-red-500 hover:text-red-700 p-1 mt-8" onclick="removeEditCard(${card.id})">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+            </button>
+        </div>
+    `).join('');
+    
+    // Setup auto-resize for all textareas
+    container.querySelectorAll('textarea[name="definition"]').forEach(textarea => {
+        setupAutoResize(textarea);
+    });
+}
+
+function removeEditCard(cardId) {
+    editingCards = editingCards.filter(card => card.id !== cardId);
+    displayEditCards();
+}
+
+function addNewEditCard() {
+    // Add a new empty card to the editingCards array
+    const newCard = {
+        id: 'new_' + Date.now(), // Temporary ID for new cards
+        front_content: '',
+        back_content: '',
+        is_new: true
+    };
+    
+    editingCards.push(newCard);
+    displayEditCards();
+    
+    // Focus on the new card's term input
+    const container = document.getElementById('editCardsContainer');
+    const newCardElement = container.querySelector(`[data-card-id="${newCard.id}"]`);
+    if (newCardElement) {
+        const termInput = newCardElement.querySelector('input[name="term"]');
+        termInput.focus();
+    }
+}
+
+async function saveEditedDeck() {
+    const deckId = document.getElementById('editDeckId').value;
+    const name = document.getElementById('editDeckName').value;
+    const description = document.getElementById('editDeckDescription').value;
+    
+    if (!name.trim()) {
+        showMessage('Deck name is required', 'error');
+        return;
+    }
+    
+    try {
+        // Update deck info
+        const deckResponse = await fetch(`${API_BASE}/decks/${deckId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ name, description })
+        });
+        
+        if (!deckResponse.ok) {
+            throw new Error('Failed to update deck');
+        }
+        
+        // Get current card data from form
+        const cardRows = document.querySelectorAll('#editCardsContainer .card-row');
+        const currentCards = [];
+        
+        cardRows.forEach(row => {
+            const cardId = row.dataset.cardId;
+            const term = row.querySelector('input[name="term"]').value.trim();
+            const definition = row.querySelector('textarea[name="definition"]').value.trim();
+            
+            if (term && definition) {
+                const originalCard = editingCards.find(c => c.id == cardId);
+                currentCards.push({
+                    id: cardId,
+                    front_content: term,
+                    back_content: definition,
+                    is_new: originalCard?.is_new || false
+                });
+            }
+        });
+        
+        // Handle card updates/creations/deletions
+        const promises = [];
+        
+        // Update existing cards and create new ones
+        for (const card of currentCards) {
+            if (card.is_new) {
+                // Create new card
+                promises.push(
+                    fetch(`${API_BASE}/cards/deck/${deckId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            front_content: card.front_content,
+                            back_content: card.back_content
+                        })
+                    })
+                );
+            } else {
+                // Update existing card
+                const originalCard = editingCards.find(c => c.id == card.id);
+                if (originalCard && 
+                    (originalCard.front_content !== card.front_content || 
+                     originalCard.back_content !== card.back_content)) {
+                    promises.push(
+                        fetch(`${API_BASE}/cards/${card.id}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            credentials: 'include',
+                            body: JSON.stringify({
+                                front_content: card.front_content,
+                                back_content: card.back_content
+                            })
+                        })
+                    );
+                }
+            }
+        }
+        
+        // Delete removed cards
+        const currentCardIds = currentCards.map(c => c.id).filter(id => !id.toString().startsWith('new_'));
+        const originalCardIds = editingCards.filter(c => !c.is_new).map(c => c.id);
+        const deletedCardIds = originalCardIds.filter(id => !currentCardIds.includes(id));
+        
+        for (const cardId of deletedCardIds) {
+            promises.push(
+                fetch(`${API_BASE}/cards/${cardId}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                })
+            );
+        }
+        
+        // Wait for all operations to complete
+        await Promise.all(promises);
+        
+        showMessage('Deck updated successfully!', 'success');
+        
+        // Refresh data and go back to library
+        await loadAllDecks();
+        await loadRecentDecks();
+        document.getElementById('nav-library').click();
+        
+    } catch (error) {
+        showMessage('Error saving deck: ' + error.message, 'error');
+    }
+}
+
+async function deleteDeck() {
+    const deckId = document.getElementById('editDeckId').value;
+    const deckName = document.getElementById('editDeckName').value;
+    
+    if (!confirm(`Are you sure you want to delete "${deckName}"? This action cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE}/decks/${deckId}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to delete deck');
+        }
+        
+        showMessage('Deck deleted successfully', 'success');
+        
+        // Refresh data and go back to library
+        await loadAllDecks();
+        await loadRecentDecks();
+        document.getElementById('nav-library').click();
+        
+    } catch (error) {
+        showMessage('Error deleting deck: ' + error.message, 'error');
+    }
+}
+
+// Event listeners for edit functionality
+document.getElementById('editDeckForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await saveEditedDeck();
+});
+
+document.getElementById('addCardToEdit').addEventListener('click', addNewEditCard);
+
+document.getElementById('cancelEdit').addEventListener('click', () => {
+    document.getElementById('nav-library').click();
+});
+
+document.getElementById('cancelEditDeck').addEventListener('click', () => {
+    document.getElementById('nav-library').click();
+});
+
+document.getElementById('deleteDeck').addEventListener('click', deleteDeck);
+
+// Update the page header info to include edit-deck
+const originalUpdatePageHeader = updatePageHeader;
+updatePageHeader = function(page) {
+    const titleElement = document.getElementById('page-title');
+    const subtitleElement = document.getElementById('page-subtitle');
+    
+    const pageInfo = {
+        'home': {
+            title: 'Dashboard',
+            subtitle: 'Welcome back! Here\'s your learning progress.'
+        },
+        'library': {
+            title: 'Library',
+            subtitle: 'Manage your flashcard decks and collections.'
+        },
+        'flashcards': {
+            title: 'Flash Cards',
+            subtitle: 'Study your cards with spaced repetition.'
+        },
+        'new-deck': {
+            title: 'Create New Deck',
+            subtitle: 'Add a new deck to your collection.'
+        },
+        'import': {
+            title: 'Import Decks',
+            subtitle: 'Import decks from files or other sources.'
+        },
+        'edit-deck': {
+            title: 'Edit Deck',
+            subtitle: 'Modify your deck and cards.'
+        }
+    };
+
+    const info = pageInfo[page] || pageInfo['home'];
+    titleElement.textContent = info.title;
+    subtitleElement.textContent = info.subtitle;
+};
 
 // Initialize page
 window.addEventListener('load', () => {
