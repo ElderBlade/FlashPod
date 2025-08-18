@@ -18,6 +18,7 @@ async def create_card(request, deck_id):
         front_type = data.get("front_type", "text")
         back_type = data.get("back_type", "text")
         tags = data.get("tags", "")
+        display_order = data.get("display_order")
         
         if not all([front_content, back_content]):
             return json({"error": "Missing required fields: front_content, back_content"}, status=400)
@@ -27,6 +28,13 @@ async def create_card(request, deck_id):
         if not deck:
             return json({"error": "Deck not found"}, status=404)
         
+        # If no display_order provided, set it to the next available position
+        if display_order is None:
+            max_order = session.query(func.max(Card.display_order)).filter_by(
+                deck_id=deck_id, is_active=True
+            ).scalar() or 0
+            display_order = max_order + 1
+        
         # Create new card
         new_card = Card(
             deck_id=deck_id,
@@ -34,7 +42,8 @@ async def create_card(request, deck_id):
             back_content=back_content,
             front_type=front_type,
             back_type=back_type,
-            tags=tags
+            tags=tags,
+            display_order=display_order
         )
         
         session.add(new_card)
@@ -55,6 +64,7 @@ async def create_card(request, deck_id):
     finally:
         session.close()
 
+
 @cards_bp.route("/deck/<deck_id:int>", methods=["GET"])
 async def get_deck_cards(request, deck_id):
     """Get all cards in a deck"""
@@ -65,10 +75,11 @@ async def get_deck_cards(request, deck_id):
         if not deck:
             return json({"error": "Deck not found"}, status=404)
         
+        # Get cards ordered by display_order, then by created_at
         cards = session.query(Card).filter_by(
             deck_id=deck_id, 
             is_active=True
-        ).order_by(Card.created_at).all()
+        ).order_by(Card.display_order, Card.created_at).all()
         
         cards_data = [card.to_dict() for card in cards]
         
@@ -81,6 +92,50 @@ async def get_deck_cards(request, deck_id):
         return json({"error": str(e)}, status=500)
     finally:
         session.close()
+
+
+@cards_bp.route("/deck/<deck_id:int>/reorder", methods=["PUT"])
+async def reorder_deck_cards(request, deck_id):
+    """Reorder cards within a deck"""
+    session = get_db_session()
+    try:
+        data = request.json
+        card_orders = data.get("card_orders", [])  # List of {card_id: int, order: int}
+        
+        if not card_orders:
+            return json({"error": "Missing card_orders"}, status=400)
+        
+        # Verify deck exists
+        deck = session.query(Deck).filter_by(id=deck_id).first()
+        if not deck:
+            return json({"error": "Deck not found"}, status=404)
+        
+        # Update display orders
+        for item in card_orders:
+            card_id = item.get("card_id")
+            new_order = item.get("order")
+            
+            if card_id is not None and new_order is not None:
+                card = session.query(Card).filter_by(
+                    id=card_id, 
+                    deck_id=deck_id
+                ).first()
+                
+                if card:
+                    card.display_order = new_order
+        
+        session.commit()
+        
+        return json({
+            "message": "Card order updated successfully"
+        })
+        
+    except Exception as e:
+        session.rollback()
+        return json({"error": str(e)}, status=500)
+    finally:
+        session.close()
+
 
 @cards_bp.route("/<card_id:int>", methods=["GET"])
 async def get_card(request, card_id):
@@ -98,6 +153,7 @@ async def get_card(request, card_id):
         return json({"error": str(e)}, status=500)
     finally:
         session.close()
+
 
 @cards_bp.route("/<card_id:int>", methods=["PUT"])
 async def update_card(request, card_id):
@@ -121,6 +177,8 @@ async def update_card(request, card_id):
             card.back_type = data["back_type"]
         if "tags" in data:
             card.tags = data["tags"]
+        if "display_order" in data:
+            card.display_order = data["display_order"]
         if "difficulty" in data:
             card.difficulty = data["difficulty"]
         
@@ -136,6 +194,7 @@ async def update_card(request, card_id):
         return json({"error": str(e)}, status=500)
     finally:
         session.close()
+
 
 @cards_bp.route("/<card_id:int>", methods=["DELETE"])
 async def delete_card(request, card_id):
@@ -166,6 +225,7 @@ async def delete_card(request, card_id):
         return json({"error": str(e)}, status=500)
     finally:
         session.close()
+
 
 @cards_bp.route("/search", methods=["GET"])
 async def search_cards(request):

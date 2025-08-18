@@ -333,15 +333,20 @@ function initializeCardRows() {
 }
 
 function getCardData() {
-    const cardRows = document.querySelectorAll('.card-row');
+    // Get cards from the cardsContainer in their current DOM order
+    const cardRows = document.querySelectorAll('#cardsContainer .card-row');
     const cards = [];
 
-    cardRows.forEach(row => {
+    cardRows.forEach((row, index) => {
         const term = row.querySelector('input[name="term"]').value.trim();
         const definition = row.querySelector('textarea[name="definition"]').value.trim();
 
         if (term && definition) {
-            cards.push({ term, definition });
+            cards.push({ 
+                term, 
+                definition,
+                display_order: index  // Include the order based on DOM position
+            });
         }
     });
 
@@ -506,7 +511,8 @@ function initializeImportFunctionality() {
             cardsContainer.innerHTML = '';
             
             // Add imported cards using existing createCardRow function
-            cards.forEach(card => {
+            // Cards will maintain their order from the import
+            cards.forEach((card, index) => {
                 const cardRow = createCardRow(card.term, card.definition);
                 cardsContainer.appendChild(cardRow);
             });
@@ -557,11 +563,11 @@ document.getElementById('deckForm').addEventListener('submit', async (e) => {
             const deckData = await deckResponse.json();
             const deckId = deckData.deck_id;
             
-            // Then add all the cards
+            // Then add all the cards with display order
             let successCount = 0;
             
             // Use Promise.all to handle multiple async card creations
-            const cardPromises = cards.map(async (card) => {
+            const cardPromises = cards.map(async (card, index) => {
                 try {
                     const cardResponse = await fetch(`${API_BASE}/cards/deck/${deckId}`, {
                         method: 'POST',
@@ -571,7 +577,8 @@ document.getElementById('deckForm').addEventListener('submit', async (e) => {
                         credentials: 'include',
                         body: JSON.stringify({
                             front_content: card.term,
-                            back_content: card.definition
+                            back_content: card.definition,
+                            display_order: index  // Add display order based on position in form
                         })
                     });
                     
@@ -659,8 +666,10 @@ document.head.appendChild(style);
 
 
 /* EDIT DECK FUNCTIONS */
+// Edit deck functionality
 let editingDeckId = null;
 let editingCards = [];
+let originalCards = []; 
 
 async function editDeck(deckId) {
     editingDeckId = deckId;
@@ -692,6 +701,11 @@ async function editDeck(deckId) {
         const cardsData = await cardsResponse.json();
         editingCards = cardsData.cards || [];
         
+        // IMPORTANT: Keep a copy of the original cards for deletion tracking
+        originalCards = cardsData.cards ? JSON.parse(JSON.stringify(cardsData.cards)) : [];
+        
+        console.log('Loaded original cards:', originalCards);
+        
         // Populate form
         document.getElementById('editDeckId').value = deck.id;
         document.getElementById('editDeckName').value = deck.name;
@@ -711,6 +725,7 @@ async function editDeck(deckId) {
     }
 }
 
+
 function displayEditCards() {
     const container = document.getElementById('editCardsContainer');
     
@@ -724,7 +739,14 @@ function displayEditCards() {
     }
     
     container.innerHTML = editingCards.map((card, index) => `
-        <div class="card-row flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200" data-card-id="${card.id}">
+        <div class="card-row flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200" 
+             data-card-id="${card.id}" 
+             draggable="true">
+            <div class="drag-handle cursor-move text-gray-400 hover:text-gray-600 mt-8">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                </svg>
+            </div>
             <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Term</label>
@@ -747,11 +769,85 @@ function displayEditCards() {
     container.querySelectorAll('textarea[name="definition"]').forEach(textarea => {
         setupAutoResize(textarea);
     });
+    
+    // Setup drag and drop for all card rows
+    container.querySelectorAll('.card-row').forEach(cardRow => {
+        setupEditCardDragAndDrop(cardRow);
+    });
 }
 
 function removeEditCard(cardId) {
+    console.log('Removing card:', cardId);
     editingCards = editingCards.filter(card => card.id !== cardId);
     displayEditCards();
+}
+
+function setupEditCardDragAndDrop(cardRow) {
+    cardRow.addEventListener('dragstart', (e) => {
+        cardRow.classList.add('opacity-50');
+        e.dataTransfer.setData('text/plain', cardRow.dataset.cardId);
+    });
+
+    cardRow.addEventListener('dragend', () => {
+        cardRow.classList.remove('opacity-50');
+    });
+
+    cardRow.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        cardRow.classList.add('border-blue-400');
+    });
+
+    cardRow.addEventListener('dragleave', () => {
+        cardRow.classList.remove('border-blue-400');
+    });
+
+    cardRow.addEventListener('drop', (e) => {
+        e.preventDefault();
+        cardRow.classList.remove('border-blue-400');
+        
+        const draggedCardId = e.dataTransfer.getData('text/plain');
+        const draggedCard = document.querySelector(`[data-card-id="${draggedCardId}"]`);
+        const container = document.getElementById('editCardsContainer');
+        
+        if (draggedCard && draggedCard !== cardRow) {
+            const allCards = Array.from(container.children);
+            const draggedIndex = allCards.indexOf(draggedCard);
+            const targetIndex = allCards.indexOf(cardRow);
+            
+            // Update the DOM
+            if (draggedIndex < targetIndex) {
+                container.insertBefore(draggedCard, cardRow.nextSibling);
+            } else {
+                container.insertBefore(draggedCard, cardRow);
+            }
+            
+            // Update the editingCards array to match new order
+            updateEditCardsOrder();
+        }
+    });
+}
+
+function updateEditCardsOrder() {
+    const container = document.getElementById('editCardsContainer');
+    const cardElements = Array.from(container.querySelectorAll('.card-row'));
+    
+    console.log('Updating edit cards order...');
+    console.log('Card elements found:', cardElements.length);
+    console.log('Current editingCards:', editingCards);
+    
+    // Reorder the editingCards array to match DOM order
+    const newOrder = [];
+    cardElements.forEach((element, index) => {
+        const cardId = element.dataset.cardId;
+        const card = editingCards.find(c => c.id == cardId);
+        console.log(`Position ${index}: cardId=${cardId}, found=${!!card}`);
+        if (card) {
+            newOrder.push(card);
+        }
+    });
+    
+    editingCards = newOrder;
+    console.log('New editingCards order:', editingCards);
 }
 
 function addNewEditCard() {
@@ -775,6 +871,7 @@ function addNewEditCard() {
     }
 }
 
+
 async function saveEditedDeck() {
     const deckId = document.getElementById('editDeckId').value;
     const name = document.getElementById('editDeckName').value;
@@ -784,6 +881,10 @@ async function saveEditedDeck() {
         showMessage('Deck name is required', 'error');
         return;
     }
+    
+    console.log('=== SAVE DECK DEBUG ===');
+    console.log('Original cards from server:', originalCards);
+    console.log('Current editingCards array:', editingCards);
     
     try {
         // Update deck info
@@ -800,11 +901,12 @@ async function saveEditedDeck() {
             throw new Error('Failed to update deck');
         }
         
-        // Get current card data from form
+        // Get current card data from form (in display order)
+        updateEditCardsOrder(); // Make sure order is current
         const cardRows = document.querySelectorAll('#editCardsContainer .card-row');
         const currentCards = [];
         
-        cardRows.forEach(row => {
+        cardRows.forEach((row, index) => {
             const cardId = row.dataset.cardId;
             const term = row.querySelector('input[name="term"]').value.trim();
             const definition = row.querySelector('textarea[name="definition"]').value.trim();
@@ -815,70 +917,134 @@ async function saveEditedDeck() {
                     id: cardId,
                     front_content: term,
                     back_content: definition,
+                    display_order: index,
                     is_new: originalCard?.is_new || false
                 });
             }
         });
         
-        // Handle card updates/creations/deletions
+        console.log('Current cards from form:', currentCards);
+        
+        // Separate new cards from existing cards
+        const newCards = currentCards.filter(c => c.is_new);
+        const existingCards = currentCards.filter(c => !c.is_new);
+        
+        console.log('New cards:', newCards);
+        console.log('Existing cards:', existingCards);
+        
+        // Find cards to delete by comparing original cards to current cards
+        const currentCardIds = currentCards.map(c => parseInt(c.id)).filter(id => !isNaN(id));
+        const originalCardIds = originalCards.map(c => parseInt(c.id));
+        const deletedCardIds = originalCardIds.filter(id => !currentCardIds.includes(id));
+        
+        console.log('Current card IDs (including new):', currentCardIds);
+        console.log('Original card IDs:', originalCardIds);
+        console.log('Cards to delete:', deletedCardIds);
+        
+        // Handle operations
         const promises = [];
         
-        // Update existing cards and create new ones
-        for (const card of currentCards) {
-            if (card.is_new) {
-                // Create new card
+        // 1. Create new cards
+        for (const card of newCards) {
+            console.log('Creating new card:', card);
+            promises.push(
+                fetch(`${API_BASE}/cards/deck/${deckId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        front_content: card.front_content,
+                        back_content: card.back_content,
+                        display_order: card.display_order
+                    })
+                }).then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Failed to create card: ${response.status}`);
+                    }
+                    return response.json();
+                })
+            );
+        }
+        
+        // 2. Update existing cards
+        for (const card of existingCards) {
+            const originalCard = originalCards.find(c => parseInt(c.id) === parseInt(card.id));
+            
+            // Check if card actually changed
+            const hasChanged = !originalCard || 
+                originalCard.front_content !== card.front_content || 
+                originalCard.back_content !== card.back_content ||
+                (originalCard.display_order || 0) !== card.display_order;
+            
+            if (hasChanged) {
+                console.log('Updating card:', card.id, card);
                 promises.push(
-                    fetch(`${API_BASE}/cards/deck/${deckId}`, {
-                        method: 'POST',
+                    fetch(`${API_BASE}/cards/${card.id}`, {
+                        method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
                         },
                         credentials: 'include',
                         body: JSON.stringify({
                             front_content: card.front_content,
-                            back_content: card.back_content
+                            back_content: card.back_content,
+                            display_order: card.display_order
                         })
+                    }).then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Failed to update card ${card.id}: ${response.status}`);
+                        }
+                        return response.json();
                     })
                 );
-            } else {
-                // Update existing card
-                const originalCard = editingCards.find(c => c.id == card.id);
-                if (originalCard && 
-                    (originalCard.front_content !== card.front_content || 
-                     originalCard.back_content !== card.back_content)) {
-                    promises.push(
-                        fetch(`${API_BASE}/cards/${card.id}`, {
-                            method: 'PUT',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            credentials: 'include',
-                            body: JSON.stringify({
-                                front_content: card.front_content,
-                                back_content: card.back_content
-                            })
-                        })
-                    );
-                }
             }
         }
         
-        // Delete removed cards
-        const currentCardIds = currentCards.map(c => c.id).filter(id => !id.toString().startsWith('new_'));
-        const originalCardIds = editingCards.filter(c => !c.is_new).map(c => c.id);
-        const deletedCardIds = originalCardIds.filter(id => !currentCardIds.includes(id));
-        
+        // 3. Delete removed cards
         for (const cardId of deletedCardIds) {
+            console.log('Deleting card:', cardId);
             promises.push(
                 fetch(`${API_BASE}/cards/${cardId}`, {
                     method: 'DELETE',
                     credentials: 'include'
+                }).then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Failed to delete card ${cardId}: ${response.status}`);
+                    }
+                    return { deleted: cardId };
                 })
             );
         }
         
         // Wait for all operations to complete
-        await Promise.all(promises);
+        console.log('Executing', promises.length, 'operations...');
+        const results = await Promise.all(promises);
+        console.log('All operations completed:', results);
+        
+        // 4. Update card orders if there are existing cards to reorder
+        if (existingCards.length > 0) {
+            const cardOrders = existingCards.map(card => ({
+                card_id: parseInt(card.id),
+                order: card.display_order
+            }));
+            
+            console.log('Updating card orders:', cardOrders);
+            
+            const reorderResponse = await fetch(`${API_BASE}/cards/deck/${deckId}/reorder`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({ card_orders: cardOrders })
+            });
+            
+            if (!reorderResponse.ok) {
+                console.warn('Failed to update card order, but other operations succeeded');
+            }
+        }
         
         showMessage('Deck updated successfully!', 'success');
         
@@ -888,9 +1054,11 @@ async function saveEditedDeck() {
         document.getElementById('nav-library').click();
         
     } catch (error) {
+        console.error('Error saving deck:', error);
         showMessage('Error saving deck: ' + error.message, 'error');
     }
 }
+
 
 async function deleteDeck() {
     const deckId = document.getElementById('editDeckId').value;
