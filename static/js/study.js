@@ -1,6 +1,13 @@
 // static/js/study.js
 'use strict';
 
+// Auto-detect API base if not already set
+if (!window.API_BASE) {
+    window.API_BASE = window.location.hostname === 'localhost' 
+        ? 'http://localhost:8000/api'
+        : '/api';
+}
+
 // Study mode functionality - modular implementation
 class StudyMode {
     constructor() {
@@ -88,10 +95,6 @@ class StudyMode {
                         <span id="cardProgress">Card 1 of ${this.state.totalCards}</span>
                     </div>
                 </div>
-                <div class="text-sm text-gray-500">
-                    Press <kbd class="px-2 py-1 bg-gray-100 rounded">Space</kbd> to flip • 
-                    <kbd class="px-2 py-1 bg-gray-100 rounded">←</kbd><kbd class="px-2 py-1 bg-gray-100 rounded">→</kbd> to navigate
-                </div>
             </div>
 
             <!-- Progress Bar -->
@@ -118,8 +121,11 @@ class StudyMode {
                     </div>
                     
                     <!-- Flip indicator -->
-                    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-xs text-gray-400">
-                        Click or press Space to flip
+                    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-xs text-gray-400 text-center">
+                        <div>
+                            Press <kbd class="px-1 py-0.5 bg-gray-100 rounded text-gray-600 text-xs">Space</kbd> to flip • 
+                            <kbd class="px-1 py-0.5 bg-gray-100 rounded text-gray-600 text-xs">←</kbd><kbd class="px-1 py-0.5 bg-gray-100 rounded text-gray-600 text-xs">→</kbd> to navigate
+                        </div>
                     </div>
                 </div>
             </div>
@@ -146,8 +152,12 @@ class StudyMode {
             </div>
 
             <!-- Card Edit Modal -->
-            <div id="editCardModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-                <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+            <div id="editCardModal" class="fixed inset-0 flex items-center justify-center hidden z-50">
+                <!-- Blurred backdrop -->
+                <div class="absolute inset-0 bg-opacity-30 backdrop-blur-sm"></div>
+                
+                <!-- Modal content -->
+                <div class="relative bg-white rounded-lg p-6 max-w-2xl w-full mx-4 shadow-2xl">
                     <h3 class="text-lg font-semibold mb-4">Edit Card</h3>
                     <form id="editCardForm" class="space-y-4">
                         <div>
@@ -411,6 +421,12 @@ class StudyMode {
         
         // Remove keyboard handler
         document.removeEventListener('keydown', this.keyHandler);
+        
+        // Hide study view
+        const studyView = document.getElementById('study-view');
+        if (studyView) {
+            studyView.classList.add('hidden');
+        }
         
         // Reset state
         this.state = {

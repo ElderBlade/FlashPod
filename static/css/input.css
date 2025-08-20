@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+/* Add these styles to your existing CSS or create a new CSS file */
+
 /* Study Mode Styles */
 #flashcard {
     transition: transform 0.2s ease, box-shadow 0.3s ease;
@@ -12,6 +14,28 @@
 
 #flashcard:active {
     transform: translateY(0) scale(0.98);
+}
+
+/* Backdrop blur effect for modal */
+.backdrop-blur-sm {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+/* Enhanced modal styling */
+#editCardModal .relative {
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 /* Keyboard shortcut badges */
@@ -54,31 +78,6 @@ button:disabled:hover {
     overflow-wrap: break-word;
 }
 
-/* Edit modal animations */
-#editCardModal {
-    animation: fadeIn 0.2s ease-out;
-}
-
-#editCardModal > div {
-    animation: slideUp 0.2s ease-out;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes slideUp {
-    from { 
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to { 
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
 /* Card side indicator */
 #cardSide {
     text-transform: uppercase;
@@ -107,6 +106,13 @@ button:disabled:hover {
         font-size: 1.5rem;
         padding: 1rem;
     }
+    
+    /* Make modal full screen on mobile */
+    #editCardModal .relative {
+        margin: 1rem;
+        max-height: calc(100vh - 2rem);
+        overflow-y: auto;
+    }
 }
 
 /* Focus styles for accessibility */
@@ -134,4 +140,22 @@ textarea:focus-visible {
 
 #flashcard:hover::before {
     opacity: 1;
+}
+
+/* Smooth modal backdrop animation */
+#editCardModal {
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { 
+        opacity: 0;
+        backdrop-filter: blur(0px);
+        -webkit-backdrop-filter: blur(0px);
+    }
+    to { 
+        opacity: 1;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
 }
