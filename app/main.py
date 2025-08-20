@@ -16,6 +16,7 @@ from routes.auth import auth_bp
 from routes.decks import decks_bp
 from routes.cards import cards_bp
 from routes.pods import pods_bp
+from routes.study import study_bp
 
 # Import auth decorator and helpers (comment out for now if causing issues)
 try:
@@ -184,6 +185,7 @@ def create_app():
     app.blueprint(decks_bp)
     app.blueprint(cards_bp)
     app.blueprint(pods_bp)
+    app.blueprint(study_bp)
     
     # Middleware for content types only
     @app.middleware('response')
