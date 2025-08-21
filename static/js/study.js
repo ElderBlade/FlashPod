@@ -1,14 +1,12 @@
-// static/js/study.js
 'use strict';
 
-// Auto-detect API base if not already set
+// Auto-detect API base
 if (!window.API_BASE) {
     window.API_BASE = window.location.hostname === 'localhost' 
         ? 'http://localhost:8000/api'
         : '/api';
 }
 
-// Study mode functionality - modular implementation
 class StudyMode {
     constructor() {
         this.state = {
@@ -18,55 +16,73 @@ class StudyMode {
             currentIndex: 0,
             isFlipped: false,
             totalCards: 0,
-            cardsStudied: 0
+            cardsStudied: 0,
+            flipDirection: 'Y' // Track flip axis
         };
         
         this.keyHandler = this.handleKeyboard.bind(this);
         this.isActive = false;
     }
 
-    // Initialize study mode for a deck
     async startStudy(deckId) {
         try {
-            const response = await fetch(`${window.API_BASE}/study/deck/${deckId}/session`, {
+            // First, fetch the deck details
+            const deckResponse = await fetch(`${window.API_BASE}/decks/${deckId}`, {
                 credentials: 'include'
             });
             
-            if (response.ok) {
-                const data = await response.json();
-                this.state = {
-                    session: data.session,
-                    deck: data.deck,
-                    cards: data.cards,
-                    currentIndex: 0,
-                    isFlipped: false,
-                    totalCards: data.total_cards,
-                    cardsStudied: 0
-                };
-                
-                this.showInterface();
-                this.setupKeyboardHandlers();
-                this.renderCurrentCard();
-                this.isActive = true;
-            } else {
-                const errorData = await response.json();
-                window.showMessage(errorData.error || 'Failed to start study session', 'error');
+            if (!deckResponse.ok) {
+                throw new Error('Failed to load deck');
             }
+            
+            const deckData = await deckResponse.json();
+            
+            // Then, fetch all cards for this deck
+            const cardsResponse = await fetch(`${window.API_BASE}/cards/deck/${deckId}`, {
+                credentials: 'include'
+            });
+            
+            if (!cardsResponse.ok) {
+                throw new Error('Failed to load cards');
+            }
+            
+            const cardsData = await cardsResponse.json();
+            
+            // Check if deck has cards
+            if (!cardsData.cards || cardsData.cards.length === 0) {
+                window.showMessage?.('This deck has no cards yet!', 'error');
+                return;
+            }
+            
+            // Initialize state with real data
+            this.state = {
+                session: { id: Date.now() }, // Temporary session ID
+                deck: deckData.deck,
+                cards: cardsData.cards,
+                currentIndex: 0,
+                isFlipped: false,
+                totalCards: cardsData.cards.length,
+                cardsStudied: 0,
+                flipDirection: 'Y'
+            };
+            
+            this.showInterface();
+            this.setupKeyboardHandlers();
+            this.renderCurrentCard();
+            this.isActive = true;
+            
         } catch (error) {
-            window.showMessage('Error starting study session: ' + error.message, 'error');
+            window.showMessage?.('Error starting study session: ' + error.message, 'error');
+            console.error('Study session error:', error);
         }
     }
 
-    // Show the study interface
     showInterface() {
-        // Hide all other views
         document.querySelectorAll('.page-view').forEach(view => view.classList.add('hidden'));
         
-        // Update header
         document.getElementById('page-title').textContent = 'Study Mode';
         document.getElementById('page-subtitle').textContent = `${this.state.deck.name} - ${this.state.totalCards} cards`;
         
-        // Show study view
         let studyView = document.getElementById('study-view');
         if (!studyView) {
             studyView = this.createStudyView();
@@ -74,18 +90,15 @@ class StudyMode {
         }
         studyView.classList.remove('hidden');
         
-        // Update navigation active state
         document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
     }
 
-    // Create the study view HTML
     createStudyView() {
         const studyView = document.createElement('div');
         studyView.id = 'study-view';
         studyView.className = 'page-view p-6';
         
         studyView.innerHTML = `
-            <!-- Study Controls -->
             <div class="flex justify-between items-center mb-6">
                 <div class="flex items-center space-x-4">
                     <button id="exitStudyBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
@@ -97,53 +110,58 @@ class StudyMode {
                 </div>
             </div>
 
-            <!-- Progress Bar -->
             <div class="w-full bg-gray-200 rounded-full h-2 mb-8">
                 <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
             </div>
 
-            <!-- Flashcard -->
             <div class="max-w-4xl mx-auto">
-                <div id="flashcard" class="relative bg-white rounded-xl shadow-lg border border-gray-200 min-h-96 cursor-pointer transition-transform duration-300 hover:shadow-xl">
-                    <!-- Edit button -->
-                    <button id="editCardBtn" class="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                        </svg>
-                    </button>
-                    
-                    <!-- Card content -->
-                    <div class="p-8 h-full flex flex-col justify-center">
-                        <div id="cardSide" class="text-sm text-gray-500 mb-2">Term</div>
-                        <div id="cardContent" class="text-2xl text-gray-900 text-center leading-relaxed">
-                            <!-- Card content will be inserted here -->
-                        </div>
-                    </div>
-                    
-                    <!-- Flip indicator -->
-                    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-xs text-gray-400 text-center">
-                        <div>
-                            Press <kbd class="px-1 py-0.5 bg-gray-100 rounded text-gray-600 text-xs">Space</kbd> to flip • 
-                            <kbd class="px-1 py-0.5 bg-gray-100 rounded text-gray-600 text-xs">←</kbd><kbd class="px-1 py-0.5 bg-gray-100 rounded text-gray-600 text-xs">→</kbd> to navigate
+                <div class="card-container">
+                    <div id="flashcard" class="flashcard">
+                        <div class="flashcard-inner">
+                            <div class="flashcard-front">
+                                <button id="editCardBtn" class="edit-btn">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
+                                </button>
+                                <div class="card-label">Term</div>
+                                <div id="frontContent" class="card-content"></div>
+                            </div>
+                            <div class="flashcard-back">
+                                <button class="edit-btn" onclick="window.studyMode.openEditModal()">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
+                                </button>
+                                <div class="card-label">Definition</div>
+                                <div id="backContent" class="card-content"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
+                
+                <div class="keyboard-hints">
+                    <kbd>Space</kbd> flip horizontal • 
+                    <kbd>↑</kbd> flip up • 
+                    <kbd>↓</kbd> flip down • 
+                    <kbd>←</kbd> previous • 
+                    <kbd>→</kbd> next
+                </div>
             </div>
 
-            <!-- Navigation Controls -->
             <div class="flex justify-center items-center mt-8 space-x-6">
-                <button id="prevCardBtn" class="flex items-center px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors">
+                <button id="prevCardBtn" class="nav-button">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                     </svg>
                     Previous
                 </button>
                 
-                <button id="flipCardBtn" class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+                <button id="flipCardBtn" class="flip-button">
                     Flip Card
                 </button>
                 
-                <button id="nextCardBtn" class="flex items-center px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors">
+                <button id="nextCardBtn" class="nav-button">
                     Next
                     <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -151,13 +169,9 @@ class StudyMode {
                 </button>
             </div>
 
-            <!-- Card Edit Modal -->
-            <div id="editCardModal" class="fixed inset-0 flex items-center justify-center hidden z-50">
-                <!-- Blurred backdrop -->
-                <div class="absolute inset-0 bg-opacity-30 backdrop-blur-sm"></div>
-                
-                <!-- Modal content -->
-                <div class="relative bg-white rounded-lg p-6 max-w-2xl w-full mx-4 shadow-2xl">
+            <div id="editCardModal" class="modal hidden">
+                <div class="modal-backdrop"></div>
+                <div class="modal-content">
                     <h3 class="text-lg font-semibold mb-4">Edit Card</h3>
                     <form id="editCardForm" class="space-y-4">
                         <div>
@@ -185,17 +199,17 @@ class StudyMode {
         return studyView;
     }
 
-    // Setup event listeners for study interface
     setupEventListeners() {
         document.addEventListener('click', this.handleClick.bind(this));
         document.addEventListener('submit', this.handleSubmit.bind(this));
     }
 
-    // Handle click events
     handleClick(e) {
         if (!this.isActive) return;
 
-        switch (e.target.id || e.target.closest('button')?.id) {
+        const target = e.target.id || e.target.closest('button')?.id;
+        
+        switch (target) {
             case 'exitStudyBtn':
                 this.exit();
                 break;
@@ -206,7 +220,7 @@ class StudyMode {
                 this.navigateCard(1);
                 break;
             case 'flipCardBtn':
-                this.flipCard();
+                this.flipCard('horizontal');
                 break;
             case 'editCardBtn':
                 this.openEditModal();
@@ -217,12 +231,11 @@ class StudyMode {
         }
 
         // Handle flashcard click
-        if (e.target.closest('#flashcard') && !e.target.closest('#editCardBtn')) {
-            this.flipCard();
+        if (e.target.closest('#flashcard') && !e.target.closest('.edit-btn')) {
+            this.flipCard('horizontal');
         }
     }
 
-    // Handle form submissions
     handleSubmit(e) {
         if (!this.isActive) return;
         
@@ -232,13 +245,11 @@ class StudyMode {
         }
     }
 
-    // Setup keyboard handlers
     setupKeyboardHandlers() {
         document.removeEventListener('keydown', this.keyHandler);
         document.addEventListener('keydown', this.keyHandler);
     }
 
-    // Keyboard handler
     handleKeyboard(e) {
         if (!this.isActive) return;
         
@@ -248,9 +259,17 @@ class StudyMode {
         }
         
         switch (e.key) {
-            case ' ': // Spacebar - flip card
+            case ' ': // Spacebar - horizontal flip (like turning a page)
                 e.preventDefault();
-                this.flipCard();
+                this.flipCard('horizontal');
+                break;
+            case 'ArrowUp': // Up arrow - vertical flip up
+                e.preventDefault();
+                this.flipCard('vertical-up');
+                break;
+            case 'ArrowDown': // Down arrow - vertical flip down
+                e.preventDefault();
+                this.flipCard('vertical-down');
                 break;
             case 'ArrowLeft': // Left arrow - previous card
                 e.preventDefault();
@@ -267,25 +286,26 @@ class StudyMode {
         }
     }
 
-    // Render the current card
     renderCurrentCard() {
         if (!this.state.cards.length) return;
         
         const currentCard = this.state.cards[this.state.currentIndex];
-        const cardContent = document.getElementById('cardContent');
-        const cardSide = document.getElementById('cardSide');
+        const frontContent = document.getElementById('frontContent');
+        const backContent = document.getElementById('backContent');
         const progressBar = document.getElementById('progressBar');
         const cardProgress = document.getElementById('cardProgress');
         
-        if (!cardContent) return; // Safety check
+        if (!frontContent || !backContent) return;
         
         // Update card content
-        if (this.state.isFlipped) {
-            cardContent.textContent = currentCard.back_content;
-            cardSide.textContent = 'Definition';
-        } else {
-            cardContent.textContent = currentCard.front_content;
-            cardSide.textContent = 'Term';
+        frontContent.textContent = currentCard.front_content;
+        backContent.textContent = currentCard.back_content;
+        
+        // Reset flip state
+        const flashcard = document.getElementById('flashcard');
+        if (flashcard) {
+            flashcard.classList.remove('flipped', 'flip-horizontal', 'flip-vertical-up', 'flip-vertical-down');
+            this.state.isFlipped = false;
         }
         
         // Update progress
@@ -301,34 +321,39 @@ class StudyMode {
         if (nextBtn) nextBtn.disabled = this.state.currentIndex === this.state.totalCards - 1;
     }
 
-    // Navigate to next/previous card
     navigateCard(direction) {
         const newIndex = this.state.currentIndex + direction;
         
         if (newIndex >= 0 && newIndex < this.state.totalCards) {
             this.state.currentIndex = newIndex;
-            this.state.isFlipped = false; // Reset flip state
+            this.state.isFlipped = false;
             this.renderCurrentCard();
             this.updateProgress();
         }
     }
 
-    // Flip the current card
-    flipCard() {
-        this.state.isFlipped = !this.state.isFlipped;
-        this.renderCurrentCard();
-        
-        // Add flip animation
+    flipCard(direction) {
         const flashcard = document.getElementById('flashcard');
-        if (flashcard) {
-            flashcard.style.transform = 'rotateY(10deg)';
-            setTimeout(() => {
-                flashcard.style.transform = 'rotateY(0deg)';
-            }, 150);
+        if (!flashcard) return;
+        
+        // Remove any existing flip classes
+        flashcard.classList.remove('flip-horizontal', 'flip-vertical-up', 'flip-vertical-down');
+        
+        // Add the appropriate flip class based on direction
+        flashcard.classList.add(`flip-${direction}`);
+        
+        // Toggle flipped state
+        this.state.isFlipped = !this.state.isFlipped;
+        
+        if (this.state.isFlipped) {
+            flashcard.classList.add('flipped');
+        } else {
+            flashcard.classList.remove('flipped');
         }
+        
+        this.state.flipDirection = direction;
     }
 
-    // Open edit modal for current card
     openEditModal() {
         const currentCard = this.state.cards[this.state.currentIndex];
         
@@ -339,12 +364,10 @@ class StudyMode {
         document.getElementById('editCardModal').classList.remove('hidden');
     }
 
-    // Close edit modal
     closeEditModal() {
         document.getElementById('editCardModal').classList.add('hidden');
     }
 
-    // Save card edits
     async saveCardEdit() {
         const currentCard = this.state.cards[this.state.currentIndex];
         const formData = {
@@ -354,7 +377,8 @@ class StudyMode {
         };
         
         try {
-            const response = await fetch(`${window.API_BASE}/study/card/${currentCard.id}`, {
+            // Send update to backend
+            const response = await fetch(`${window.API_BASE}/cards/${currentCard.id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -367,7 +391,7 @@ class StudyMode {
                 const data = await response.json();
                 
                 // Update the card in our local state
-                Object.assign(this.state.cards[this.state.currentIndex], data.card);
+                Object.assign(this.state.cards[this.state.currentIndex], data.card || formData);
                 
                 // Re-render the card
                 this.renderCurrentCard();
@@ -375,51 +399,23 @@ class StudyMode {
                 // Close modal
                 this.closeEditModal();
                 
-                window.showMessage('Card updated successfully', 'success');
+                window.showMessage?.('Card updated successfully', 'success');
             } else {
-                const errorData = await response.json();
-                window.showMessage(errorData.error || 'Failed to update card', 'error');
+                throw new Error('Failed to update card');
             }
         } catch (error) {
-            window.showMessage('Error updating card: ' + error.message, 'error');
+            console.error('Error updating card:', error);
+            window.showMessage?.('Failed to update card: ' + error.message, 'error');
         }
     }
 
-    // Update study progress on server
     async updateProgress() {
-        if (!this.state.session) return;
-        
-        try {
-            await fetch(`${window.API_BASE}/study/session/${this.state.session.id}/progress`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-                body: JSON.stringify({
-                    current_index: this.state.currentIndex,
-                    cards_studied: this.state.currentIndex + 1
-                })
-            });
-        } catch (error) {
-            console.warn('Failed to update study progress:', error);
-        }
+        // Progress tracking for future backend integration
+        console.log('Progress updated:', this.state.currentIndex + 1, 'of', this.state.totalCards);
     }
 
-    // Exit study mode
     async exit() {
-        if (this.state.session) {
-            try {
-                await fetch(`${window.API_BASE}/study/session/${this.state.session.id}/complete`, {
-                    method: 'POST',
-                    credentials: 'include'
-                });
-            } catch (error) {
-                console.warn('Failed to complete study session:', error);
-            }
-        }
-        
-        // Remove keyboard handler
+        // Cleanup
         document.removeEventListener('keydown', this.keyHandler);
         
         // Hide study view
@@ -436,7 +432,8 @@ class StudyMode {
             currentIndex: 0,
             isFlipped: false,
             totalCards: 0,
-            cardsStudied: 0
+            cardsStudied: 0,
+            flipDirection: 'Y'
         };
         
         this.isActive = false;
@@ -447,7 +444,6 @@ class StudyMode {
         }
     }
 
-    // Public method to check if study mode is active
     isStudyActive() {
         return this.isActive;
     }
@@ -456,7 +452,7 @@ class StudyMode {
 // Create global study instance
 window.studyMode = new StudyMode();
 
-// Export the studyDeck function for compatibility with existing code
+// Export the studyDeck function for compatibility
 window.studyDeck = function(deckId) {
     window.studyMode.startStudy(deckId);
 };
