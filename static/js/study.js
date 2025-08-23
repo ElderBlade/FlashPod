@@ -17,15 +17,23 @@ class StudyMode {
             isFlipped: false,
             totalCards: 0,
             cardsStudied: 0,
-            flipDirection: 'Y' // Track flip axis
+            flipDirection: 'Y',
+            lastDeckId: null // Track last studied deck
         };
         
         this.keyHandler = this.handleKeyboard.bind(this);
         this.isActive = false;
+        this.isPaused = false; // Track if study is paused (not exited)
     }
 
     async startStudy(deckId) {
         try {
+            // If resuming same deck and has state, just show interface
+            if (deckId === this.state.lastDeckId && this.state.cards.length > 0 && this.isPaused) {
+                this.resumeStudy();
+                return;
+            }
+
             // First, fetch the deck details
             const deckResponse = await fetch(`${window.API_BASE}/decks/${deckId}`, {
                 credentials: 'include'
@@ -63,18 +71,42 @@ class StudyMode {
                 isFlipped: false,
                 totalCards: cardsData.cards.length,
                 cardsStudied: 0,
-                flipDirection: 'Y'
+                flipDirection: 'Y',
+                lastDeckId: deckId
             };
             
             this.showInterface();
             this.setupKeyboardHandlers();
             this.renderCurrentCard();
             this.isActive = true;
+            this.isPaused = false;
             
         } catch (error) {
             window.showMessage?.('Error starting study session: ' + error.message, 'error');
             console.error('Study session error:', error);
         }
+    }
+
+    resumeStudy() {
+        this.showInterface();
+        this.setupKeyboardHandlers();
+        this.renderCurrentCard();
+        this.isActive = true;
+        this.isPaused = false;
+    }
+
+    pauseStudy() {
+        // Hide study view without clearing state
+        const studyView = document.getElementById('study-view');
+        if (studyView) {
+            studyView.classList.add('hidden');
+        }
+        
+        // Remove keyboard handlers
+        document.removeEventListener('keydown', this.keyHandler);
+        
+        this.isActive = false;
+        this.isPaused = true;
     }
 
     showInterface() {
@@ -90,7 +122,12 @@ class StudyMode {
         }
         studyView.classList.remove('hidden');
         
+        // Update navigation to show flashcards as active
         document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+        const flashcardsNav = document.getElementById('nav-flashcards');
+        if (flashcardsNav) {
+            flashcardsNav.classList.add('active');
+        }
     }
 
     createStudyView() {
@@ -157,10 +194,6 @@ class StudyMode {
                     Previous
                 </button>
                 
-                <button id="flipCardBtn" class="flip-button">
-                    Flip Card
-                </button>
-                
                 <button id="nextCardBtn" class="nav-button">
                     Next
                     <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,6 +235,28 @@ class StudyMode {
     setupEventListeners() {
         document.addEventListener('click', this.handleClick.bind(this));
         document.addEventListener('submit', this.handleSubmit.bind(this));
+        
+        // Setup navigation interception
+        this.setupNavigationInterception();
+    }
+
+    setupNavigationInterception() {
+        // Intercept navigation clicks
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                // If study mode is active and not clicking flashcards
+                if (this.isActive && item.id !== 'nav-flashcards') {
+                    this.pauseStudy();
+                }
+                // If clicking flashcards and have a paused session
+                else if (item.id === 'nav-flashcards' && this.isPaused && this.state.lastDeckId) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.resumeStudy();
+                }
+            });
+        });
     }
 
     handleClick(e) {
@@ -219,9 +274,6 @@ class StudyMode {
             case 'nextCardBtn':
                 this.navigateCard(1);
                 break;
-            case 'flipCardBtn':
-                this.flipCard('horizontal');
-                break;
             case 'editCardBtn':
                 this.openEditModal();
                 break;
@@ -230,7 +282,7 @@ class StudyMode {
                 break;
         }
 
-        // Handle flashcard click
+        // Handle flashcard click (but not on edit buttons)
         if (e.target.closest('#flashcard') && !e.target.closest('.edit-btn')) {
             this.flipCard('horizontal');
         }
@@ -424,7 +476,7 @@ class StudyMode {
             studyView.classList.add('hidden');
         }
         
-        // Reset state
+        // Reset state completely
         this.state = {
             session: null,
             deck: null,
@@ -433,10 +485,12 @@ class StudyMode {
             isFlipped: false,
             totalCards: 0,
             cardsStudied: 0,
-            flipDirection: 'Y'
+            flipDirection: 'Y',
+            lastDeckId: null
         };
         
         this.isActive = false;
+        this.isPaused = false;
         
         // Return to library view
         if (document.getElementById('nav-library')) {
@@ -447,6 +501,10 @@ class StudyMode {
     isStudyActive() {
         return this.isActive;
     }
+
+    hasPausedSession() {
+        return this.isPaused && this.state.lastDeckId;
+    }
 }
 
 // Create global study instance
@@ -456,3 +514,23 @@ window.studyMode = new StudyMode();
 window.studyDeck = function(deckId) {
     window.studyMode.startStudy(deckId);
 };
+
+// Add global message function if not exists
+if (!window.showMessage) {
+    window.showMessage = function(message, type = 'info') {
+        const messagesContainer = document.getElementById('messages');
+        if (!messagesContainer) return;
+        
+        const messageDiv = document.createElement('div');
+        const bgColor = type === 'error' ? 'bg-red-500' : type === 'success' ? 'bg-green-500' : 'bg-blue-500';
+        
+        messageDiv.className = `${bgColor} text-white px-6 py-4 rounded-lg shadow-lg mb-3 max-w-sm`;
+        messageDiv.textContent = message;
+        
+        messagesContainer.appendChild(messageDiv);
+        
+        setTimeout(() => {
+            messageDiv.remove();
+        }, 5000);
+    };
+}
