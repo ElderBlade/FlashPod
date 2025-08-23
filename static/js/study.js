@@ -21,7 +21,8 @@ class StudyMode {
             flipDirection: 'Y',
             lastDeckId: null, // Track last studied deck
             isShuffled: false, // Track shuffle state
-            currentCardId: null // Track current card by ID to maintain position
+            currentCardId: null, // Track current card by ID to maintain position
+            showDefinitionFirst: false // Track if showing definition first
         };
         
         this.keyHandler = this.handleKeyboard.bind(this);
@@ -78,13 +79,15 @@ class StudyMode {
                 flipDirection: 'Y',
                 lastDeckId: deckId,
                 isShuffled: false,
-                currentCardId: cardsData.cards[0]?.id
+                currentCardId: cardsData.cards[0]?.id,
+                showDefinitionFirst: false
             };
             
             this.showInterface();
             this.setupKeyboardHandlers();
             this.renderCurrentCard();
             this.updateShuffleButton();
+            this.updateTermDefButton();
             this.isActive = true;
             this.isPaused = false;
             
@@ -99,6 +102,7 @@ class StudyMode {
         this.setupKeyboardHandlers();
         this.renderCurrentCard();
         this.updateShuffleButton();
+        this.updateTermDefButton();
         this.isActive = true;
         this.isPaused = false;
     }
@@ -191,13 +195,14 @@ class StudyMode {
                     <kbd>↓</kbd> flip down • 
                     <kbd>←</kbd> previous • 
                     <kbd>→</kbd> next • 
+                    <kbd>T</kbd> term/definition • 
                     <kbd>S</kbd> shuffle
                 </div>
             </div>
 
             <div class="flex justify-between items-center mt-8 max-w-4xl mx-auto">
-                <!-- Left spacer to balance the shuffle button -->
-                <div class="w-24"></div>
+                <!-- Left spacer to balance the right side buttons -->
+                <div class="w-48"></div>
                 
                 <!-- Centered Previous/Next buttons -->
                 <div class="flex items-center space-x-6">
@@ -216,11 +221,18 @@ class StudyMode {
                     </button>
                 </div>
 
-                <!-- Shuffle button on the right -->
-                <div class="flex justify-end w-24">
+                <!-- Right side buttons -->
+                <div class="flex justify-end items-center space-x-3 w-48">
+                    <button id="termDefBtn" class="nav-button transition-all duration-200">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a1.994 1.994 0 01-1.414.586H7a4 4 0 01-4-4V7a4 4 0 014-4z"></path>
+                        </svg>
+                        <span id="termDefLabel">Term First</span>
+                    </button>
+                    
                     <button id="shuffleBtn" class="nav-button transition-all duration-200">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4l11.733 16h4.267l-11.733-16zm0 16l11.733-16h4.267l-11.733 16zm8.467-8.467l2.733-2.733"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4l11.733 16h4.267l-11.733-16zm0 16l11.733-16h4.267l-11.733-16zm8.467-8.467l2.733-2.733"></path>
                         </svg>
                         Shuffle
                     </button>
@@ -302,6 +314,9 @@ class StudyMode {
             case 'shuffleBtn':
                 this.toggleShuffle();
                 break;
+            case 'termDefBtn':
+                this.toggleTermDef();
+                break;
             case 'editCardBtn':
                 this.openEditModal();
                 break;
@@ -364,6 +379,11 @@ class StudyMode {
                 e.preventDefault();
                 this.toggleShuffle();
                 break;
+            case 't':
+            case 'T': // T key - toggle term/definition
+                e.preventDefault();
+                this.toggleTermDef();
+                break;
             case 'Escape': // Escape - exit study
                 e.preventDefault();
                 this.exit();
@@ -401,6 +421,19 @@ class StudyMode {
         this.updateShuffleButton();
     }
 
+    toggleTermDef() {
+        this.state.showDefinitionFirst = !this.state.showDefinitionFirst;
+        
+        if (this.state.showDefinitionFirst) {
+            window.showMessage?.('Now showing definitions first', 'info');
+        } else {
+            window.showMessage?.('Now showing terms first', 'info');
+        }
+
+        this.renderCurrentCard();
+        this.updateTermDefButton();
+    }
+
     shuffleArray(array) {
         const shuffled = [...array];
         for (let i = shuffled.length - 1; i > 0; i--) {
@@ -429,6 +462,40 @@ class StudyMode {
         }
     }
 
+    updateTermDefButton() {
+        const termDefBtn = document.getElementById('termDefBtn');
+        const termDefLabel = document.getElementById('termDefLabel');
+        if (!termDefBtn || !termDefLabel) return;
+
+        if (this.state.showDefinitionFirst) {
+            termDefBtn.classList.remove('bg-gray-100', 'text-gray-500');
+            termDefBtn.classList.add('bg-purple-100', 'text-purple-700', 'border-purple-200');
+            termDefBtn.style.backgroundColor = '#f3e8ff';
+            termDefBtn.style.color = '#7c3aed';
+            termDefBtn.style.borderColor = '#c4b5fd';
+            termDefLabel.textContent = 'Definition First';
+            
+            // Update icon for definition first
+            const svg = termDefBtn.querySelector('svg');
+            if (svg) {
+                svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>';
+            }
+        } else {
+            termDefBtn.classList.remove('bg-purple-100', 'text-purple-700', 'border-purple-200');
+            termDefBtn.classList.add('bg-gray-100', 'text-gray-500');
+            termDefBtn.style.backgroundColor = '';
+            termDefBtn.style.color = '';
+            termDefBtn.style.borderColor = '';
+            termDefLabel.textContent = 'Term First';
+            
+            // Update icon for term first
+            const svg = termDefBtn.querySelector('svg');
+            if (svg) {
+                svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a1.994 1.994 0 01-1.414.586H7a4 4 0 01-4-4V7a4 4 0 014-4z"></path>';
+            }
+        }
+    }
+
     renderCurrentCard() {
         if (!this.state.cards.length) return;
         
@@ -440,9 +507,21 @@ class StudyMode {
         
         if (!frontContent || !backContent) return;
         
+        // Determine what to show based on showDefinitionFirst setting
+        const frontText = this.state.showDefinitionFirst ? currentCard.back_content : currentCard.front_content;
+        const backText = this.state.showDefinitionFirst ? currentCard.front_content : currentCard.back_content;
+        const frontLabel = this.state.showDefinitionFirst ? 'Definition' : 'Term';
+        const backLabel = this.state.showDefinitionFirst ? 'Term' : 'Definition';
+        
         // Update card content
-        frontContent.textContent = currentCard.front_content;
-        backContent.textContent = currentCard.back_content;
+        frontContent.textContent = frontText;
+        backContent.textContent = backText;
+        
+        // Update labels
+        const frontLabelEl = document.querySelector('.flashcard-front .card-label');
+        const backLabelEl = document.querySelector('.flashcard-back .card-label');
+        if (frontLabelEl) frontLabelEl.textContent = frontLabel;
+        if (backLabelEl) backLabelEl.textContent = backLabel;
         
         // Reset flip state
         const flashcard = document.getElementById('flashcard');
@@ -588,7 +667,8 @@ class StudyMode {
             flipDirection: 'Y',
             lastDeckId: null,
             isShuffled: false,
-            currentCardId: null
+            currentCardId: null,
+            showDefinitionFirst: false
         };
         
         this.isActive = false;
