@@ -48,6 +48,8 @@ export class DeckEditor {
             this.editingCards = cardsData.cards || [];
             this.originalCards = JSON.parse(JSON.stringify(this.editingCards));
             
+            console.log(deck);
+            console.log(this.editingCards);
             // Populate form
             document.getElementById('editDeckId').value = deck.id;
             document.getElementById('editDeckName').value = deck.name;
@@ -57,6 +59,12 @@ export class DeckEditor {
             
             // Navigate to edit view
             this.navigation.navigateTo('edit-deck');
+            document.getElementById('edit-deck-view').classList.remove('hidden');
+            
+            // Switch to edit view
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            document.querySelectorAll('.page-view').forEach(view => view.classList.add('hidden'));
+            document.getElementById('edit-deck-view').classList.remove('hidden');
             
         } catch (error) {
             MessageUI.show('Error loading deck: ' + error.message, 'error');
@@ -66,7 +74,7 @@ export class DeckEditor {
     displayEditCards() {
         const container = document.getElementById('editCardsContainer');
         if (!container) return;
-        
+
         if (this.editingCards.length === 0) {
             container.innerHTML = `
                 <div class="text-center py-8 text-gray-500">
