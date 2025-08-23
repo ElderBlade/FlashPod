@@ -75,7 +75,7 @@ export class DeckLibrary {
                 <div class="flex justify-between items-center text-sm">
                     <span class="text-gray-500">${deck.card_count} cards</span>
                     <button onclick="window.app.studyDeck(${deck.id})" 
-                            class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">
+                            class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 cursor-pointer">
                         Study
                     </button>
                 </div>
@@ -92,15 +92,15 @@ export class DeckLibrary {
                     <span class="text-sm text-gray-500">${deck.card_count} cards</span>
                     <div class="space-x-2">
                         <button onclick="window.app.viewDeck(${deck.id})" 
-                                class="bg-gray-100 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-200">
+                                class="bg-gray-100 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-200 cursor-pointer">
                             View
                         </button>
                         <button onclick="window.app.editDeck(${deck.id})" 
-                                class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded text-sm hover:bg-yellow-200">
+                                class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded text-sm hover:bg-yellow-200 cursor-pointer">
                             Edit
                         </button>
                         <button onclick="window.app.studyDeck(${deck.id})" 
-                                class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                                class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 cursor-pointer">
                             Study
                         </button>
                     </div>
