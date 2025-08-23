@@ -13,12 +13,15 @@ class StudyMode {
             session: null,
             deck: null,
             cards: [],
+            originalCards: [], // Store original order
             currentIndex: 0,
             isFlipped: false,
             totalCards: 0,
             cardsStudied: 0,
             flipDirection: 'Y',
-            lastDeckId: null // Track last studied deck
+            lastDeckId: null, // Track last studied deck
+            isShuffled: false, // Track shuffle state
+            currentCardId: null // Track current card by ID to maintain position
         };
         
         this.keyHandler = this.handleKeyboard.bind(this);
@@ -66,18 +69,22 @@ class StudyMode {
             this.state = {
                 session: { id: Date.now() }, // Temporary session ID
                 deck: deckData.deck,
-                cards: cardsData.cards,
+                cards: [...cardsData.cards], // Current order (may be shuffled)
+                originalCards: [...cardsData.cards], // Always keep original order
                 currentIndex: 0,
                 isFlipped: false,
                 totalCards: cardsData.cards.length,
                 cardsStudied: 0,
                 flipDirection: 'Y',
-                lastDeckId: deckId
+                lastDeckId: deckId,
+                isShuffled: false,
+                currentCardId: cardsData.cards[0]?.id
             };
             
             this.showInterface();
             this.setupKeyboardHandlers();
             this.renderCurrentCard();
+            this.updateShuffleButton();
             this.isActive = true;
             this.isPaused = false;
             
@@ -91,6 +98,7 @@ class StudyMode {
         this.showInterface();
         this.setupKeyboardHandlers();
         this.renderCurrentCard();
+        this.updateShuffleButton();
         this.isActive = true;
         this.isPaused = false;
     }
@@ -182,24 +190,41 @@ class StudyMode {
                     <kbd>↑</kbd> flip up • 
                     <kbd>↓</kbd> flip down • 
                     <kbd>←</kbd> previous • 
-                    <kbd>→</kbd> next
+                    <kbd>→</kbd> next • 
+                    <kbd>S</kbd> shuffle
                 </div>
             </div>
 
-            <div class="flex justify-center items-center mt-8 space-x-6">
-                <button id="prevCardBtn" class="nav-button">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                    </svg>
-                    Previous
-                </button>
+            <div class="flex justify-between items-center mt-8 max-w-4xl mx-auto">
+                <!-- Left spacer to balance the shuffle button -->
+                <div class="w-24"></div>
                 
-                <button id="nextCardBtn" class="nav-button">
-                    Next
-                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </button>
+                <!-- Centered Previous/Next buttons -->
+                <div class="flex items-center space-x-6">
+                    <button id="prevCardBtn" class="nav-button">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                        Previous
+                    </button>
+                    
+                    <button id="nextCardBtn" class="nav-button">
+                        Next
+                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Shuffle button on the right -->
+                <div class="flex justify-end w-24">
+                    <button id="shuffleBtn" class="nav-button transition-all duration-200">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4l11.733 16h4.267l-11.733-16zm0 16l11.733-16h4.267l-11.733 16zm8.467-8.467l2.733-2.733"></path>
+                        </svg>
+                        Shuffle
+                    </button>
+                </div>
             </div>
 
             <div id="editCardModal" class="modal hidden">
@@ -274,6 +299,9 @@ class StudyMode {
             case 'nextCardBtn':
                 this.navigateCard(1);
                 break;
+            case 'shuffleBtn':
+                this.toggleShuffle();
+                break;
             case 'editCardBtn':
                 this.openEditModal();
                 break;
@@ -331,10 +359,73 @@ class StudyMode {
                 e.preventDefault();
                 this.navigateCard(1);
                 break;
+            case 's':
+            case 'S': // S key - toggle shuffle
+                e.preventDefault();
+                this.toggleShuffle();
+                break;
             case 'Escape': // Escape - exit study
                 e.preventDefault();
                 this.exit();
                 break;
+        }
+    }
+
+    toggleShuffle() {
+        const currentCard = this.state.cards[this.state.currentIndex];
+
+        if (this.state.isShuffled) {
+            // Turn off shuffle - restore original order, keep current card
+            this.state.currentCardId = currentCard?.id;
+            this.state.cards = [...this.state.originalCards];
+            this.state.isShuffled = false;
+            
+            // Find the current card in the original order and update index
+            if (this.state.currentCardId) {
+                const newIndex = this.state.cards.findIndex(card => card.id === this.state.currentCardId);
+                this.state.currentIndex = newIndex !== -1 ? newIndex : 0;
+            }
+            
+            window.showMessage?.('Shuffle turned off - cards restored to original order', 'info');
+        } else {
+            // Turn on shuffle - go to first card
+            this.state.cards = this.shuffleArray([...this.state.cards]);
+            this.state.isShuffled = true;
+            this.state.currentIndex = 0; // Move to first card in shuffled deck
+            this.state.currentCardId = this.state.cards[0]?.id;
+            
+            window.showMessage?.('Shuffle turned on - cards are now randomized', 'info');
+        }
+
+        this.renderCurrentCard();
+        this.updateShuffleButton();
+    }
+
+    shuffleArray(array) {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+    }
+
+    updateShuffleButton() {
+        const shuffleBtn = document.getElementById('shuffleBtn');
+        if (!shuffleBtn) return;
+
+        if (this.state.isShuffled) {
+            shuffleBtn.classList.remove('bg-gray-100', 'text-gray-500');
+            shuffleBtn.classList.add('bg-blue-100', 'text-blue-700', 'border-blue-200');
+            shuffleBtn.style.backgroundColor = '#dbeafe';
+            shuffleBtn.style.color = '#1d4ed8';
+            shuffleBtn.style.borderColor = '#93c5fd';
+        } else {
+            shuffleBtn.classList.remove('bg-blue-100', 'text-blue-700', 'border-blue-200');
+            shuffleBtn.classList.add('bg-gray-100', 'text-gray-500');
+            shuffleBtn.style.backgroundColor = '';
+            shuffleBtn.style.color = '';
+            shuffleBtn.style.borderColor = '';
         }
     }
 
@@ -378,6 +469,7 @@ class StudyMode {
         
         if (newIndex >= 0 && newIndex < this.state.totalCards) {
             this.state.currentIndex = newIndex;
+            this.state.currentCardId = this.state.cards[newIndex]?.id;
             this.state.isFlipped = false;
             this.renderCurrentCard();
             this.updateProgress();
@@ -442,8 +534,15 @@ class StudyMode {
             if (response.ok) {
                 const data = await response.json();
                 
-                // Update the card in our local state
-                Object.assign(this.state.cards[this.state.currentIndex], data.card || formData);
+                // Update the card in both current and original arrays
+                const updatedCard = data.card || { ...currentCard, ...formData };
+                Object.assign(this.state.cards[this.state.currentIndex], updatedCard);
+                
+                // Also update in original cards array
+                const originalIndex = this.state.originalCards.findIndex(card => card.id === currentCard.id);
+                if (originalIndex !== -1) {
+                    Object.assign(this.state.originalCards[originalIndex], updatedCard);
+                }
                 
                 // Re-render the card
                 this.renderCurrentCard();
@@ -481,12 +580,15 @@ class StudyMode {
             session: null,
             deck: null,
             cards: [],
+            originalCards: [],
             currentIndex: 0,
             isFlipped: false,
             totalCards: 0,
             cardsStudied: 0,
             flipDirection: 'Y',
-            lastDeckId: null
+            lastDeckId: null,
+            isShuffled: false,
+            currentCardId: null
         };
         
         this.isActive = false;
