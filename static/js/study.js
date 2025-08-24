@@ -223,18 +223,14 @@ class StudyMode {
 
                 <!-- Right side buttons -->
                 <div class="flex justify-end items-center space-x-3 w-48">
-                    <button id="termDefBtn" class="nav-button transition-all duration-200">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a1.994 1.994 0 01-1.414.586H7a4 4 0 01-4-4V7a4 4 0 014-4z"></path>
-                        </svg>
-                        <span id="termDefLabel">Term First</span>
+                    <button id="termDefBtn" class="nav-button transition-all duration-200" title="Toggle Term/Definition First">
+                        <span id="termDefIcon" class="w-5 h-5 flex items-center justify-center font-bold text-lg pointer-events-none">T</span>
                     </button>
                     
-                    <button id="shuffleBtn" class="nav-button transition-all duration-200">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button id="shuffleBtn" class="nav-button transition-all duration-200" title="Toggle Shuffle Cards">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4l11.733 16h4.267l-11.733-16zm0 16l11.733-16h4.267l-11.733-16zm8.467-8.467l2.733-2.733"></path>
                         </svg>
-                        Shuffle
                     </button>
                 </div>
             </div>
@@ -299,7 +295,13 @@ class StudyMode {
     handleClick(e) {
         if (!this.isActive) return;
 
-        const target = e.target.id || e.target.closest('button')?.id;
+        // Stop event bubbling immediately
+        e.preventDefault();
+        e.stopPropagation();
+
+        const clickedElement = e.target;
+        const button = clickedElement.closest('button');
+        const target = button?.id;
         
         switch (target) {
             case 'exitStudyBtn':
@@ -325,8 +327,8 @@ class StudyMode {
                 break;
         }
 
-        // Handle flashcard click (but not on edit buttons)
-        if (e.target.closest('#flashcard') && !e.target.closest('.edit-btn')) {
+        // Handle flashcard click (but not on edit buttons or control buttons)
+        if (clickedElement.closest('#flashcard') && !clickedElement.closest('.edit-btn') && !button) {
             this.flipCard('horizontal');
         }
     }
@@ -422,7 +424,11 @@ class StudyMode {
     }
 
     toggleTermDef() {
+        console.log('Toggle term/def clicked, current state:', this.state.showDefinitionFirst);
+        
         this.state.showDefinitionFirst = !this.state.showDefinitionFirst;
+        
+        console.log('New state:', this.state.showDefinitionFirst);
         
         if (this.state.showDefinitionFirst) {
             window.showMessage?.('Now showing definitions first', 'info');
@@ -430,8 +436,9 @@ class StudyMode {
             window.showMessage?.('Now showing terms first', 'info');
         }
 
-        this.renderCurrentCard();
+        // Update UI immediately
         this.updateTermDefButton();
+        this.renderCurrentCard();
     }
 
     shuffleArray(array) {
@@ -453,19 +460,21 @@ class StudyMode {
             shuffleBtn.style.backgroundColor = '#dbeafe';
             shuffleBtn.style.color = '#1d4ed8';
             shuffleBtn.style.borderColor = '#93c5fd';
+            shuffleBtn.title = 'Shuffle is ON - Click to restore original order';
         } else {
             shuffleBtn.classList.remove('bg-blue-100', 'text-blue-700', 'border-blue-200');
             shuffleBtn.classList.add('bg-gray-100', 'text-gray-500');
             shuffleBtn.style.backgroundColor = '';
             shuffleBtn.style.color = '';
             shuffleBtn.style.borderColor = '';
+            shuffleBtn.title = 'Shuffle is OFF - Click to randomize cards';
         }
     }
 
     updateTermDefButton() {
         const termDefBtn = document.getElementById('termDefBtn');
-        const termDefLabel = document.getElementById('termDefLabel');
-        if (!termDefBtn || !termDefLabel) return;
+        const termDefIcon = document.getElementById('termDefIcon');
+        if (!termDefBtn || !termDefIcon) return;
 
         if (this.state.showDefinitionFirst) {
             termDefBtn.classList.remove('bg-gray-100', 'text-gray-500');
@@ -473,26 +482,16 @@ class StudyMode {
             termDefBtn.style.backgroundColor = '#f3e8ff';
             termDefBtn.style.color = '#7c3aed';
             termDefBtn.style.borderColor = '#c4b5fd';
-            termDefLabel.textContent = 'Definition First';
-            
-            // Update icon for definition first
-            const svg = termDefBtn.querySelector('svg');
-            if (svg) {
-                svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>';
-            }
+            termDefBtn.title = 'Currently showing Definition First - Click to show Term First';
+            termDefIcon.textContent = 'D';
         } else {
             termDefBtn.classList.remove('bg-purple-100', 'text-purple-700', 'border-purple-200');
             termDefBtn.classList.add('bg-gray-100', 'text-gray-500');
             termDefBtn.style.backgroundColor = '';
             termDefBtn.style.color = '';
             termDefBtn.style.borderColor = '';
-            termDefLabel.textContent = 'Term First';
-            
-            // Update icon for term first
-            const svg = termDefBtn.querySelector('svg');
-            if (svg) {
-                svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a1.994 1.994 0 01-1.414.586H7a4 4 0 01-4-4V7a4 4 0 014-4z"></path>';
-            }
+            termDefBtn.title = 'Currently showing Term First - Click to show Definition First';
+            termDefIcon.textContent = 'T';
         }
     }
 
