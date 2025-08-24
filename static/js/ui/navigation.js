@@ -63,18 +63,43 @@ export class Navigation {
     }
 
     updatePageHeader(page) {
+        const info = this.pageInfo[page] || this.pageInfo['home'];
+        
+        // Update desktop headers
         const titleElement = document.getElementById('page-title');
         const subtitleElement = document.getElementById('page-subtitle');
+        if (titleElement) titleElement.textContent = info.title;
+        if (subtitleElement) subtitleElement.textContent = info.subtitle;
         
-        const info = this.pageInfo[page] || this.pageInfo['home'];
-        titleElement.textContent = info.title;
-        subtitleElement.textContent = info.subtitle;
+        // Update mobile headers
+        const mobilePageTitle = document.getElementById('mobile-page-title');
+        const mobilePageSubtitle = document.getElementById('mobile-page-subtitle');
+        if (mobilePageTitle) mobilePageTitle.textContent = info.title;
+        if (mobilePageSubtitle) mobilePageSubtitle.textContent = info.subtitle;
     }
 
     navigateTo(viewId) {
         const navItem = document.getElementById(`nav-${viewId}`);
         if (navItem) {
             navItem.click();
+        }
+    }
+
+    setActiveNav(navId) {
+        this.navItems.forEach(nav => nav.classList.remove('active'));
+        const activeNav = document.getElementById(`nav-${navId}`);
+        if (activeNav) {
+            activeNav.classList.add('active');
+        }
+    }
+
+    showView(viewId) {
+        this.pageViews.forEach(view => view.classList.add('hidden'));
+        const targetView = this.getTargetView(viewId);
+        if (targetView) {
+            targetView.classList.remove('hidden');
+            this.updatePageHeader(viewId);
+            this.setActiveNav(viewId);
         }
     }
 

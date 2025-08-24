@@ -7,9 +7,12 @@
     <link href="/static/css/style.css" rel="stylesheet">
 </head>
 <body class="bg-gray-50 min-h-screen">
+    <!-- Mobile Overlay -->
+    <div id="overlay" class="overlay"></div>
+    
     <div class="flex h-screen">
         <!-- Sidebar Navigation -->
-        <div class="bg-white w-64 shadow-lg flex flex-col">
+        <div id="sidebar" class="sidebar bg-white w-64 shadow-lg flex flex-col">
             <!-- App Header -->
             <div class="px-6 py-6 border-b border-gray-200">
                 <h1 class="text-2xl font-bold text-gray-900">FlashPod</h1>
@@ -88,9 +91,20 @@
         </div>
 
         <!-- Main Content Area -->
-        <div class="flex-1 flex flex-col overflow-hidden">
-            <!-- Top Header -->
-            <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+        <div class="main-content flex-1 flex flex-col overflow-hidden">
+            <!-- Mobile Header (visible only on mobile) -->
+            <div class="mobile-header md:hidden">
+                <button id="hamburger" class="hamburger" aria-label="Toggle navigation menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <h2 class="text-lg font-bold text-gray-900">FlashPod</h2>
+                <div class="w-6"></div> <!-- Spacer for alignment -->
+            </div>
+
+            <!-- Desktop Header -->
+            <header class="hidden md:block bg-white shadow-sm border-b border-gray-200 px-6 py-4">
                 <div class="flex items-center justify-between">
                     <div>
                         <h2 id="page-title" class="text-2xl font-bold text-gray-900">Dashboard</h2>
@@ -104,68 +118,74 @@
                 </div>
             </header>
 
+            <!-- Mobile Page Title -->
+            <div class="mobile-page-header md:hidden">
+                <h2 id="mobile-page-title" class="mobile-page-title">Dashboard</h2>
+                <p id="mobile-page-subtitle" class="mobile-page-subtitle">Welcome back!</p>
+            </div>
+
             <!-- Main Content -->
             <main class="flex-1 overflow-y-auto">
                 <!-- Dashboard View -->
-                <div id="dashboard-view" class="page-view p-6">
+                <div id="dashboard-view" class="page-view p-4 md:p-6">
                     <!-- Stats Grid -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="stats-grid-mobile grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
                         <!-- Cards Learned -->
-                        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                        <div class="stats-card-mobile bg-white rounded-xl shadow-sm p-4 md:p-6 border border-gray-100">
                             <div class="flex items-center">
                                 <div class="p-2 bg-green-100 rounded-lg">
-                                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="stats-icon w-4 h-4 md:w-6 md:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
                                 </div>
-                                <div class="ml-4">
-                                    <p class="text-sm font-medium text-gray-500">Cards Learned</p>
-                                    <p id="cards-learned" class="text-2xl font-bold text-gray-900">127</p>
+                                <div class="stats-text ml-3 md:ml-4">
+                                    <p class="stats-label text-xs md:text-sm font-medium text-gray-500">Learned</p>
+                                    <p id="cards-learned" class="stats-value text-lg md:text-2xl font-bold text-gray-900">127</p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Retention Rate -->
-                        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                        <div class="stats-card-mobile bg-white rounded-xl shadow-sm p-4 md:p-6 border border-gray-100">
                             <div class="flex items-center">
                                 <div class="p-2 bg-blue-100 rounded-lg">
-                                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="stats-icon w-4 h-4 md:w-6 md:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
                                     </svg>
                                 </div>
-                                <div class="ml-4">
-                                    <p class="text-sm font-medium text-gray-500">Retention Rate</p>
-                                    <p id="retention-rate" class="text-2xl font-bold text-gray-900">84%</p>
+                                <div class="stats-text ml-3 md:ml-4">
+                                    <p class="stats-label text-xs md:text-sm font-medium text-gray-500">Retention</p>
+                                    <p id="retention-rate" class="stats-value text-lg md:text-2xl font-bold text-gray-900">84%</p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Total Reviews -->
-                        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                        <div class="stats-card-mobile bg-white rounded-xl shadow-sm p-4 md:p-6 border border-gray-100">
                             <div class="flex items-center">
                                 <div class="p-2 bg-purple-100 rounded-lg">
-                                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="stats-icon w-4 h-4 md:w-6 md:h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
                                     </svg>
                                 </div>
-                                <div class="ml-4">
-                                    <p class="text-sm font-medium text-gray-500">Total Reviews</p>
-                                    <p id="total-reviews" class="text-2xl font-bold text-gray-900">1,247</p>
+                                <div class="stats-text ml-3 md:ml-4">
+                                    <p class="stats-label text-xs md:text-sm font-medium text-gray-500">Reviews</p>
+                                    <p id="total-reviews" class="stats-value text-lg md:text-2xl font-bold text-gray-900">1.2k</p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Review Time -->
-                        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                        <div class="stats-card-mobile bg-white rounded-xl shadow-sm p-4 md:p-6 border border-gray-100">
                             <div class="flex items-center">
                                 <div class="p-2 bg-orange-100 rounded-lg">
-                                    <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="stats-icon w-4 h-4 md:w-6 md:h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
                                 </div>
-                                <div class="ml-4">
-                                    <p class="text-sm font-medium text-gray-500">Review Time</p>
-                                    <p id="review-time" class="text-2xl font-bold text-gray-900">2.3h</p>
+                                <div class="stats-text ml-3 md:ml-4">
+                                    <p class="stats-label text-xs md:text-sm font-medium text-gray-500">Time</p>
+                                    <p id="review-time" class="stats-value text-lg md:text-2xl font-bold text-gray-900">2.3h</p>
                                 </div>
                             </div>
                         </div>
@@ -173,18 +193,18 @@
 
                     <!-- Recently Reviewed Decks -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100">
-                        <div class="px-6 py-4 border-b border-gray-200">
-                            <h3 class="text-lg font-semibold text-gray-900">Recently Reviewed Decks</h3>
-                            <p class="text-sm text-gray-500 mt-1">Your 6 most recently studied decks</p>
+                        <div class="px-4 md:px-6 py-4 border-b border-gray-200">
+                            <h3 class="text-base md:text-lg font-semibold text-gray-900">Recently Reviewed Decks</h3>
+                            <p class="text-xs md:text-sm text-gray-500 mt-1">Your most recently studied decks</p>
                         </div>
-                        <div class="p-6">
+                        <div class="p-4 md:p-6">
                             <div id="recent-decks" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <!-- Recent decks will be loaded here -->
                                 <div class="text-center py-8 text-gray-500">
                                     <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                                     </svg>
-                                    <p>Loading recent decks...</p>
+                                    <p class="text-sm md:text-base">Loading recent decks...</p>
                                 </div>
                             </div>
                         </div>
@@ -192,20 +212,20 @@
                 </div>
 
                 <!-- Other Views (Hidden by default) -->
-                <div id="library-view" class="page-view hidden p-6">
-                    <div id="decks-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div id="library-view" class="page-view hidden p-4 md:p-6">
+                    <div id="decks-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                         <!-- Decks will be loaded here -->
                     </div>
                 </div>
 
-                <div id="flashcards-view" class="page-view hidden p-6">
+                <div id="flashcards-view" class="page-view hidden p-4 md:p-6">
                     <p>Flash card study interface coming soon...</p>
                 </div>
 
-                <div id="new-deck-view" class="page-view hidden p-6">
+                <div id="new-deck-view" class="page-view hidden p-4 md:p-6">
                     
                     <!-- New Deck Form -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
                         <form id="deckForm" class="space-y-6">
                             <!-- Deck Info Section -->
                             <div class="">
@@ -260,8 +280,8 @@
                 </div>
 
                 <!-- Import Section -->
-                <div id="import-view" class="page-view hidden p-6">
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div id="import-view" class="page-view hidden p-4 md:p-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
                         <div class="mb-6">
                             <h2 class="text-xl font-semibold text-gray-900 mb-2">Import Flashcards</h2>
                             <p class="text-sm text-gray-600 mb-4">
@@ -337,9 +357,9 @@
                 </div> <!-- End Import Section-->
 
                 <!-- Edit Section-->
-                <div id="edit-deck-view" class="page-view hidden p-6">
+                <div id="edit-deck-view" class="page-view hidden p-4 md:p-6">
                     <!-- Edit Deck Form -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
                         <div class="flex items-center justify-between mb-6">
                             <h3 class="text-xl font-semibold text-gray-900">Edit Deck</h3>
                             <button id="cancelEdit" class="text-gray-500 hover:text-gray-700">

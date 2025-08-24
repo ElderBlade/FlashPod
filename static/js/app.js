@@ -2,6 +2,7 @@
 import { Config } from './core/config.js';
 import { UserService } from './services/user-service.js';
 import { Navigation } from './ui/navigation.js';
+import { MobileNavigation } from './ui/mobile-navigation.js';
 import { MessageUI } from './ui/message.js';
 import { DeckLibrary } from './features/deck-library.js';
 import { DeckManager } from './features/deck-manager.js';
@@ -15,6 +16,7 @@ class FlashPodApp {
         
         // Initialize modules
         this.navigation = new Navigation();
+        this.mobileNavigation = new MobileNavigation();
         this.library = new DeckLibrary();
         this.deckManager = new DeckManager(this.navigation);
         this.deckEditor = new DeckEditor(this.navigation);
@@ -34,8 +36,13 @@ class FlashPodApp {
         // Initialize navigation
         this.navigation.init();
         
-        // Override navigation callback
+        // Override navigation callback to close mobile nav and load data
         this.navigation.onNavigate = (navId) => {
+            // Close mobile navigation when navigating
+            if (this.mobileNavigation.isNavigationOpen()) {
+                this.mobileNavigation.forceClose();
+            }
+            
             if (navId === 'library') {
                 this.library.loadAllDecks();
             }
@@ -72,6 +79,12 @@ class FlashPodApp {
         
         // Add CSS for active navigation
         this.addNavigationStyles();
+        
+        // Enable mobile swipe gestures (optional)
+        this.mobileNavigation.enableSwipeGestures();
+        
+        // Handle page visibility changes (close mobile nav when switching tabs)
+        this.setupPageVisibilityHandler();
     }
 
     addNavigationStyles() {
@@ -93,22 +106,48 @@ class FlashPodApp {
         document.head.appendChild(style);
     }
 
+    setupPageVisibilityHandler() {
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && this.mobileNavigation.isNavigationOpen()) {
+                this.mobileNavigation.forceClose();
+            }
+        });
+    }
+
     // Public methods for onclick handlers
     viewDeck(deckId) {
         MessageUI.show(`View deck ${deckId} - Coming soon!`, 'info');
     }
 
     editDeck(deckId) {
+        // Close mobile nav if open before editing
+        if (this.mobileNavigation.isNavigationOpen()) {
+            this.mobileNavigation.forceClose();
+        }
         this.deckEditor.loadDeckForEdit(deckId);
     }
 
     studyDeck(deckId) {
+        // Close mobile nav if open before studying
+        if (this.mobileNavigation.isNavigationOpen()) {
+            this.mobileNavigation.forceClose();
+        }
+        
         // Call the existing global studyDeck function if available
         if (window.studyDeck) {
             window.studyDeck(deckId);
         } else {
             MessageUI.show(`Study deck ${deckId} - Coming soon!`, 'info');
         }
+    }
+
+    // Utility methods for mobile navigation integration
+    isMobileNavigationOpen() {
+        return this.mobileNavigation.isNavigationOpen();
+    }
+
+    closeMobileNavigation() {
+        this.mobileNavigation.forceClose();
     }
 }
 
