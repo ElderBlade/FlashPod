@@ -1,10 +1,12 @@
 # app/routes/decks.py
 from sanic import Blueprint
-from sanic.response import json
+from sanic.response import json, HTTPResponse
 from models.database import get_db_session
 from models.user import User
 from models.deck import Deck
+from models.card import Card
 from middleware.auth import require_auth
+import re
 
 decks_bp = Blueprint("decks", url_prefix="/api/decks")
 
@@ -45,6 +47,7 @@ async def create_deck(request):
     finally:
         session.close()
 
+
 @decks_bp.route("/<deck_id:int>", methods=["GET"])
 async def get_deck(request, deck_id):
     """Get a specific deck"""
@@ -61,6 +64,7 @@ async def get_deck(request, deck_id):
         return json({"error": str(e)}, status=500)
     finally:
         session.close()
+
 
 @decks_bp.route("/<deck_id:int>", methods=["PUT"])
 async def update_deck(request, deck_id):
@@ -94,6 +98,7 @@ async def update_deck(request, deck_id):
     finally:
         session.close()
 
+
 @decks_bp.route("/<deck_id:int>", methods=["DELETE"])
 async def delete_deck(request, deck_id):
     """Delete a deck"""
@@ -118,8 +123,59 @@ async def delete_deck(request, deck_id):
     finally:
         session.close()
 
-# User-specific deck routes
 
+@decks_bp.route("/<deck_id:int>/export", methods=["GET"])
+async def export_deck(request, deck_id):
+    """Export deck as CSV"""
+    session = get_db_session()
+    try:
+        # Get deck with verification
+        deck = session.query(Deck).filter_by(id=deck_id).first()
+        if not deck:
+            return json({"error": "Deck not found"}, status=404)
+        
+        # Get all active cards for this deck
+        cards = session.query(Card).filter_by(
+            deck_id=deck_id, 
+            is_active=True
+        ).order_by(Card.display_order, Card.created_at).all()
+        
+        # Create CSV content
+        csv_lines = []
+        csv_lines.append("Term,Definition,Tags")  # Header
+        
+        for card in cards:
+            # Escape CSV fields properly
+            term = card.front_content.replace('"', '""')
+            definition = card.back_content.replace('"', '""')
+            tags = (card.tags or "").replace('"', '""')
+            
+            # Wrap in quotes to handle commas and newlines
+            csv_lines.append(f'"{term}","{definition}","{tags}"')
+        
+        csv_content = "\n".join(csv_lines)
+        
+        # Create filename with sanitized deck name
+        safe_name = re.sub(r'[^\w\-_.]', '_', deck.name)
+        filename = f"{safe_name}_{deck.id}.csv"
+        
+        # Return CSV response
+        return HTTPResponse(
+            csv_content,
+            status=200,
+            headers={
+                'Content-Type': 'text/csv; charset=utf-8',
+                'Content-Disposition': f'attachment; filename="{filename}"'
+            }
+        )
+        
+    except Exception as e:
+        return json({"error": str(e)}, status=500)
+    finally:
+        session.close()
+
+
+# User specific routes
 @decks_bp.route("/my-decks", methods=["GET"])
 @require_auth
 async def get_my_decks(request):
@@ -138,6 +194,7 @@ async def get_my_decks(request):
         return json({"error": str(e)}, status=500)
     finally:
         session.close()
+        
         
 @decks_bp.route("/users/<user_id:int>", methods=["GET"])
 async def get_user_decks(request, user_id):

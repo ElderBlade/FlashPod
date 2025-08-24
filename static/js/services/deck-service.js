@@ -41,4 +41,12 @@ export class DeckService {
         }
         throw new Error('Failed to delete deck');
     }
+
+    static async exportDeck(deckId) {
+        const response = await API.get(`/decks/${deckId}/export`);
+        if (response.ok) {
+            return await response.blob();
+        }
+        throw new Error('Failed to export deck');
+    }
 }

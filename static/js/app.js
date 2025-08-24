@@ -141,6 +141,67 @@ class FlashPodApp {
         }
     }
 
+    async exportDeck(deckId) {
+        // Close mobile nav if open before exporting
+        if (this.mobileNavigation.isNavigationOpen()) {
+            this.mobileNavigation.forceClose();
+        }
+        
+        try {
+            // Show loading message
+            MessageUI.show('Preparing deck export...', 'info');
+            
+            // Get the deck data for filename
+            const deckResponse = await fetch(`${Config.API_BASE}/decks/${deckId}`, {
+                credentials: 'include'
+            });
+            
+            if (!deckResponse.ok) {
+                throw new Error('Failed to load deck information');
+            }
+            
+            const deckData = await deckResponse.json();
+            const deck = deckData.deck;
+            
+            // Request the CSV export
+            const exportResponse = await fetch(`${Config.API_BASE}/decks/${deckId}/export`, {
+                method: 'GET',
+                credentials: 'include'
+            });
+            
+            if (!exportResponse.ok) {
+                throw new Error('Failed to export deck');
+            }
+            
+            // Get the CSV content as blob
+            const csvBlob = await exportResponse.blob();
+            
+            // Create download link and trigger download
+            const url = window.URL.createObjectURL(csvBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            
+            // Create a clean filename
+            const safeName = deck.name.replace(/[^\w\-_.]/g, '_');
+            const timestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            link.download = `${safeName}_${timestamp}.csv`;
+            
+            // Trigger download
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up the URL object
+            window.URL.revokeObjectURL(url);
+            
+            MessageUI.show(`Deck "${deck.name}" exported successfully!`, 'success');
+            
+        } catch (error) {
+            console.error('Export failed:', error);
+            MessageUI.show('Failed to export deck: ' + error.message, 'error');
+        }
+    }
+
     // Utility methods for mobile navigation integration
     isMobileNavigationOpen() {
         return this.mobileNavigation.isNavigationOpen();
