@@ -1,15 +1,20 @@
-# app/middleware/auth.py - Secure server-side authentication
+# app/middleware/auth.py - Secure server-side authentication with environment config
 from sanic import redirect
 from sanic.response import json
 import jwt
+import os
 from datetime import datetime, timedelta
 from models.database import get_db_session
 from models.user import User
 
-# JWT Configuration
-JWT_SECRET = "your-super-secret-jwt-key-change-this-in-production"
-JWT_ALGORITHM = "HS256"
-JWT_EXPIRATION_HOURS = 24
+# JWT Configuration from environment variables
+JWT_SECRET = os.getenv("JWT_SECRET", "change-this-secure-jwt-secret-key")
+JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+JWT_EXPIRATION_HOURS = int(os.getenv("JWT_EXPIRATION_HOURS", "24"))
+
+# Warn if default secrets are being used
+if JWT_SECRET == "change-this-secure-jwt-secret-key":
+    print("⚠️  WARNING: Using default JWT_SECRET! Set JWT_SECRET environment variable in production!")
 
 # Routes that don't require authentication
 PUBLIC_ROUTES = {
@@ -17,6 +22,7 @@ PUBLIC_ROUTES = {
     "/login", 
     "/register",
     "/api/health",
+    "/api/version",
     "/api/auth/login",
     "/api/auth/register"
 }

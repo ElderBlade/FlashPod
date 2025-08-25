@@ -1,0 +1,55 @@
+# .dockerignore - placed in project root
+# Exclude files from Docker build context
+
+# Version control
+.git
+.gitignore
+
+# Environment files (security)
+.env
+.env.*
+!.env.example
+
+# Node.js
+node_modules/
+npm-debug.log*
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+
+# Development files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+build/
+
+# Documentation (optional, remove if you want docs in container)
+README.md
+docs/
+
+# Docker files (don't copy docker folder into container)
+docker/
+docker-compose.yml
+docker-compose.override.yml
+
+# Logs
+*.log
+
+# Database (will be created in container)
+data/
+*.db
+*.sqlite
