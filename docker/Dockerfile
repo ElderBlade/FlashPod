@@ -10,6 +10,12 @@ RUN npm ci --only=production
 COPY postcss.config.mjs ./
 COPY static/css/input.css ./static/css/
 
+# Copy Tailwind config, PostCSS config, and source files for scanning
+COPY tailwind.config.js ./
+COPY postcss.config.mjs ./
+COPY templates/ ./templates/
+COPY static/js/ ./static/js/
+
 # Build CSS using postcss directly since we're in production
 RUN npx postcss static/css/input.css -o static/css/style.css
 
