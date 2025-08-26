@@ -1,8 +1,8 @@
 'use strict';
 
-const API_BASE = window.location.hostname === 'localhost' 
-    ? 'http://localhost:8000/api'
-    : '/api';
+// Use dynamic API base that works with any port
+const API_BASE = window.location.origin + '/api';
+console.log('🌐 API_BASE:', API_BASE);
 
 // Show message function
 function showMessage(message, type = 'info') {
@@ -26,13 +26,17 @@ function setLoading(loading) {
     const btn = document.getElementById('loginBtn');
     
     if (loading) {
-        overlay.classList.remove('hidden');
-        btn.disabled = true;
-        btn.textContent = 'Signing in...';
+        overlay?.classList.remove('hidden');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Signing in...';
+        }
     } else {
-        overlay.classList.add('hidden');
-        btn.disabled = false;
-        btn.textContent = 'Sign in';
+        overlay?.classList.add('hidden');
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Sign in';
+        }
     }
 }
 
@@ -42,7 +46,7 @@ function saveUserSession(user) {
 }
 
 // Login form submission
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
+document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const username = document.getElementById('username').value;
@@ -61,6 +65,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include', // Important for cookies
             body: JSON.stringify({ username, password })
         });
         
@@ -68,9 +73,9 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         
         if (response.ok) {
             showMessage('Login successful! Redirecting...', 'success');
-            saveUserSession(data.user); // Save for username display only
+            saveUserSession(data.user);
             
-            // Server will handle auth via cookies, just redirect
+            // Redirect to dashboard
             setTimeout(() => {
                 window.location.href = '/dashboard';
             }, 1000);
@@ -79,13 +84,14 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         }
     } catch (error) {
         showMessage('Network error: ' + error.message, 'error');
+        console.error('Login error:', error);
     } finally {
         setLoading(false);
     }
 });
 
 // Demo account button
-document.getElementById('useDemoBtn').addEventListener('click', () => {
+document.getElementById('useDemoBtn')?.addEventListener('click', () => {
     document.getElementById('username').value = 'testuser';
     document.getElementById('password').value = 'password123';
 });

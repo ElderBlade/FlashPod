@@ -1,8 +1,7 @@
 // static/js/core/config.js
 export const Config = {
-    API_BASE: window.location.hostname === 'localhost' 
-        ? 'http://localhost:8000/api'
-        : '/api',
+    // Use dynamic API base that works with any port
+    API_BASE: window.location.origin + '/api',
     
     MESSAGE_TIMEOUT: 5000,
     
@@ -16,3 +15,6 @@ export const Config = {
         USER: 'flashpod_user'
     }
 };
+
+// Debug logging
+console.log('🔧 Config API_BASE:', Config.API_BASE);
