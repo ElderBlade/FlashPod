@@ -7,6 +7,7 @@ if (!window.API_BASE) {
         : '/api';
 }
 
+
 class StudyMode {
     constructor() {
         this.state = {
@@ -29,6 +30,7 @@ class StudyMode {
         this.isActive = false;
         this.isPaused = false; // Track if study is paused (not exited)
     }
+
 
     async startStudy(deckId) {
         try {
@@ -506,13 +508,32 @@ class StudyMode {
         
         if (!frontContent || !backContent) return;
         
+        const flashcard = document.getElementById('flashcard');
+        if (flashcard) {
+            // INSTANT reset without animation - this prevents the flash
+            flashcard.style.transition = 'none';
+            flashcard.classList.remove('flipped', 'flip-horizontal', 'flip-vertical-up', 'flip-vertical-down', 'flipping');
+            
+            // Force reflow to apply the instant changes
+            flashcard.offsetHeight;
+            
+            // Restore transition for future flips
+            flashcard.style.transition = '';
+            
+            // Set default flip direction
+            flashcard.classList.add('flip-horizontal');
+            
+            // Reset flip state
+            this.state.isFlipped = false;
+        }
+        
         // Determine what to show based on showDefinitionFirst setting
         const frontText = this.state.showDefinitionFirst ? currentCard.back_content : currentCard.front_content;
         const backText = this.state.showDefinitionFirst ? currentCard.front_content : currentCard.back_content;
         const frontLabel = this.state.showDefinitionFirst ? 'Definition' : 'Term';
         const backLabel = this.state.showDefinitionFirst ? 'Term' : 'Definition';
         
-        // Update card content
+        // Update card content AFTER resetting the card position
         frontContent.textContent = frontText;
         backContent.textContent = backText;
         
@@ -522,17 +543,10 @@ class StudyMode {
         if (frontLabelEl) frontLabelEl.textContent = frontLabel;
         if (backLabelEl) backLabelEl.textContent = backLabel;
         
-        // Reset flip state
-        const flashcard = document.getElementById('flashcard');
-        if (flashcard) {
-            flashcard.classList.remove('flipped', 'flip-horizontal', 'flip-vertical-up', 'flip-vertical-down');
-            this.state.isFlipped = false;
-        }
-        
         // Update progress
         const progressPercent = ((this.state.currentIndex + 1) / this.state.totalCards) * 100;
-        progressBar.style.width = `${progressPercent}%`;
-        cardProgress.textContent = `Card ${this.state.currentIndex + 1} of ${this.state.totalCards}`;
+        if (progressBar) progressBar.style.width = `${progressPercent}%`;
+        if (cardProgress) cardProgress.textContent = `Card ${this.state.currentIndex + 1} of ${this.state.totalCards}`;
         
         // Update navigation buttons
         const prevBtn = document.getElementById('prevCardBtn');
@@ -558,22 +572,75 @@ class StudyMode {
         const flashcard = document.getElementById('flashcard');
         if (!flashcard) return;
         
-        // Remove any existing flip classes
+        // Remove existing flip classes
         flashcard.classList.remove('flip-horizontal', 'flip-vertical-up', 'flip-vertical-down');
         
-        // Add the appropriate flip class based on direction
+        // Add a flipping class to prevent hover effects during animation
+        flashcard.classList.add('flipping');
+        
+        // Force reflow
+        flashcard.offsetHeight;
+        
+        // Add the direction class
+        flashcard.classList.add(`flip-${direction}`);
+        
+        // Toggle the flipped state
+        if (this.state.isFlipped) {
+            flashcard.classList.remove('flipped');
+            this.state.isFlipped = false;
+        } else {
+            flashcard.classList.add('flipped');
+            this.state.isFlipped = true;
+        }
+        
+        // Remove flipping class after animation completes
+        setTimeout(() => {
+            flashcard.classList.remove('flipping');
+        }, 800);
+        
+        this.state.flipDirection = direction;
+    }
+
+    flipCard3D(flashcard, direction) {
+        // Remove any existing flip direction classes
+        flashcard.classList.remove('flip-horizontal', 'flip-vertical-up', 'flip-vertical-down');
+        
+        // Force a reflow
+        flashcard.offsetHeight;
+        
+        // Add the new direction class
         flashcard.classList.add(`flip-${direction}`);
         
         // Toggle flipped state
-        this.state.isFlipped = !this.state.isFlipped;
-        
         if (this.state.isFlipped) {
-            flashcard.classList.add('flipped');
-        } else {
             flashcard.classList.remove('flipped');
+            this.state.isFlipped = false;
+        } else {
+            flashcard.classList.add('flipped');
+            this.state.isFlipped = true;
         }
+    }
+
+    flipCardFallback(flashcard) {
+        // Simple opacity-based fallback for browsers with poor 3D support
+        flashcard.style.transition = 'opacity 0.3s ease-in-out';
+        flashcard.style.opacity = '0';
         
-        this.state.flipDirection = direction;
+        setTimeout(() => {
+            if (this.state.isFlipped) {
+                flashcard.classList.remove('flipped');
+                this.state.isFlipped = false;
+            } else {
+                flashcard.classList.add('flipped');
+                this.state.isFlipped = true;
+            }
+            flashcard.style.opacity = '1';
+        }, 150);
+        
+        // Clean up transition after animation
+        setTimeout(() => {
+            flashcard.style.transition = '';
+        }, 300);
     }
 
     openEditModal() {
