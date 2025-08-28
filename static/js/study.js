@@ -62,7 +62,7 @@ class ModularStudyManager {
                 },
                 onCardFlip: async (direction) => {
                     const modeData = this.state.modeData.basic;
-                    if (!this.state.isFlipped) {
+                    if (this.state.isFlipped) {
                         modeData.cardsStudied = Math.max(modeData.cardsStudied, this.state.currentIndex + 1);
                     }
                 },
@@ -81,12 +81,41 @@ class ModularStudyManager {
                 }
             };
 
-            // Initialize simple spaced mode (fallback implementation)
-            this.modes['simple-spaced'] = this.createSimpleSpacedMode();
-            console.log('✅ Study modes initialized');
+            // Load the proper modular simple-spaced mode
+            const studyInterface = {
+                updateModeSpecificUI: (modeName, modeData) => this.updateModeSpecificUI(),
+                showResponseButtons: () => {
+                    const responseButtons = document.getElementById('responseButtons');
+                    if (responseButtons) responseButtons.classList.remove('hidden');
+                },
+                hideResponseButtons: () => {
+                    const responseButtons = document.getElementById('responseButtons');
+                    if (responseButtons) responseButtons.classList.add('hidden');
+                },
+                updateProgress: () => this.updateProgress(),
+                updateNavigationButtons: () => this.updateNavigationButtons()
+            };
+
+            const mockStudyManager = {
+                state: this.state,
+                interface: studyInterface,
+                session: { 
+                    isActive: true, 
+                    recordCardReview: (cardId, quality) => this.recordCardReview(cardId, quality) 
+                },
+                _showMessage: (msg, type) => this.showMessage(msg, type),
+                showCompletionOverlay: () => this.showCompletionOverlay(),
+                addCardFeedback: (type) => this.addCardFeedback(type),
+                renderCurrentCard: () => this.renderCurrentCard()
+            };
+
+            const SimpleSpacedModule = await import('./study/modes/simple-spaced.js');
+            this.modes['simple-spaced'] = new SimpleSpacedModule.SimpleSpaced(mockStudyManager);
+            console.log('✅ SimpleSpaced mode loaded from module');
 
         } catch (error) {
             console.error('Failed to initialize modes:', error);
+            this.showMessage('Failed to load study modes. Please refresh the page.', 'error');
         }
     }
 
@@ -993,89 +1022,17 @@ class ModularStudyManager {
     }
 
     checkRoundCompletion() {
-        if (this.state.mode !== 'simple-spaced') return;
-        
-        const modeData = this.state.modeData['simple-spaced'];
-        
-        // If all cards are known - session complete!
-        if (modeData.stillLearning.length === 0) {
-            setTimeout(() => this.showCompletionOverlay(), 500);
-            return;
-        }
-        
-        // Check if we've reviewed all still learning cards in this round
-        const stillLearningCards = this.state.cards.filter(card => 
-            modeData.stillLearning.includes(card.id)
-        );
-        
-        // Get cards that have been reviewed in current round
-        const cardsReviewedThisRound = new Set();
-        modeData.responses.forEach((responses, cardId) => {
-            if (responses.some(r => r.round === modeData.currentRound)) {
-                cardsReviewedThisRound.add(cardId);
-            }
-        });
-        
-        console.log(`Round ${modeData.currentRound} check:`, {
-            stillLearning: stillLearningCards.length,
-            reviewedThisRound: cardsReviewedThisRound.size,
-            stillLearningIds: stillLearningCards.map(c => c.id),
-            reviewedIds: Array.from(cardsReviewedThisRound)
-        });
-        
-        // If all still learning cards have been reviewed this round, start next round
-        const allStillLearningReviewed = stillLearningCards.every(card => 
-            cardsReviewedThisRound.has(card.id)
-        );
-        
-        if (allStillLearningReviewed && stillLearningCards.length > 0) {
-            this.startNextRound();
+        // This method is called by the fallback, but now we delegate to the proper mode
+        if (this.currentMode && this.currentMode._checkRoundCompletion) {
+            this.currentMode._checkRoundCompletion();
         }
     }
 
     startNextRound() {
-        const modeData = this.state.modeData['simple-spaced'];
-        
-        // Save current round info
-        modeData.completedRounds.push({
-            round: modeData.currentRound,
-            completedAt: new Date(),
-            cardsLearned: modeData.known.length,
-            cardsRemaining: modeData.stillLearning.length
-        });
-        
-        // Start next round
-        modeData.currentRound++;
-        modeData.roundStartTime = new Date();
-        
-        // Filter cards to only show "Still Learning" cards for this round
-        const stillLearningCards = this.state.originalCards.filter(card => 
-            modeData.stillLearning.includes(card.id)
-        );
-        
-        // Update the current cards array to only include still learning cards
-        this.state.cards = [...stillLearningCards];
-        this.state.totalCards = stillLearningCards.length;
-        
-        // Start at the first card of the filtered set
-        this.state.currentIndex = 0;
-        this.state.currentCardId = stillLearningCards[0]?.id;
-        this.state.isFlipped = false;
-        
-        // Reset response collection state
-        modeData.isCollectingResponse = false;
-        const responseButtons = document.getElementById('responseButtons');
-        if (responseButtons) {
-            responseButtons.classList.add('hidden');
+        // This method is called by the fallback, but now we delegate to the proper mode  
+        if (this.currentMode && this.currentMode._startNextRound) {
+            this.currentMode._startNextRound();
         }
-        
-        // Re-render with the new filtered card set
-        this.renderCurrentCard();
-        this.updateModeSpecificUI();
-        
-        this.showMessage(`🔄 Round ${modeData.currentRound} started! Focusing on ${stillLearningCards.length} cards that need more practice.`, 'info');
-        
-        console.log(`Started round ${modeData.currentRound} with ${stillLearningCards.length} cards still learning`);
     }
 
     exitStudy() {
@@ -2017,6 +1974,11 @@ class StudyManagerSimplified {
     async flipCard(direction) {
         const flashcard = document.getElementById('flashcard');
         if (!flashcard) return;
+
+        // Let current mode handle pre-flip logic
+        if (this.currentMode && this.currentMode.onCardFlip) {
+            await this.currentMode.onCardFlip(direction);
+        }
         
         flashcard.classList.remove('flip-horizontal', 'flip-vertical-up', 'flip-vertical-down');
         flashcard.classList.add('flipping');
