@@ -3,6 +3,7 @@
 /**
  * Handles keyboard events for study modes
  * Provides mode-specific keyboard shortcuts
+ * Updated to support arrow key responses in simple spaced mode
  */
 export class KeyboardHandler {
     constructor(studyManager) {
@@ -44,27 +45,29 @@ export class KeyboardHandler {
 
         const currentMode = this.manager.state.mode;
         
-        // Universal shortcuts (work in all modes)
-        if (this._handleUniversalShortcuts(e)) {
-            return; // Event was handled
-        }
-
-        // Mode-specific shortcuts
+        // Mode-specific shortcuts first (they may override universal ones)
+        let handled = false;
         switch (currentMode) {
             case 'basic':
-                this._handleBasicModeKeys(e);
+                handled = this._handleBasicModeKeys(e);
                 break;
             case 'simple-spaced':
-                this._handleSimpleSpacedKeys(e);
+                handled = this._handleSimpleSpacedKeys(e);
                 break;
             case 'full-spaced':
-                this._handleFullSpacedKeys(e);
+                handled = this._handleFullSpacedKeys(e);
                 break;
+        }
+
+        // If mode-specific handler didn't handle it, try universal shortcuts
+        if (!handled) {
+            this._handleUniversalShortcuts(e);
         }
     }
 
     /**
      * Handle universal keyboard shortcuts
+     * These work in all modes unless overridden by mode-specific handlers
      */
     _handleUniversalShortcuts(e) {
         switch (e.key) {
@@ -83,12 +86,12 @@ export class KeyboardHandler {
                 this.manager.flipCard('vertical-down');
                 return true;
                 
-            case 'ArrowLeft': // Left arrow - previous card
+            case 'ArrowLeft': // Left arrow - previous card (default behavior)
                 e.preventDefault();
                 this.manager.navigateCard(-1);
                 return true;
                 
-            case 'ArrowRight': // Right arrow - next card
+            case 'ArrowRight': // Right arrow - next card (default behavior)
                 e.preventDefault();
                 this.manager.navigateCard(1);
                 return true;
@@ -141,30 +144,48 @@ export class KeyboardHandler {
             case 'B': // Bookmark card (future feature)
                 e.preventDefault();
                 this._showMessage('Bookmarking not yet implemented', 'info');
-                break;
+                return true;
         }
+        
+        return false;
     }
 
     /**
      * Handle simple spaced repetition mode keys
+     * Arrow keys are overridden for responses when collecting responses
      */
     _handleSimpleSpacedKeys(e) {
         const modeData = this.manager.state.modeData['simple-spaced'];
         
-        // Only handle response keys if we're collecting a response
-        if (modeData.isCollectingResponse) {
+        // Override arrow key behavior when collecting responses
+        if (modeData && modeData.isCollectingResponse) {
             switch (e.key) {
-                case 'x':
-                case 'X': // X key - don't remember
+                case 'ArrowLeft': // Left arrow - don't remember
                     e.preventDefault();
                     this.manager.handleResponse('dont-remember');
-                    return;
+                    return true;
                     
-                case 'c':
-                case 'C': // C key - remember
+                case 'ArrowRight': // Right arrow - remember
                     e.preventDefault();
                     this.manager.handleResponse('remember');
-                    return;
+                    return true;
+            }
+        }
+        
+        // Legacy key support (X and C) - can be removed if not needed
+        if (modeData && modeData.isCollectingResponse) {
+            switch (e.key) {
+                case 'x':
+                case 'X': // X key - don't remember (legacy)
+                    e.preventDefault();
+                    this.manager.handleResponse('dont-remember');
+                    return true;
+                    
+                case 'c':
+                case 'C': // C key - remember (legacy)
+                    e.preventDefault();
+                    this.manager.handleResponse('remember');
+                    return true;
             }
         }
         
@@ -174,14 +195,16 @@ export class KeyboardHandler {
             case 'R': // R key - show round info
                 e.preventDefault();
                 this._showRoundInfo();
-                break;
+                return true;
                 
             case 'p':
             case 'P': // P key - show progress
                 e.preventDefault();
                 this._showProgressInfo();
-                break;
+                return true;
         }
+        
+        return false;
     }
 
     /**
@@ -195,7 +218,7 @@ export class KeyboardHandler {
             e.preventDefault();
             const difficulty = parseInt(e.key);
             this.manager.handleResponse(difficulty);
-            return;
+            return true;
         }
         
         // Additional SM-2 mode shortcuts
@@ -204,14 +227,16 @@ export class KeyboardHandler {
             case 'D': // D key - show due cards info
                 e.preventDefault();
                 this._showDueCardsInfo();
-                break;
+                return true;
                 
             case 'i':
             case 'I': // I key - show card info
                 e.preventDefault();
                 this._showCardInfo();
-                break;
+                return true;
         }
+        
+        return false;
     }
 
     /**
@@ -251,7 +276,9 @@ export class KeyboardHandler {
      */
     _showDueCardsInfo() {
         const modeData = this.manager.state.modeData['full-spaced'];
-        const message = `Due: ${modeData.dueCards.length}, Learning: ${modeData.learningCards.length}, Mature: ${modeData.matureCards.length}`;
+        if (!modeData) return;
+        
+        const message = `Due: ${modeData.dueCards?.length || 0}, Learning: ${modeData.learningCards?.length || 0}, Mature: ${modeData.matureCards?.length || 0}`;
         this._showMessage(message, 'info');
     }
 
@@ -259,7 +286,7 @@ export class KeyboardHandler {
      * Show current card information
      */
     _showCardInfo() {
-        const currentCard = this.manager.currentCard;
+        const currentCard = this.manager.state.cards[this.manager.state.currentIndex];
         if (!currentCard) return;
         
         const message = `Card ID: ${currentCard.id}, Difficulty: ${currentCard.difficulty || 'Not set'}`;
@@ -276,8 +303,6 @@ export class KeyboardHandler {
             { key: 'Space', action: 'Flip card horizontally' },
             { key: '↑', action: 'Flip card up' },
             { key: '↓', action: 'Flip card down' },
-            { key: '←', action: 'Previous card' },
-            { key: '→', action: 'Next card' },
             { key: 'S', action: 'Toggle shuffle' },
             { key: 'T', action: 'Toggle term/definition' },
             { key: 'Escape', action: 'Exit study' },
@@ -285,14 +310,21 @@ export class KeyboardHandler {
         ];
 
         const modeSpecificShortcuts = {
-            'basic': [],
+            'basic': [
+                { key: '←', action: 'Previous card' },
+                { key: '→', action: 'Next card' }
+            ],
             'simple-spaced': [
-                { key: 'X', action: "Don't remember (when flipped)" },
-                { key: 'C', action: 'Remember (when flipped)' },
+                { key: '← (when flipped)', action: "Don't remember & advance" },
+                { key: '→ (when flipped)', action: 'Remember & advance' },
+                { key: '← (normal)', action: 'Previous card' },
+                { key: '→ (normal)', action: 'Next card' },
                 { key: 'R', action: 'Show round info' },
                 { key: 'P', action: 'Show progress' }
             ],
             'full-spaced': [
+                { key: '←', action: 'Previous card' },
+                { key: '→', action: 'Next card' },
                 { key: '1-4', action: 'Rate difficulty' },
                 { key: 'D', action: 'Show due cards info' },
                 { key: 'I', action: 'Show card info' }
@@ -315,7 +347,9 @@ export class KeyboardHandler {
 
     // Private helper
     _showMessage(message, type = 'info') {
-        if (this.manager._showMessage) {
+        if (this.manager.showMessage) {
+            this.manager.showMessage(message, type);
+        } else if (this.manager._showMessage) {
             this.manager._showMessage(message, type);
         }
     }

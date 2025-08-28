@@ -369,14 +369,14 @@ class ModularStudyManager {
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
                             Don't Remember
-                            <kbd class="ml-3 px-2 py-1 text-xs bg-red-400 rounded">X</kbd>
+                            <kbd class="ml-3 px-2 py-1 text-xs bg-red-400 rounded">←</kbd>
                         </button>
                         <button id="rememberBtn" class="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg font-medium transition-colors flex items-center">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
                             Remember
-                            <kbd class="ml-3 px-2 py-1 text-xs bg-green-400 rounded">C</kbd>
+                            <kbd class="ml-3 px-2 py-1 text-xs bg-green-400 rounded">→</kbd>
                         </button>
                     </div>
                 </div>
@@ -538,6 +538,31 @@ class ModularStudyManager {
         this.keyHandler = (e) => {
             if (!this.isActive || this.isTypingInInput(e.target)) return;
 
+            // Handle simple-spaced mode response keys first (they override default arrow behavior)
+            if (this.state.mode === 'simple-spaced' && this.state.modeData['simple-spaced'].isCollectingResponse) {
+                switch (e.key) {
+                    case 'ArrowLeft': // Left arrow - don't remember
+                        e.preventDefault();
+                        this.handleResponse('dont-remember');
+                        return;
+                    case 'ArrowRight': // Right arrow - remember
+                        e.preventDefault();
+                        this.handleResponse('remember');
+                        return;
+                    case 'x':
+                    case 'X': // Legacy support
+                        e.preventDefault();
+                        this.handleResponse('dont-remember');
+                        return;
+                    case 'c':
+                    case 'C': // Legacy support
+                        e.preventDefault();
+                        this.handleResponse('remember');
+                        return;
+                }
+            }
+
+            // Default keyboard shortcuts
             switch (e.key) {
                 case ' ':
                     e.preventDefault();
@@ -572,20 +597,6 @@ class ModularStudyManager {
                 case 'Escape':
                     e.preventDefault();
                     this.exitStudy();
-                    break;
-                case 'x':
-                case 'X':
-                    if (this.state.mode === 'simple-spaced' && this.state.modeData['simple-spaced'].isCollectingResponse) {
-                        e.preventDefault();
-                        this.handleResponse('dont-remember');
-                    }
-                    break;
-                case 'c':
-                case 'C':
-                    if (this.state.mode === 'simple-spaced' && this.state.modeData['simple-spaced'].isCollectingResponse) {
-                        e.preventDefault();
-                        this.handleResponse('remember');
-                    }
                     break;
                 case '1':
                     e.preventDefault();
@@ -754,11 +765,13 @@ class ModularStudyManager {
 
     updateModeSpecificUI() {
         const modeIndicator = document.getElementById('modeIndicator');
+        const responseButtons = document.getElementById('responseButtons');
         const keyboardHints = document.getElementById('keyboardHints');
         
         switch (this.state.mode) {
             case 'basic':
                 if (modeIndicator) modeIndicator.innerHTML = '';
+                if (responseButtons) responseButtons.classList.add('hidden');
                 if (keyboardHints) {
                     keyboardHints.innerHTML = `
                         <kbd>Space</kbd> flip horizontal • 
@@ -794,11 +807,17 @@ class ModularStudyManager {
                     `;
                 }
                 
+                // Show response buttons only when collecting responses
+                if (responseButtons && modeData.isCollectingResponse) {
+                    responseButtons.classList.remove('hidden');
+                } else if (responseButtons) {
+                    responseButtons.classList.add('hidden');
+                }
+                
                 if (keyboardHints) {
                     keyboardHints.innerHTML = `
                         <kbd>Space</kbd> flip horizontal • 
-                        <kbd>X</kbd> don't remember • 
-                        <kbd>C</kbd> remember • 
+                        <kbd>←/→</kbd> ${modeData.isCollectingResponse ? 'respond & advance' : 'navigate'} • 
                         <kbd>S</kbd> shuffle • 
                         <kbd>T</kbd> term/definition
                     `;
@@ -1318,6 +1337,11 @@ class StudyManagerSimplified {
                     <div id="flashcard" class="flashcard">
                         <div class="flashcard-inner">
                             <div class="flashcard-front">
+                                <button id="editCardBtn" class="edit-btn">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
+                                </button>
                                 <div class="card-label">Term</div>
                                 <div id="frontContent" class="card-content"></div>
                             </div>

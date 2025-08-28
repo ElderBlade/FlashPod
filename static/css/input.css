@@ -304,6 +304,50 @@ textarea:focus-visible {
     display: none;
 }
 
+
+/* Card feedback animations */
+.feedback-correct {
+    animation: flashGreen 0.6s ease-in-out;
+}
+
+.feedback-incorrect {
+    animation: flashRed 0.6s ease-in-out;
+}
+
+@keyframes flashGreen {
+    0% { background-color: transparent; }
+    50% { background-color: rgba(34, 197, 94, 0.2); }
+    100% { background-color: transparent; }
+}
+
+@keyframes flashRed {
+    0% { background-color: transparent; }
+    50% { background-color: rgba(239, 68, 68, 0.2); }
+    100% { background-color: transparent; }
+}
+
+/* Alternative: Border flash effect */
+.feedback-correct {
+    animation: borderGreen 0.6s ease-in-out;
+}
+
+.feedback-incorrect {
+    animation: borderRed 0.6s ease-in-out;
+}
+
+@keyframes borderGreen {
+    0% { border: 2px solid transparent; }
+    50% { border: 2px solid #22c55e; }
+    100% { border: 2px solid transparent; }
+}
+
+@keyframes borderRed {
+    0% { border: 2px solid transparent; }
+    50% { border: 2px solid #ef4444; }
+    100% { border: 2px solid transparent; }
+}
+
+
 /* Windows-specific optimizations */
 @media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
     .flashcard-inner {

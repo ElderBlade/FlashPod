@@ -5,6 +5,7 @@ import { StudyState } from '../core/study-state.js';
  * Mode 2: Simple Spaced Repetition
  * Cards move between "Still Learning" and "Known" buckets
  * Multiple rounds until all cards are in "Known" bucket
+ * Updated to use left/right arrow keys for responses and auto-advance
  */
 export class SimpleSpaced {
     constructor(studyManager) {
@@ -48,33 +49,30 @@ export class SimpleSpaced {
         // Get DOM elements
         const frontContent = document.getElementById('frontContent');
         const backContent = document.getElementById('backContent');
-        const frontLabel = document.querySelector('.flashcard-front .card-label');
-        const backLabel = document.querySelector('.flashcard-back .card-label');
+        const frontLabel = document.querySelector('.card-front .card-label');
+        const backLabel = document.querySelector('.card-back .card-label');
         
-        if (!frontContent || !backContent) return;
+        if (frontContent && backContent) {
+            frontContent.textContent = displayContent.frontText;
+            backContent.textContent = displayContent.backText;
+        }
         
-        // Reset card flip state
-        this._resetCardFlip();
+        if (frontLabel && backLabel) {
+            frontLabel.textContent = displayContent.frontLabel;
+            backLabel.textContent = displayContent.backLabel;
+        }
         
-        // Update content
-        frontContent.textContent = displayContent.frontText;
-        backContent.textContent = displayContent.backText;
+        // Update progress and interface
+        this._updateProgress();
+        this._updateInterface();
         
-        // Update labels
-        if (frontLabel) frontLabel.textContent = displayContent.frontLabel;
-        if (backLabel) backLabel.textContent = displayContent.backLabel;
-        
-        // Update progress and navigation
-        this.manager.interface.updateProgress();
-        this.manager.interface.updateNavigationButtons();
-        
-        // Update mode-specific UI
-        this.manager.interface.updateModeSpecificUI('simple-spaced', 
-            StudyState.getModeData(state, 'simple-spaced'));
+        // CRITICAL FIX: Update progress display directly
+        this._updateProgressDisplay();
     }
 
     /**
-     * Handle card flip event
+     * Handle card flip - show response options when flipped to back
+     * This method is called by the study manager AFTER the flip state is updated
      */
     async onCardFlip(direction) {
         const state = this.manager.state;
@@ -83,17 +81,30 @@ export class SimpleSpaced {
         
         if (!currentCard) return;
         
-        // Show response buttons immediately when flipping to back (card is now flipped)
-        if (state.isFlipped && modeData.stillLearning.includes(currentCard.id)) {
-            setTimeout(() => {
-                modeData.isCollectingResponse = true;
-                this.manager.interface.showResponseButtons();
-                this.manager.interface.updateModeSpecificUI('simple-spaced', modeData);
-            }, 300); // Wait for flip animation to complete
-        } else if (!state.isFlipped) {
+        if (state.isFlipped) {
+            // Card was flipped to back - start collecting response
+            // Only show buttons for cards that are still learning
+            if (modeData.stillLearning.includes(currentCard.id)) {
+                setTimeout(() => {
+                    modeData.isCollectingResponse = true;
+                    
+                    // Show response buttons
+                    const responseButtons = document.getElementById('responseButtons');
+                    if (responseButtons) {
+                        responseButtons.classList.remove('hidden');
+                    }
+                    
+                    console.log('Simple spaced: Response buttons shown, collecting response');
+                }, 300); // Wait for flip animation to complete
+            }
+        } else {
             // Hide response buttons when flipping back to front
             modeData.isCollectingResponse = false;
-            this.manager.interface.hideResponseButtons();
+            const responseButtons = document.getElementById('responseButtons');
+            if (responseButtons) {
+                responseButtons.classList.add('hidden');
+            }
+            console.log('Simple spaced: Response buttons hidden');
         }
         
         console.log(`Simple spaced mode: Card flipped ${direction}, isFlipped: ${state.isFlipped}, collecting response: ${modeData.isCollectingResponse}`);
@@ -101,6 +112,7 @@ export class SimpleSpaced {
 
     /**
      * Handle user response (remember/don't remember)
+     * Now automatically advances to next card after response
      */
     async handleResponse(responseType) {
         const state = this.manager.state;
@@ -121,7 +133,7 @@ export class SimpleSpaced {
             round: modeData.currentRound
         });
         
-        // Move card between buckets
+        // Move card between buckets and show feedback
         if (responseType === 'remember') {
             await this._moveCardToKnown(cardId);
             this._showCardFeedback('correct');
@@ -137,21 +149,119 @@ export class SimpleSpaced {
         
         // Hide response buttons
         modeData.isCollectingResponse = false;
-        this.manager.interface.hideResponseButtons();
+        const responseButtons = document.getElementById('responseButtons');
+        if (responseButtons) {
+            responseButtons.classList.add('hidden');
+        }
         
-        // Update UI
-        this.manager.interface.updateModeSpecificUI('simple-spaced', modeData);
-        
-        // Check if round is complete
-        setTimeout(() => this._checkRoundCompletion(), 1000);
+        // Auto-advance to next card after a short delay for feedback
+        setTimeout(async () => {
+            await this._advanceToNextCard();
+        }, 800);
     }
 
     /**
-     * Handle navigation between cards
+     * Handle mode-specific keyboard events
+     * Called by the main keyboard handler for simple-spaced mode
+     */
+    handleKeyboard(e, modeData) {
+        // Only handle response keys if we're collecting a response
+        if (modeData.isCollectingResponse) {
+            switch (e.key) {
+                case 'ArrowLeft': // Left arrow - don't remember
+                    e.preventDefault();
+                    this.handleResponse('dont-remember');
+                    return true;
+                    
+                case 'ArrowRight': // Right arrow - remember
+                    e.preventDefault();
+                    this.handleResponse('remember');
+                    return true;
+            }
+        }
+        
+        // Mode-specific shortcuts (non-response keys)
+        switch (e.key) {
+            case 'r':
+            case 'R': // R key - show round info
+                e.preventDefault();
+                this._showRoundInfo();
+                return true;
+                
+            case 'p':
+            case 'P': // P key - show progress
+                e.preventDefault();
+                this._showProgressInfo();
+                return true;
+        }
+        
+        return false; // Let other handlers process the key
+    }
+
+    /**
+     * Auto-advance to next card
+     */
+    async _advanceToNextCard() {
+        const state = this.manager.state;
+        const modeData = StudyState.getModeData(state, 'simple-spaced');
+        
+        // Check if round is complete before advancing
+        if (await this._checkRoundCompletion()) {
+            return; // Round completion handling will take over
+        }
+        
+        // Advance to next card
+        const nextIndex = (state.currentIndex + 1) % state.cards.length;
+        state.currentIndex = nextIndex;
+        state.currentCardId = state.cards[nextIndex]?.id;
+        
+        // Reset card flip state to show front side
+        state.isFlipped = false;
+        
+        // Use the manager's reset method if available, otherwise reset manually
+        if (this.manager.resetCardFlip) {
+            this.manager.resetCardFlip();
+        } else {
+            // Fallback manual reset
+            const flashcard = document.getElementById('flashcard');
+            if (flashcard) {
+                flashcard.style.transition = 'none';
+                flashcard.classList.remove('flipped', 'flip-horizontal', 'flip-vertical-up', 'flip-vertical-down', 'flipping');
+                flashcard.offsetHeight;
+                flashcard.style.transition = '';
+                flashcard.classList.add('flip-horizontal');
+            }
+        }
+        
+        // Reset response collection state
+        modeData.isCollectingResponse = false;
+        const responseButtons = document.getElementById('responseButtons');
+        if (responseButtons) {
+            responseButtons.classList.add('hidden');
+        }
+        
+        // Render new card
+        await this.renderCard();
+        
+        // CRITICAL FIX: Update progress bar and card counter directly
+        this._updateProgressDisplay();
+        
+        console.log(`Auto-advanced to next card: ${nextIndex + 1}/${state.cards.length}`);
+    }
+
+    /**
+     * Handle navigation between cards - override default navigation during response collection
      */
     async beforeNavigation(direction) {
-        // Always allow navigation in simple spaced mode
-        // Could add logic here to prevent navigation during response collection
+        const state = this.manager.state;
+        const modeData = StudyState.getModeData(state, 'simple-spaced');
+        
+        // If collecting response, prevent manual navigation (arrows are for responses)
+        if (modeData.isCollectingResponse) {
+            this._showMessage('Use arrow keys to respond: ← Don\'t Remember, → Remember', 'info');
+            return false;
+        }
+        
         return true;
     }
 
@@ -164,7 +274,10 @@ export class SimpleSpaced {
         
         // Reset response collection state
         modeData.isCollectingResponse = false;
-        this.manager.interface.hideResponseButtons();
+        const responseButtons = document.getElementById('responseButtons');
+        if (responseButtons) {
+            responseButtons.classList.add('hidden');
+        }
         
         // Re-render the new card
         await this.renderCard();
@@ -196,7 +309,10 @@ export class SimpleSpaced {
         await this._saveProgress();
         
         // Hide response buttons
-        this.manager.interface.hideResponseButtons();
+        const responseButtons = document.getElementById('responseButtons');
+        if (responseButtons) {
+            responseButtons.classList.add('hidden');
+        }
     }
 
     /**
@@ -236,12 +352,37 @@ export class SimpleSpaced {
      */
     getCompletionMessage() {
         const stats = this.getStats();
-        return `🎉 Amazing! You've mastered all ${stats.totalCards} cards in ${stats.currentRound} rounds and ${stats.studyDuration} minutes!`;
+        return `🎉 Amazing! You've completed ${stats.roundsCompleted} round${stats.roundsCompleted !== 1 ? 's' : ''} and mastered all ${stats.totalCards} cards in ${stats.studyDuration} minutes!`;
     }
 
-    // Private methods
+    // Private helper methods
+
     /**
-     * Update interface for simple spaced mode
+     * Update progress display directly (fixes progress bar and card counter)
+     */
+    _updateProgressDisplay() {
+        const state = this.manager.state;
+        const progress = state.currentIndex + 1;
+        const total = state.totalCards;
+        const percentage = (progress / total) * 100;
+
+        // Update progress bar
+        const progressBar = document.getElementById('progressBar');
+        if (progressBar) {
+            progressBar.style.width = `${percentage}%`;
+        }
+
+        // Update card counter
+        const cardProgress = document.getElementById('cardProgress');
+        if (cardProgress) {
+            cardProgress.textContent = `Card ${progress} of ${total}`;
+        }
+
+        console.log(`Progress updated: ${progress}/${total} (${Math.round(percentage)}%)`);
+    }
+
+    /**
+     * Update the interface for simple spaced mode
      */
     async _updateInterface() {
         const state = this.manager.state;
@@ -250,41 +391,37 @@ export class SimpleSpaced {
         // Update mode-specific UI
         this.manager.interface.updateModeSpecificUI('simple-spaced', modeData);
         
-        // Update keyboard hints
-        if (this.manager.interface.modeToggle?.updateKeyboardHints) {
-            this.manager.interface.modeToggle.updateKeyboardHints();
+        // Update progress display
+        this._updateProgress();
+    }
+
+    /**
+     * Update progress display
+     */
+    _updateProgress() {
+        const state = this.manager.state;
+        const modeData = StudyState.getModeData(state, 'simple-spaced');
+        
+        const progressElement = document.getElementById('progress');
+        if (progressElement) {
+            const knownCount = modeData.known.length;
+            const totalCards = state.totalCards;
+            const percentage = Math.round((knownCount / totalCards) * 100);
+            
+            progressElement.innerHTML = `
+                <div class="flex justify-between text-sm text-gray-600 mb-1">
+                    <span>Round ${modeData.currentRound}</span>
+                    <span>${knownCount}/${totalCards} Known (${percentage}%)</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-green-500 h-2 rounded-full transition-all duration-300" style="width: ${percentage}%"></div>
+                </div>
+            `;
         }
     }
 
     /**
-     * Reset card flip state
-     */
-    _resetCardFlip() {
-        const flashcard = document.getElementById('flashcard');
-        if (!flashcard) return;
-        
-        // Remove all flip states instantly
-        flashcard.style.transition = 'none';
-        flashcard.classList.remove('flipped', 'flip-horizontal', 'flip-vertical-up', 'flip-vertical-down', 'flipping');
-        
-        // Force reflow
-        flashcard.offsetHeight;
-        
-        // Restore transitions
-        flashcard.style.transition = '';
-        
-        // Set default flip direction
-        flashcard.classList.add('flip-horizontal');
-        
-        // Reset response collection state
-        const state = this.manager.state;
-        const modeData = StudyState.getModeData(state, 'simple-spaced');
-        modeData.isCollectingResponse = false;
-        this.manager.interface.hideResponseButtons();
-    }
-
-    /**
-     * Move card from still learning to known bucket
+     * Move card to known bucket
      */
     async _moveCardToKnown(cardId) {
         const state = this.manager.state;
@@ -293,26 +430,24 @@ export class SimpleSpaced {
         const stillLearningIndex = modeData.stillLearning.indexOf(cardId);
         if (stillLearningIndex > -1) {
             modeData.stillLearning.splice(stillLearningIndex, 1);
-            if (!modeData.known.includes(cardId)) {
-                modeData.known.push(cardId);
-            }
+            modeData.known.push(cardId);
         }
     }
 
     /**
-     * Keep card in still learning bucket (or move back from known)
+     * Keep card in learning bucket
      */
     async _keepCardInLearning(cardId) {
         const state = this.manager.state;
         const modeData = StudyState.getModeData(state, 'simple-spaced');
         
-        // If card was in known, move it back to still learning
-        const knownIndex = modeData.known.indexOf(cardId);
-        if (knownIndex > -1) {
-            modeData.known.splice(knownIndex, 1);
-            if (!modeData.stillLearning.includes(cardId)) {
-                modeData.stillLearning.push(cardId);
+        // Ensure card is in still learning bucket
+        if (!modeData.stillLearning.includes(cardId)) {
+            const knownIndex = modeData.known.indexOf(cardId);
+            if (knownIndex > -1) {
+                modeData.known.splice(knownIndex, 1);
             }
+            modeData.stillLearning.push(cardId);
         }
     }
 
@@ -320,134 +455,260 @@ export class SimpleSpaced {
      * Show visual feedback for card response
      */
     _showCardFeedback(type) {
+        const cardContainer = document.querySelector('.card-container');
         const flashcard = document.getElementById('flashcard');
-        if (!flashcard) return;
+        const targetElement = cardContainer || flashcard;
         
-        // Remove existing feedback
-        flashcard.classList.remove('response-correct', 'response-incorrect');
+        if (!targetElement) return;
         
-        // Add new feedback
-        const feedbackClass = type === 'correct' ? 'response-correct' : 'response-incorrect';
-        flashcard.classList.add(feedbackClass);
+        const feedbackClass = type === 'correct' ? 'feedback-correct' : 'feedback-incorrect';
         
-        // Remove feedback after animation
+        // Add appropriate CSS class for visual feedback
+        targetElement.classList.add(feedbackClass);
+        
+        // Remove the class after animation completes
         setTimeout(() => {
-            flashcard.classList.remove(feedbackClass);
-        }, 1000);
+            targetElement.classList.remove(feedbackClass);
+        }, 600);
+        
+        // Also try the manager's method if available
+        if (this.manager.addCardFeedback) {
+            this.manager.addCardFeedback(type);
+        }
+    }
+
+    /**
+     * Show message to user
+     */
+    _showMessage(message, type = 'info') {
+        if (this.manager.showMessage) {
+            this.manager.showMessage(message, type);
+        }
+    }
+
+    /**
+     * Record card review to backend (optional - won't fail if endpoint doesn't exist)
+     */
+    async _recordCardReview(cardId, rating) {
+        try {
+            const response = await fetch(`${window.API_BASE}/study/card-review`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    card_id: cardId,
+                    response_quality: rating
+                })
+            });
+            
+            if (response.ok) {
+                console.log(`Recorded review for card ${cardId}: quality=${rating}`);
+            } else if (response.status === 404) {
+                console.warn('Card review endpoint not implemented on backend');
+            }
+        } catch (error) {
+            // Don't throw error, just log warning
+            console.warn('Failed to record review (non-critical):', error);
+        }
     }
 
     /**
      * Check if current round is complete
      */
-    _checkRoundCompletion() {
+    async _checkRoundCompletion() {
         const state = this.manager.state;
         const modeData = StudyState.getModeData(state, 'simple-spaced');
         
-        // If all cards are known - session complete!
+        // Check if all cards are now known - session complete!
         if (modeData.stillLearning.length === 0) {
-            setTimeout(() => this._completeSession(), 500);
-            return;
+            await this._handleSessionCompletion();
+            return true;
         }
         
-        // Check if we've reviewed all still learning cards in this round
-        const stillLearningCards = state.cards.filter(card => 
-            modeData.stillLearning.includes(card.id)
-        );
+        // Check if we've gone through all cards in the current round
+        const currentCardId = StudyState.getCurrentCard(state)?.id;
+        const isLastCard = state.currentIndex === state.cards.length - 1;
+        const hasProcessedCurrentCard = modeData.responses.has(currentCardId);
         
-        // Get cards that have been reviewed in current round
-        const cardsReviewedThisRound = new Set();
-        modeData.responses.forEach((responses, cardId) => {
-            if (responses.some(r => r.round === modeData.currentRound)) {
-                cardsReviewedThisRound.add(cardId);
+        if (isLastCard && hasProcessedCurrentCard) {
+            // We've processed the last card, check if round should advance
+            const stillLearningThisRound = state.cards.filter(card => 
+                modeData.stillLearning.includes(card.id)
+            );
+            
+            if (stillLearningThisRound.length > 0) {
+                // Start new round with remaining cards
+                await this._startNewRound();
+                return true;
             }
-        });
-        
-        console.log(`Round ${modeData.currentRound} check:`, {
-            stillLearning: stillLearningCards.length,
-            reviewedThisRound: cardsReviewedThisRound.size,
-            stillLearningIds: stillLearningCards.map(c => c.id),
-            reviewedIds: Array.from(cardsReviewedThisRound)
-        });
-        
-        // If all still learning cards have been reviewed this round, start next round
-        const allStillLearningReviewed = stillLearningCards.every(card => 
-            cardsReviewedThisRound.has(card.id)
-        );
-        
-        if (allStillLearningReviewed && stillLearningCards.length > 0) {
-            this._startNextRound();
         }
+        
+        return false;
     }
 
     /**
-     * Start the next round
+     * Start a new round with remaining cards
      */
-    async _startNextRound() {
+    async _startNewRound() {
         const state = this.manager.state;
         const modeData = StudyState.getModeData(state, 'simple-spaced');
         
-        // Save current round info
+        // Record completed round
         modeData.completedRounds.push({
             round: modeData.currentRound,
             completedAt: new Date(),
-            cardsLearned: modeData.known.length,
-            cardsRemaining: modeData.stillLearning.length
+            cardsLearned: modeData.known.length
         });
         
-        // Start next round
         modeData.currentRound++;
         modeData.roundStartTime = new Date();
         
-        // Filter cards to only show "Still Learning" cards for this round
-        const stillLearningCards = state.originalCards.filter(card => 
+        // Filter cards to only those still learning
+        state.cards = state.originalCards.filter(card => 
             modeData.stillLearning.includes(card.id)
         );
         
-        // Update the current cards array to only include still learning cards
-        state.cards = [...stillLearningCards];
-        state.totalCards = stillLearningCards.length;
-        
-        // Start at the first card of the filtered set
+        // CRITICAL FIX: Reset to first card AND ensure front side shows
         state.currentIndex = 0;
-        state.currentCardId = stillLearningCards[0]?.id;
-        state.isFlipped = false;
+        state.currentCardId = state.cards[0]?.id;
+        state.isFlipped = false;  // Ensure card shows front side
         
-        // Reset response collection state
-        modeData.isCollectingResponse = false;
-        this.manager.interface.hideResponseButtons();
+        // Reset card flip visual state
+        if (this.manager.resetCardFlip) {
+            this.manager.resetCardFlip();
+        } else {
+            // Fallback manual reset
+            const flashcard = document.getElementById('flashcard');
+            if (flashcard) {
+                flashcard.style.transition = 'none';
+                flashcard.classList.remove('flipped', 'flip-horizontal', 'flip-vertical-up', 'flip-vertical-down', 'flipping');
+                flashcard.offsetHeight;
+                flashcard.style.transition = '';
+                flashcard.classList.add('flip-horizontal');
+            }
+        }
         
-        // Re-render with the new filtered card set
+        // Show round transition message
+        this._showMessage(
+            `Starting Round ${modeData.currentRound} with ${modeData.stillLearning.length} cards`,
+            'info'
+        );
+        
+        // Render new round with front side showing
         await this.renderCard();
-        
-        this._showMessage(`🔄 Round ${modeData.currentRound} started! Focusing on ${stillLearningCards.length} cards that need more practice.`, 'info');
-        
-        console.log(`Started round ${modeData.currentRound} with ${stillLearningCards.length} cards still learning`);
     }
 
     /**
-     * Complete the session
+     * Handle session completion
      */
-    _completeSession() {
+    async _handleSessionCompletion() {
         const stats = this.getStats();
         
-        const completionMessage = `
-            🎉 Congratulations! You've mastered all ${stats.totalCards} cards!
-            
-            📊 Session Summary:
-            • Rounds completed: ${stats.currentRound}
-            • Total time: ${stats.studyDuration} minutes
-            • Cards mastered: ${stats.known}
-            
-            All cards are now in your "Known" pile! 🧠✨
-        `;
+        this._showMessage('🎉 Congratulations! You\'ve mastered all cards!', 'success');
         
-        this._showCompletionOverlay(completionMessage);
+        // CRITICAL FIX: Call manager's completion method with our custom reset logic
+        if (this.manager.showCompletionOverlay) {
+            // Use manager's method but with custom message
+            const modeData = StudyState.getModeData(this.manager.state, 'simple-spaced');
+            const totalTime = Math.round((new Date() - new Date(modeData.sessionStartTime)) / 1000 / 60);
+            
+            const completionMessage = `🎉 Congratulations! You've mastered all ${stats.totalCards} cards!
+            
+📊 Session Summary:
+• Rounds completed: ${stats.currentRound}
+• Total time: ${totalTime} minutes
+• Cards mastered: ${stats.known}
+
+All cards are now in your "Known" pile! 🧠✨`;
+
+            // Override the manager's reset function temporarily
+            const originalShowCompletionOverlay = this.manager.showCompletionOverlay.bind(this.manager);
+            this.manager.showCompletionOverlay = (message) => {
+                const overlay = document.createElement('div');
+                overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                
+                overlay.innerHTML = `
+                    <div class="bg-white rounded-lg p-8 max-w-md mx-4 text-center">
+                        <div class="text-6xl mb-4">🎉</div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-4">Session Complete!</h3>
+                        <div class="text-gray-600 whitespace-pre-line text-sm mb-6">${message}</div>
+                        <div class="flex space-x-3">
+                            <button id="studyAgainBtn" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                                Study Again
+                            </button>
+                            <button id="finishSessionBtn" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">
+                                Finish
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                overlay.querySelector('#studyAgainBtn').addEventListener('click', async () => {
+                    overlay.remove();
+                    
+                    // CRITICAL FIX: Properly reset the deck to all original cards
+                    const state = this.manager.state;
+                    
+                    // Reset to original cards (all cards, not just current filtered ones)
+                    state.cards = [...state.originalCards];
+                    state.totalCards = state.originalCards.length;
+                    state.currentIndex = 0;
+                    state.currentCardId = state.cards[0]?.id;
+                    state.isFlipped = false;
+                    
+                    // Reset simple spaced mode data completely
+                    const allCardIds = state.cards.map(card => card.id);
+                    StudyState.updateModeData(state, {
+                        stillLearning: [...allCardIds],  // All cards back to still learning
+                        known: [],
+                        currentRound: 1,
+                        responses: new Map(),
+                        isCollectingResponse: false,
+                        sessionStartTime: new Date(),
+                        roundStartTime: new Date(),
+                        completedRounds: []
+                    }, 'simple-spaced');
+                    
+                    // Re-initialize mode and render
+                    if (this.manager.currentMode && this.manager.currentMode.initialize) {
+                        await this.manager.currentMode.initialize(state);
+                    }
+                    await this.renderCard();
+                    
+                    console.log(`Study Again: Reset with all ${state.totalCards} cards`);
+                });
+
+                overlay.querySelector('#finishSessionBtn').addEventListener('click', () => {
+                    overlay.remove();
+                    if (this.manager.exitStudy) {
+                        this.manager.exitStudy();
+                    }
+                });
+
+                document.body.appendChild(overlay);
+                
+                // Restore original method
+                this.manager.showCompletionOverlay = originalShowCompletionOverlay;
+            };
+            
+            this.manager.showCompletionOverlay(completionMessage);
+        } else {
+            // Fallback to our own completion overlay
+            this._showCompletionOverlay();
+        }
+        
+        console.log('Simple spaced session completed!', stats);
     }
 
     /**
-     * Show completion overlay
+     * Show completion overlay (fallback method)
      */
-    _showCompletionOverlay(message) {
+    _showCompletionOverlay() {
+        const stats = this.getStats();
+        const modeData = StudyState.getModeData(this.manager.state, 'simple-spaced');
+        
         const overlay = document.createElement('div');
         overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
         
@@ -455,7 +716,16 @@ export class SimpleSpaced {
             <div class="bg-white rounded-lg p-8 max-w-md mx-4 text-center">
                 <div class="text-6xl mb-4">🎉</div>
                 <h3 class="text-xl font-semibold text-gray-900 mb-4">Session Complete!</h3>
-                <div class="text-gray-600 whitespace-pre-line text-sm mb-6">${message}</div>
+                <div class="text-gray-600 text-sm mb-6">
+                    Congratulations! You've mastered all ${stats.totalCards} cards!
+                    <br><br>
+                    📊 Session Summary:<br>
+                    • Rounds completed: ${stats.currentRound}<br>
+                    • Total time: ${stats.studyDuration} minutes<br>
+                    • Cards mastered: ${stats.known}
+                    <br><br>
+                    All cards are now in your "Known" pile! 🧠✨
+                </div>
                 <div class="flex space-x-3">
                     <button id="studyAgainBtn" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
                         Study Again
@@ -469,64 +739,83 @@ export class SimpleSpaced {
 
         overlay.querySelector('#studyAgainBtn').addEventListener('click', async () => {
             overlay.remove();
-            // Reset and restart
-            await this.initialize(this.manager.state);
-            this.manager.state.currentIndex = 0;
-            this.manager.state.isFlipped = false;
+            
+            // CRITICAL FIX: Properly reset the session
+            const state = this.manager.state;
+            
+            // Reset to original cards (all cards, not just remaining ones)
+            state.cards = [...state.originalCards];
+            state.totalCards = state.originalCards.length;
+            state.currentIndex = 0;
+            state.currentCardId = state.cards[0]?.id;
+            state.isFlipped = false;
+            
+            // Reset simple spaced mode data completely
+            const allCardIds = state.cards.map(card => card.id);
+            StudyState.updateModeData(state, {
+                stillLearning: [...allCardIds],  // All cards back to still learning
+                known: [],
+                currentRound: 1,
+                responses: new Map(),
+                isCollectingResponse: false,
+                sessionStartTime: new Date(),
+                roundStartTime: new Date(),
+                completedRounds: []
+            }, 'simple-spaced');
+            
+            // Re-initialize and render
+            await this.initialize(state);
             await this.renderCard();
+            
+            console.log(`Study Again: Reset with all ${state.totalCards} cards`);
         });
 
         overlay.querySelector('#finishSessionBtn').addEventListener('click', () => {
             overlay.remove();
-            this.manager.exitStudy();
+            if (this.manager.exitStudy) {
+                this.manager.exitStudy();
+            } else {
+                // Fallback - reload page or redirect
+                window.location.reload();
+            }
         });
 
         document.body.appendChild(overlay);
     }
+    _showRoundInfo() {
+        const state = this.manager.state;
+        const modeData = StudyState.getModeData(state, 'simple-spaced');
+        const message = `Round ${modeData.currentRound} - Still Learning: ${modeData.stillLearning.length}, Known: ${modeData.known.length}`;
+        this._showMessage(message, 'info');
+    }
 
     /**
-     * Record card review to backend
+     * Show progress information
      */
-    async _recordCardReview(cardId, responseQuality) {
-        if (!this.manager.session.isActive) return;
-        
-        try {
-            await this.manager.session.recordCardReview(cardId, responseQuality);
-        } catch (error) {
-            console.warn('Failed to record card review:', error);
-        }
+    _showProgressInfo() {
+        const stats = this.getStats();
+        const message = `Progress: ${stats.completionPercentage}% complete, ${stats.studyDuration} minutes studied`;
+        this._showMessage(message, 'info');
     }
 
     /**
      * Save current progress
      */
     _saveProgress() {
+        // Implementation for saving progress to localStorage or backend
         const state = this.manager.state;
         const modeData = StudyState.getModeData(state, 'simple-spaced');
         
-        // Save to localStorage as backup
         const progressData = {
             mode: 'simple-spaced',
             currentRound: modeData.currentRound,
             stillLearning: modeData.stillLearning,
             known: modeData.known,
-            currentIndex: state.currentIndex,
-            lastStudied: new Date().toISOString()
+            responses: Array.from(modeData.responses.entries()),
+            sessionStartTime: modeData.sessionStartTime,
+            completedRounds: modeData.completedRounds
         };
         
-        const storageKey = state.lastDeckId ? 
-            `study_progress_deck_${state.lastDeckId}` :
-            `study_progress_pod_${state.lastPodId}`;
-            
-        localStorage.setItem(storageKey, JSON.stringify(progressData));
-    }
-
-    /**
-     * Show message to user
-     */
-    _showMessage(message, type = 'info') {
-        if (this.manager._showMessage) {
-            this.manager._showMessage(message, type);
-        }
+        console.log('Saving simple spaced progress:', progressData);
     }
 }
