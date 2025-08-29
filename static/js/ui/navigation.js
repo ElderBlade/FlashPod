@@ -43,7 +43,15 @@ export class Navigation {
         this.navItems.forEach(nav => nav.classList.remove('active'));
         item.classList.add('active');
         
+        // Hide all regular page views
         this.pageViews.forEach(view => view.classList.add('hidden'));
+        
+        // ADDED: Hide study interface if it's active
+        if (window.studyController && window.studyController.studyManager && 
+            window.studyController.studyManager.interface && 
+            window.studyController.studyManager.interface.isVisible) {
+            window.studyController.studyManager.interface.hide();
+        }
         
         const navId = item.id.replace('nav-', '');
         const targetView = this.getTargetView(navId);

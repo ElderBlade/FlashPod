@@ -91,6 +91,8 @@ export class SimpleSpaced {
         modeData.isCollectingResponse = false;
         this.manager.interface.hideResponseButtons();
         
+        this.manager.interface.updateModeSpecificUI('simple-spaced', modeData);
+        
         // Show color effect
         this.showColorEffect(response === 'remember' ? 'green' : 'red');
         

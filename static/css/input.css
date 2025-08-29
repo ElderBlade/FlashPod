@@ -316,6 +316,7 @@ textarea:focus-visible {
     transition: all 0.3s ease;
 }
 
+
 /* Windows-specific optimizations */
 @media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
     .flashcard-inner {

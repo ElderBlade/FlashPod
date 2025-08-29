@@ -75,6 +75,9 @@ export class DeckEditor {
         const container = document.getElementById('editCardsContainer');
         if (!container) return;
 
+        // Clear container
+        container.innerHTML = '';
+
         if (this.editingCards.length === 0) {
             container.innerHTML = `
                 <div class="text-center py-8 text-gray-500">
@@ -84,7 +87,7 @@ export class DeckEditor {
             return;
         }
         
-        container.innerHTML = '';
+        // Add all cards
         this.editingCards.forEach((card) => {
             const cardRow = this.createEditCardRow(card);
             container.appendChild(cardRow);
@@ -110,6 +113,9 @@ export class DeckEditor {
     }
 
     addNewEditCard() {
+        const container = document.getElementById('editCardsContainer');
+        if (!container) return;
+        
         const newCard = {
             id: 'new_' + Date.now(),
             front_content: '',
@@ -117,8 +123,16 @@ export class DeckEditor {
             is_new: true
         };
         
+        // Add to array without refreshing the display
         this.editingCards.push(newCard);
-        this.displayEditCards();
+        
+        // Create and append only the new card row
+        const newCardRow = this.createEditCardRow(newCard);
+        container.appendChild(newCardRow);
+        
+        // Focus on the new card's term input
+        const termInput = newCardRow.querySelector('input[name="term"]');
+        if (termInput) termInput.focus();
     }
 
     async handleSaveDeck(e) {
