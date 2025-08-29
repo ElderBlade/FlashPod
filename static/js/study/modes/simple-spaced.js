@@ -2,10 +2,13 @@
  * Simple Spaced Repetition Mode Implementation
  * Integrates with existing architecture
  */
+import { CardAbsorptionAnimator } from '../ui/card-absorption-animator.js';
+
 export class SimpleSpaced {
     constructor(studyManager) {
         this.manager = studyManager;
         this.modeName = 'simple-spaced';
+        this.absorptionAnimator = new CardAbsorptionAnimator();
     }
 
     async initialize(state) {
@@ -92,12 +95,8 @@ export class SimpleSpaced {
         this.manager.interface.hideResponseButtons();
         
         this.manager.interface.updateModeSpecificUI('simple-spaced', modeData);
-        
-        // Show color effect
-        this.showColorEffect(response === 'remember' ? 'green' : 'red');
-        
-        // Auto-advance after brief delay
-        setTimeout(() => this.advanceCard(), 300);
+
+        await this.showAbsorptionEffect(response);
     }
 
     moveToKnown(cardId) {
@@ -113,16 +112,11 @@ export class SimpleSpaced {
         }
     }
 
-    showColorEffect(color) {
-        const flashcard = document.getElementById('flashcard');
-        if (!flashcard) return;
-        
-        const effectClass = color === 'green' ? 'flash-green' : 'flash-red';
-        flashcard.classList.add(effectClass);
-        
-        setTimeout(() => {
-            flashcard.classList.remove(effectClass);
-        }, 300);
+    async showAbsorptionEffect(response) {
+        await this.absorptionAnimator.showAbsorptionEffect(response, () => {
+            // This callback is called early in the animation to advance the card
+            this.advanceCard();
+        });
     }
 
     async advanceCard() {
@@ -304,5 +298,7 @@ export class SimpleSpaced {
         if (this.manager.session) {
             await this.manager.session.saveSimpleSpacedProgress(modeData);
         }
+
+        this.absorptionAnimator.cleanup();
     }
 }
