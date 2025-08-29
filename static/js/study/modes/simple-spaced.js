@@ -42,17 +42,18 @@ export class SimpleSpaced {
     async onCardFlip(direction) {
         const state = this.manager.state;
         const modeData = state.modeData['simple-spaced'];
-        
-        // Only show buttons when card is flipped (showing back side)
-        if (state.isFlipped) {
-            modeData.isCollectingResponse = true;
-            
-            // Update the interface to show buttons
-            this.manager.interface.updateModeSpecificUI('simple-spaced', modeData);
-        } else {
-            // Hide buttons when showing front
-            modeData.isCollectingResponse = false;
-            this.manager.interface.hideResponseButtons();
+        const currentCard = state.cards[state.currentIndex];
+
+        // Show response buttons immediately when flipping to back (after flip is complete)
+        if (!state.isFlipped && currentCard && modeData.stillLearning.includes(currentCard.id)) {
+            setTimeout(() => {
+                modeData.isCollectingResponse = true;
+                const responseButtons = document.getElementById('responseButtons');
+                if (responseButtons) {
+                    responseButtons.classList.remove('hidden');
+                }
+                this.manager.interface.updateModeSpecificUI('simple-spaced', modeData);
+            }, 300);
         }
     }
 
@@ -164,6 +165,9 @@ export class SimpleSpaced {
             `Round ${modeData.currentRound} started - ${modeData.stillLearning.length} cards to review`,
             'info'
         );
+        
+        // FIX: Render the first card of the new round
+        this.renderCard();
     }
 
     handleSessionCompletion() {
@@ -214,6 +218,9 @@ export class SimpleSpaced {
         document.getElementById('completionModal')?.remove();
         
         this.manager._showMessage('Session restarted!', 'info');
+        
+        // FIX: Render the first card after restart
+        this.renderCard();
     }
 
     finishSession() {
@@ -230,6 +237,9 @@ export class SimpleSpaced {
         const modeData = this.manager.state.modeData['simple-spaced'];
         modeData.isCollectingResponse = false;
         this.manager.interface.hideResponseButtons();
+        
+        // FIX: Ensure the new card is rendered after navigation
+        await this.renderCard();
     }
 
     async renderCard() {

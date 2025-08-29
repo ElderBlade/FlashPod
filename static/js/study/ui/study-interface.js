@@ -84,8 +84,12 @@ export class StudyInterface {
                         </div>
                     `;
                 }
-                if (responseButtons && modeData.isCollectingResponse) {
-                    responseButtons.classList.remove('hidden');
+                if (responseButtons) {
+                    if (modeData.isCollectingResponse) {
+                        responseButtons.classList.remove('hidden');
+                    } else {
+                        responseButtons.classList.add('hidden');
+                    }
                 }
                 break;
                 
