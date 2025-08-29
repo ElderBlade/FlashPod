@@ -67,6 +67,19 @@ export class KeyboardHandler {
      * Handle universal keyboard shortcuts
      */
     _handleUniversalShortcuts(e) {
+
+        // Check if simple-spaced mode is collecting responses
+        const currentMode = this.manager.state.mode;
+        const modeData = this.manager.state.modeData[currentMode];
+        
+        // In simple-spaced mode, arrow keys are response keys when collecting responses
+        if (currentMode === 'simple-spaced' && modeData && modeData.isCollectingResponse) {
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                // These will be handled by mode-specific handler
+                return false;
+            }
+        }
+        
         switch (e.key) {
             case ' ': // Spacebar - flip card
                 e.preventDefault();
@@ -83,12 +96,12 @@ export class KeyboardHandler {
                 this.manager.flipCard('vertical-down');
                 return true;
                 
-            case 'ArrowLeft': // Left arrow - previous card
+            case 'ArrowLeft': // Left arrow - previous card (only if not collecting response)
                 e.preventDefault();
                 this.manager.navigateCard(-1);
                 return true;
                 
-            case 'ArrowRight': // Right arrow - next card
+            case 'ArrowRight': // Right arrow - next card (only if not collecting response)
                 e.preventDefault();
                 this.manager.navigateCard(1);
                 return true;
@@ -148,20 +161,19 @@ export class KeyboardHandler {
     /**
      * Handle simple spaced repetition mode keys
      */
+    // Update the _handleSimpleSpacedKeys method in keyboard-handler.js
     _handleSimpleSpacedKeys(e) {
         const modeData = this.manager.state.modeData['simple-spaced'];
         
         // Only handle response keys if we're collecting a response
-        if (modeData.isCollectingResponse) {
+        if (modeData && modeData.isCollectingResponse) {
             switch (e.key) {
-                case 'x':
-                case 'X': // X key - don't remember
+                case 'ArrowLeft': // Left arrow - don't remember
                     e.preventDefault();
                     this.manager.handleResponse('dont-remember');
                     return;
                     
-                case 'c':
-                case 'C': // C key - remember
+                case 'ArrowRight': // Right arrow - remember
                     e.preventDefault();
                     this.manager.handleResponse('remember');
                     return;

@@ -11,7 +11,7 @@ from datetime import datetime
 
 study_bp = Blueprint("study", url_prefix="/api/study")
 
-@study_bp.route("/deck/<deck_id:int>/session", methods=["GET"])
+@study_bp.route("/deck/<deck_id:int>/session", methods=["GET", "POST"])
 @require_auth
 async def get_or_create_study_session(request, deck_id):
     """Get existing study session or create a new one for a deck"""
@@ -147,6 +147,49 @@ async def update_card_during_study(request, card_id):
         return json({
             "message": "Card updated successfully",
             "card": card.to_dict()
+        })
+        
+    except Exception as e:
+        session.rollback()
+        return json({"error": str(e)}, status=500)
+    finally:
+        session.close()
+
+
+@study_bp.route("/card-review", methods=["POST"])
+@require_auth
+async def record_card_review(request):
+    """Record a card review for spaced repetition"""
+    session = get_db_session()
+    try:
+        user_id = request.ctx.user['id']
+        data = request.json
+        
+        # Validate required fields
+        card_id = data.get('card_id')
+        # response_quality = data.get('response_quality')  # 1-4 scale
+        # response_quality = 4
+        
+        # Verify card exists
+        card = session.query(Card).filter_by(id=card_id).first()
+        if not card:
+            return json({"error": "Card not found"}, status=404)
+        
+        # Create card review record (you'll need this model)
+        review = CardReview(
+            user_id=user_id,
+            card_id=card_id,
+            # response_quality=response_quality,
+            response_time=data.get('response_time'),
+            session_id=data.get('session_id')
+        )
+        
+        session.add(review)
+        session.commit()
+        
+        return json({
+            "review": review.to_dict(),
+            "status": "recorded"
         })
         
     except Exception as e:

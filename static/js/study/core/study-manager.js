@@ -5,7 +5,7 @@ import { StudyInterface } from '../ui/study-interface.js';
 import { KeyboardHandler } from '../utils/keyboard-handler.js';
 import { BasicReview } from '../modes/basic-review.js';
 import { SimpleSpaced } from '../modes/simple-spaced.js';
-import { FullSpaced } from '../modes/full-spaced.js';
+// import { FullSpaced } from '../modes/full-spaced.js';
 
 export class StudyManager {
     constructor() {
@@ -18,7 +18,7 @@ export class StudyManager {
         this.modes = {
             'basic': new BasicReview(this),
             'simple-spaced': new SimpleSpaced(this),
-            'full-spaced': new FullSpaced(this)
+            // 'full-spaced': new FullSpaced(this)
         };
         
         this.currentMode = null;
@@ -317,6 +317,20 @@ export class StudyManager {
         if (document.getElementById('nav-library')) {
             document.getElementById('nav-library').click();
         }
+    }
+
+    _activateStudy() {
+        this.interface.show();
+        this.keyboard.activate();
+        this.isActive = true;
+        this.isPaused = false;
+        
+        // Render the first card
+        if (this.currentMode) {
+            this.currentMode.renderCard();
+        }
+        
+        console.log(`Study activated - Mode: ${this.state.mode}`);
     }
 
     // Getters for external access

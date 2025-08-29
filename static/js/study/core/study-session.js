@@ -110,10 +110,9 @@ export class StudySession {
         };
 
         // Add session ID if we have a real backend session
-        if (this.sessionData.id && !this.sessionData.id.startsWith('local_')) {
-            reviewData.session_id = this.sessionData.id;
-        }
-
+        if (!this.sessionData || String(this.sessionData.id).startsWith('local_')) {
+            return; // Skip for local sessions
+}
         try {
             const response = await this.api.recordCardReview(reviewData);
             console.log(`Recorded review for card ${cardId}: quality=${responseQuality}`);
@@ -128,7 +127,7 @@ export class StudySession {
      * Update session progress
      */
     async updateProgress(cardsStudied, cardsCorrect = null) {
-        if (!this.sessionData || this.sessionData.id.startsWith('local_')) {
+        if (!this.sessionData || typeof this.sessionData.id === 'string' && this.sessionData.id.startsWith('local_')) {
             return; // Skip for local sessions
         }
 
@@ -152,10 +151,10 @@ export class StudySession {
      * Complete the study session
      */
     async end() {
-        if (!this.sessionData || this.sessionData.id.startsWith('local_')) {
+        if (!this.sessionData || typeof this.sessionData.id === 'string' && this.sessionData.id.startsWith('local_')) {
             return; // Skip for local sessions
         }
-
+        
         try {
             await this.api.completeSession(this.sessionData.id);
             console.log(`Completed session: ${this.sessionData.id}`);
@@ -227,6 +226,38 @@ export class StudySession {
                 results.push(result);
             }
             return results;
+        }
+    }
+
+    /**
+     * Record simple spaced response
+     */
+    async recordSimpleSpacedResponse(cardId, response) {
+        const responseQuality = response === 'remember' ? 4 : 1;
+        return await this.recordCardReview(cardId, responseQuality);
+    }
+
+    /**
+     * Save simple spaced progress
+     */
+    async saveSimpleSpacedProgress(modeData) {
+        if (!this.sessionData) return false;
+        
+        try {
+            const progressKey = `simple_spaced_${this.sessionData.id}`;
+            const progressData = {
+                currentRound: modeData.currentRound,
+                stillLearning: modeData.stillLearning,
+                known: modeData.known,
+                completedRounds: modeData.completedRounds,
+                timestamp: new Date().toISOString()
+            };
+            
+            localStorage.setItem(progressKey, JSON.stringify(progressData));
+            return true;
+        } catch (error) {
+            console.error('Failed to save simple spaced progress:', error);
+            return false;
         }
     }
 

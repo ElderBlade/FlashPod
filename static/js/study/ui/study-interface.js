@@ -349,8 +349,8 @@ export class StudyInterface {
                     <kbd>Space</kbd> flip horizontal • 
                     <kbd>↑</kbd> flip up • 
                     <kbd>↓</kbd> flip down • 
-                    <kbd>←</kbd> previous • 
-                    <kbd>→</kbd> next • 
+                    <kbd>←</kbd> previous / don't remember • 
+                    <kbd>→</kbd> next / remember • 
                     <kbd>T</kbd> term/definition • 
                     <kbd>S</kbd> shuffle
                 </div>
@@ -364,14 +364,14 @@ export class StudyInterface {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                         Don't Remember
-                        <kbd class="ml-3 px-2 py-1 text-xs bg-red-400 rounded">X</kbd>
+                        <kbd class="ml-3 px-2 py-1 text-xs bg-red-400 rounded">←</kbd>
                     </button>
                     <button id="rememberBtn" class="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg font-medium transition-colors flex items-center">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                         </svg>
                         Remember
-                        <kbd class="ml-3 px-2 py-1 text-xs bg-green-400 rounded">C</kbd>
+                        <kbd class="ml-3 px-2 py-1 text-xs bg-green-400 rounded">→</kbd>
                     </button>
                 </div>
             </div>

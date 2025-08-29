@@ -304,6 +304,18 @@ textarea:focus-visible {
     display: none;
 }
 
+.flashcard.flash-green {
+    background-color: rgba(34, 197, 94, 0.1);
+    border-color: #22c55e;
+    transition: all 0.3s ease;
+}
+
+.flashcard.flash-red {
+    background-color: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
+    transition: all 0.3s ease;
+}
+
 /* Windows-specific optimizations */
 @media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
     .flashcard-inner {
