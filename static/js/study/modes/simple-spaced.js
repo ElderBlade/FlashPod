@@ -21,6 +21,7 @@ export class SimpleSpaced {
         }
 
         this.updateActiveCards();
+        await this._updateInterface();
         console.log(`Simple Spaced initialized - Round ${modeData.currentRound}`);
     }
 
@@ -172,26 +173,31 @@ export class SimpleSpaced {
 
     handleSessionCompletion() {
         const modeData = this.manager.state.modeData['simple-spaced'];
+        const totalTime = Math.round((new Date() - new Date(modeData.sessionStartTime)) / 1000 / 60);
         
         // Create completion modal
         const modalHTML = `
-            <div id="completionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div class="bg-white rounded-lg p-6 max-w-md mx-4">
-                    <div class="text-center">
-                        <div class="text-4xl mb-4">🎉</div>
-                        <h2 class="text-2xl font-bold mb-4 text-green-600">Congratulations!</h2>
-                        <p class="mb-4">You've learned all ${modeData.known.length} cards!</p>
-                        <div class="mb-6">
-                            <p class="text-sm text-gray-600">Completed in ${modeData.currentRound} rounds</p>
-                        </div>
-                        <div class="flex gap-4">
-                            <button id="studyAgainBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
-                                Study Again
-                            </button>
-                            <button id="finishBtn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
-                                Finish
-                            </button>
-                        </div>
+            <div id="completionModal" class="modal-backdrop fixed inset-0 bg-opacity-50 flex items-center justify-center z-50"">
+                <div class="bg-white rounded-lg p-8 max-w-md mx-4 text-center shadow-xl">
+                    <div class="text-6xl mb-4">🎉</div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Session Complete!</h3>
+                    <div class="text-gray-600 text-sm mb-6">
+                        Congratulations! You've mastered all ${this.manager.state.totalCards} cards!
+                        <br><br>
+                        📊 Session Summary:<br>
+                        • Rounds completed: ${modeData.currentRound}<br>
+                        • Total time: ${totalTime} minutes<br>
+                        • Cards mastered: ${modeData.known.length}
+                        <br><br>
+                        All cards are now in your "Known" pile! 🧠✨
+                    </div>
+                    <div class="flex space-x-3">
+                        <button data-action="study-again" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            Study Again
+                        </button>
+                        <button data-action="finish" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                            Finish
+                        </button>
                     </div>
                 </div>
             </div>
@@ -199,8 +205,16 @@ export class SimpleSpaced {
         
         document.body.insertAdjacentHTML('beforeend', modalHTML);
         
-        document.getElementById('studyAgainBtn').onclick = () => this.restartSession();
-        document.getElementById('finishBtn').onclick = () => this.finishSession();
+        // Use event delegation
+        const modal = document.getElementById('completionModal');
+        modal.addEventListener('click', (e) => {
+            const action = e.target.dataset.action;
+            if (action === 'study-again') {
+                this.restartSession();
+            } else if (action === 'finish') {
+                this.finishSession();
+            }
+        });
     }
 
     restartSession() {
@@ -214,12 +228,25 @@ export class SimpleSpaced {
         modeData.responses.clear();
         modeData.sessionStartTime = new Date();
         
+        // Update the active cards (this updates state.cards and state.totalCards)
         this.updateActiveCards();
+        
+        // Reset current position to beginning
+        state.currentIndex = 0;
+        state.currentCardId = state.cards[0]?.id;
+        state.isFlipped = false;
+        
+        // Update interface components
+        this.manager.interface.updateProgress(); // This updates progress bar and counter
+        this.manager.interface.updateNavigationButtons();
+        this.manager.interface.updateModeSpecificUI('simple-spaced', modeData);
+        
+        // Remove the modal
         document.getElementById('completionModal')?.remove();
         
         this.manager._showMessage('Session restarted!', 'info');
         
-        // FIX: Render the first card after restart
+        // Render the first card after restart
         this.renderCard();
     }
 
@@ -244,6 +271,12 @@ export class SimpleSpaced {
 
     async renderCard() {
         this.manager.interface.renderCurrentCard();
+    }
+
+    // In your SimpleSpaced class
+    async _updateInterface() {
+        // Update keyboard hints for simple spaced mode
+        this.manager.interface.modeToggle.updateKeyboardHints();
     }
 
     getStats() {

@@ -15,7 +15,8 @@ export class ModeToggle {
      */
     setActiveMode(modeName) {
         this.activeMode = modeName;
-        this._updateToggleButtons();
+        // this._updateToggleButtons();
+        setTimeout(() => this._updateToggleButtons(), 0);
     }
 
     /**
@@ -156,8 +157,10 @@ export class ModeToggle {
             ],
             'simple-spaced': [
                 { key: 'Space', description: 'flip card' },
-                { key: 'X', description: "don't remember" },
-                { key: 'C', description: 'remember' },
+                { key: '↑', description: 'flip up'},
+                { key: '↓', description: 'flip down'},
+                { key: '←', description: "don't remember" },
+                { key: '→', description: 'remember' },
                 { key: 'S', description: 'shuffle' },
                 { key: 'T', description: 'term/def' }
             ],

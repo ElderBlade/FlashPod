@@ -37,6 +37,9 @@ export class StudyInterface {
         // Update navigation to show flashcards as active
         this._updateNavigation();
         
+        // Update keyboard hints for current mode
+        this.modeToggle.updateKeyboardHints();
+        
         this.isVisible = true;
     }
 
@@ -55,6 +58,7 @@ export class StudyInterface {
      */
     updateModeToggle(modeName) {
         this.modeToggle.setActiveMode(modeName);
+        this.modeToggle.updateKeyboardHints();
     }
 
     /**
@@ -181,11 +185,17 @@ export class StudyInterface {
 
         if (this.manager.state.isShuffled) {
             shuffleBtn.classList.remove('bg-gray-100', 'text-gray-500');
-            shuffleBtn.classList.add('bg-blue-100', 'text-blue-700');
+            shuffleBtn.classList.add('bg-blue-100', 'text-blue-700', 'border-blue-200');
+            shuffleBtn.style.backgroundColor = '#dbeafe';
+            shuffleBtn.style.color = '#1d4ed8';
+            shuffleBtn.style.borderColor = '#93c5fd';
             shuffleBtn.title = 'Shuffle is ON - Click to restore original order';
         } else {
-            shuffleBtn.classList.remove('bg-blue-100', 'text-blue-700');
+            shuffleBtn.classList.remove('bg-blue-100', 'text-blue-700', 'border-blue-200');
             shuffleBtn.classList.add('bg-gray-100', 'text-gray-500');
+            shuffleBtn.style.backgroundColor = '';
+            shuffleBtn.style.color = '';
+            shuffleBtn.style.borderColor = '';
             shuffleBtn.title = 'Shuffle is OFF - Click to randomize cards';
         }
     }
@@ -194,18 +204,26 @@ export class StudyInterface {
      * Update term/definition button visual state
      */
     updateTermDefButton() {
+        console.log("Update termdef button");
         const termDefBtn = document.getElementById('termDefBtn');
         const termDefIcon = document.getElementById('termDefIcon');
+        console.log(termDefBtn);
         if (!termDefBtn || !termDefIcon) return;
 
         if (this.manager.state.showDefinitionFirst) {
             termDefBtn.classList.remove('bg-gray-100', 'text-gray-500');
-            termDefBtn.classList.add('bg-purple-100', 'text-purple-700');
+            termDefBtn.classList.add('bg-purple-100', 'text-purple-700', 'border-purple-200');
+            termDefBtn.style.backgroundColor = '#f3e8ff';
+            termDefBtn.style.color = '#7c3aed';
+            termDefBtn.style.borderColor = '#c4b5fd';
             termDefBtn.title = 'Currently showing Definition First - Click to show Term First';
             termDefIcon.textContent = 'D';
         } else {
-            termDefBtn.classList.remove('bg-purple-100', 'text-purple-700');
+            termDefBtn.classList.remove('bg-purple-100', 'text-purple-700', 'border-purple-200');
             termDefBtn.classList.add('bg-gray-100', 'text-gray-500');
+            termDefBtn.style.backgroundColor = '';
+            termDefBtn.style.color = '';
+            termDefBtn.style.borderColor = '';
             termDefBtn.title = 'Currently showing Term First - Click to show Definition First';
             termDefIcon.textContent = 'T';
         }
@@ -350,13 +368,7 @@ export class StudyInterface {
                 
                 <!-- Keyboard Hints -->
                 <div class="keyboard-hints">
-                    <kbd>Space</kbd> flip horizontal • 
-                    <kbd>↑</kbd> flip up • 
-                    <kbd>↓</kbd> flip down • 
-                    <kbd>←</kbd> previous / don't remember • 
-                    <kbd>→</kbd> next / remember • 
-                    <kbd>T</kbd> term/definition • 
-                    <kbd>S</kbd> shuffle
+                    <!-- Will be populated dynamically by updateKeyboardHints() -->
                 </div>
             </div>
 
