@@ -650,3 +650,108 @@ textarea:focus-visible {
         background: rgba(0, 0, 0, 0.8);
     }
 }
+
+
+/* Mobile Study Session Fixes - Safe Version */
+@media (max-width: 768px) {
+    /* Fix response buttons positioning */
+    #responseButtons {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 1px solid #e5e7eb;
+        padding: 1rem;
+        z-index: 50;
+        box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    #responseButtons .flex {
+        gap: 0.75rem;
+        justify-content: center;
+        max-width: none;
+        margin: 0;
+    }
+    
+    #responseButtons button {
+        flex: 1;
+        padding: 1rem;
+        min-height: 48px;
+    }
+    
+    #responseButtons kbd {
+        display: none;
+    }
+    
+    /* Adjust study view when response buttons are visible */
+    #study-view:not(.hidden) {
+        padding-bottom: 6rem;
+    }
+    
+    /* Mode toggle layout for mobile */
+    #modeToggle {
+        flex-direction: row;
+        align-items: center;
+        gap: 1rem;
+        background: transparent;
+        padding: 0;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* Create container for just the mode buttons */
+    #modeToggle > .mode-toggle-container,
+    #modeToggle > div:not(button) {
+        background: #f3f4f6;
+        border-radius: 0.5rem;
+        padding: 0.25rem;
+        display: flex;
+    }
+    
+    /* Style mode toggle buttons */
+    .mode-toggle-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
+    
+    /* Side control buttons */
+    #modeToggle > #shuffleBtn,
+    #modeToggle > #termDefBtn {
+        background: #f3f4f6;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        min-width: 44px;
+        min-height: 44px;
+        flex-shrink: 0;
+    }
+    
+    /* Navigation container adjustments */
+    .navigation-container {
+        flex-direction: column;
+        gap: 1.5rem;
+        align-items: center;
+        max-width: none;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    /* Previous/Next button container */
+    .nav-buttons-container {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        width: 100%;
+    }
+    
+    /* Hide desktop-only elements */
+    .w-48 {
+        display: none;
+    }
+    
+    .hidden.md\\:flex {
+        display: none;
+    }
+}

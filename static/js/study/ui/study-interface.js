@@ -180,53 +180,64 @@ export class StudyInterface {
      * Update shuffle button visual state
      */
     updateShuffleButton() {
-        const shuffleBtn = document.getElementById('shuffleBtn');
-        if (!shuffleBtn) return;
-
-        if (this.manager.state.isShuffled) {
-            shuffleBtn.classList.remove('bg-gray-100', 'text-gray-500');
-            shuffleBtn.classList.add('bg-blue-100', 'text-blue-700', 'border-blue-200');
-            shuffleBtn.style.backgroundColor = '#dbeafe';
-            shuffleBtn.style.color = '#1d4ed8';
-            shuffleBtn.style.borderColor = '#93c5fd';
-            shuffleBtn.title = 'Shuffle is ON - Click to restore original order';
-        } else {
-            shuffleBtn.classList.remove('bg-blue-100', 'text-blue-700', 'border-blue-200');
-            shuffleBtn.classList.add('bg-gray-100', 'text-gray-500');
-            shuffleBtn.style.backgroundColor = '';
-            shuffleBtn.style.color = '';
-            shuffleBtn.style.borderColor = '';
-            shuffleBtn.title = 'Shuffle is OFF - Click to randomize cards';
-        }
+        const shuffleBtns = [
+            document.getElementById('shuffleBtn'),
+            document.getElementById('shuffleBtnDesktop')
+        ];
+        shuffleBtns.forEach(shuffleBtn => {
+            if (this.manager.state.isShuffled) {
+                shuffleBtn.classList.remove('bg-gray-100', 'text-gray-500');
+                shuffleBtn.classList.add('bg-blue-100', 'text-blue-700', 'border-blue-200');
+                shuffleBtn.style.backgroundColor = '#dbeafe';
+                shuffleBtn.style.color = '#1d4ed8';
+                shuffleBtn.style.borderColor = '#93c5fd';
+                shuffleBtn.title = 'Shuffle is ON - Click to restore original order';
+            } else {
+                shuffleBtn.classList.remove('bg-blue-100', 'text-blue-700', 'border-blue-200');
+                shuffleBtn.classList.add('bg-gray-100', 'text-gray-500');
+                shuffleBtn.style.backgroundColor = '';
+                shuffleBtn.style.color = '';
+                shuffleBtn.style.borderColor = '';
+                shuffleBtn.title = 'Shuffle is OFF - Click to randomize cards';
+            }
+        });
     }
 
     /**
      * Update term/definition button visual state
      */
     updateTermDefButton() {
-        console.log("Update termdef button");
-        const termDefBtn = document.getElementById('termDefBtn');
-        const termDefIcon = document.getElementById('termDefIcon');
-        console.log(termDefBtn);
-        if (!termDefBtn || !termDefIcon) return;
+        const termDefBtns = [
+            document.getElementById('termDefBtn'),
+            document.getElementById('termDefBtnDesktop')
+        ];
+        
+        const termDefIcons = [
+            document.querySelector('#termDefBtn span'),
+            document.querySelector('#termDefBtnDesktop span') // Desktop version
+        ];
 
-        if (this.manager.state.showDefinitionFirst) {
-            termDefBtn.classList.remove('bg-gray-100', 'text-gray-500');
-            termDefBtn.classList.add('bg-purple-100', 'text-purple-700', 'border-purple-200');
-            termDefBtn.style.backgroundColor = '#f3e8ff';
-            termDefBtn.style.color = '#7c3aed';
-            termDefBtn.style.borderColor = '#c4b5fd';
-            termDefBtn.title = 'Currently showing Definition First - Click to show Term First';
-            termDefIcon.textContent = 'D';
-        } else {
-            termDefBtn.classList.remove('bg-purple-100', 'text-purple-700', 'border-purple-200');
-            termDefBtn.classList.add('bg-gray-100', 'text-gray-500');
-            termDefBtn.style.backgroundColor = '';
-            termDefBtn.style.color = '';
-            termDefBtn.style.borderColor = '';
-            termDefBtn.title = 'Currently showing Term First - Click to show Definition First';
-            termDefIcon.textContent = 'T';
-        }
+        termDefBtns.forEach((termDefBtn, index) => {
+            const termDefIcon = termDefIcons[index];
+            
+            if (this.manager.state.showDefinitionFirst) {
+                termDefBtn.classList.remove('bg-gray-100', 'text-gray-500');
+                termDefBtn.classList.add('bg-purple-100', 'text-purple-700', 'border-purple-200');
+                termDefBtn.style.backgroundColor = '#f3e8ff';
+                termDefBtn.style.color = '#7c3aed';
+                termDefBtn.style.borderColor = '#c4b5fd';
+                termDefBtn.title = 'Currently showing Definition First - Click to show Term First';
+                termDefIcon.textContent = 'D';
+            } else {
+                termDefBtn.classList.remove('bg-purple-100', 'text-purple-700', 'border-purple-200');
+                termDefBtn.classList.add('bg-gray-100', 'text-gray-500');
+                termDefBtn.style.backgroundColor = '';
+                termDefBtn.style.color = '';
+                termDefBtn.style.borderColor = '';
+                termDefBtn.title = 'Currently showing Term First - Click to show Definition First';
+                termDefIcon.textContent = 'T';
+            }
+        });
     }
 
     /**
@@ -272,9 +283,11 @@ export class StudyInterface {
                 this.manager.navigateCard(1);
                 break;
             case 'shuffleBtn':
+            case 'shuffleBtnDesktop':
                 this.manager.toggleShuffle();
                 break;
             case 'termDefBtn':
+            case 'termDefBtnDesktop':
                 this.manager.toggleTermDef();
                 break;
             case 'editCardBtn':
@@ -393,26 +406,41 @@ export class StudyInterface {
             </div>
 
             <!-- Navigation Controls -->
-            <div class="flex justify-between items-center mt-8 max-w-4xl mx-auto">
-                <!-- Left spacer -->
-                <div class="w-48"></div>
+            <div class="navigation-container flex justify-between items-center mt-8 max-w-4xl mx-auto">
+                <!-- Left spacer (desktop only) -->
+                <div class="w-48 hidden md:block"></div>
                 
-                <!-- Mode Toggle (centered left) -->
+                <!-- Mode Toggle with side buttons -->
                 <div id="modeToggle" class="flex items-center bg-gray-100 rounded-lg p-1">
-                    <button id="basicModeBtn" class="mode-toggle-btn px-3 py-2 text-sm font-medium rounded transition-colors">
-                        Basic
+                    <!-- Shuffle button (mobile only) -->
+                    <button id="shuffleBtn" class="md:hidden" title="Toggle Shuffle Cards">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4l11.733 16h4.267l-11.733-16zm0 16l11.733-16h4.267l-11.733-16zm8.467-8.467l2.733-2.733"></path>
+                        </svg>
                     </button>
-                    <button id="simpleSpacedModeBtn" class="mode-toggle-btn px-3 py-2 text-sm font-medium rounded transition-colors">
-                        Simple
-                    </button>
-                    <button id="fullSpacedModeBtn" class="mode-toggle-btn px-3 py-2 text-sm font-medium rounded transition-colors">
-                        SM-2
+                    
+                    <!-- Mode buttons container -->
+                    <div class="mode-toggle-container">
+                        <button id="basicModeBtn" class="mode-toggle-btn px-3 py-2 text-sm font-medium rounded transition-colors">
+                            Basic
+                        </button>
+                        <button id="simpleSpacedModeBtn" class="mode-toggle-btn px-3 py-2 text-sm font-medium rounded transition-colors">
+                            Simple
+                        </button>
+                        <button id="fullSpacedModeBtn" class="mode-toggle-btn px-3 py-2 text-sm font-medium rounded transition-colors">
+                            SM-2
+                        </button>
+                    </div>
+                    
+                    <!-- Term/Def button (mobile only) -->
+                    <button id="termDefBtn" class="md:hidden" title="Toggle Term/Definition First">
+                        <span class="font-bold text-sm">T</span>
                     </button>
                 </div>
 
-                <!-- Navigation buttons (centered) -->
-                <div class="flex items-center space-x-6">
-                    <button id="prevCardBtn" class="nav-button">
+                <!-- Navigation buttons -->
+                <div class="nav-buttons-container flex items-center space-x-6">
+                    <button id="prevCardBtnDesktop" class="nav-button">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                         </svg>
@@ -427,13 +455,13 @@ export class StudyInterface {
                     </button>
                 </div>
 
-                <!-- Right side controls -->
-                <div class="flex justify-end items-center space-x-3 w-48">
-                    <button id="termDefBtn" class="nav-button transition-all duration-200" title="Toggle Term/Definition First">
-                        <span id="termDefIcon" class="w-5 h-5 flex items-center justify-center font-bold text-lg pointer-events-none">T</span>
+                <!-- Right side controls (desktop only) -->
+                <div class="hidden md:flex justify-end items-center space-x-3 w-48">
+                    <button id="termDefBtnDesktop" class="nav-button transition-all duration-200" title="Toggle Term/Definition First">
+                        <span class="w-5 h-5 flex items-center justify-center font-bold text-lg">T</span>
                     </button>
                     
-                    <button id="shuffleBtn" class="nav-button transition-all duration-200" title="Toggle Shuffle Cards">
+                    <button id="shuffleBtnDesktop" class="nav-button transition-all duration-200" title="Toggle Shuffle Cards">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4l11.733 16h4.267l-11.733-16zm0 16l11.733-16h4.267l-11.733-16zm8.467-8.467l2.733-2.733"></path>
                         </svg>
