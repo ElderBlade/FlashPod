@@ -258,9 +258,6 @@ export class StudyInterface {
      * Handle click events
      */
     handleClick(e) {
-        e.preventDefault();
-        e.stopPropagation();
-
         const button = e.target.closest('button');
         if (!button) {
             // Click on flashcard
@@ -275,6 +272,10 @@ export class StudyInterface {
         switch (action) {
             case 'exitStudyBtn':
                 this.manager.exitStudy();
+                break;
+            case 'saveChangesBtn':  // Add this case
+                console.log('Save button clicked - calling _saveCardEdit');
+                this._saveCardEdit();
                 break;
             case 'prevCardBtn':
                 this.manager.navigateCard(-1);
@@ -313,16 +314,9 @@ export class StudyInterface {
                 this.manager.switchMode('full-spaced');
                 break;
         }
-    }
 
-    /**
-     * Handle form submissions
-     */
-    handleSubmit(e) {
-        if (e.target.id === 'editCardForm') {
-            e.preventDefault();
-            this._saveCardEdit();
-        }
+        e.preventDefault();
+        e.stopPropagation();
     }
 
     // Private methods
@@ -440,7 +434,7 @@ export class StudyInterface {
 
                 <!-- Navigation buttons -->
                 <div class="nav-buttons-container flex items-center space-x-6">
-                    <button id="prevCardBtnDesktop" class="nav-button">
+                    <button id="prevCardBtn" class="nav-button">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                         </svg>
@@ -489,7 +483,7 @@ export class StudyInterface {
                         </div>
                         <div class="flex justify-end space-x-3 pt-4">
                             <button type="button" id="cancelEditBtn" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md">Cancel</button>
-                            <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md">Save Changes</button>
+                            <button type="submit" id="saveChangesBtn" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md">Save Changes</button>
                         </div>
                     </form>
                 </div>
@@ -501,7 +495,6 @@ export class StudyInterface {
         
         // Setup event listeners
         studyView.addEventListener('click', this.handleClick.bind(this));
-        studyView.addEventListener('submit', this.handleSubmit.bind(this));
         
         return studyView;
     }
@@ -541,6 +534,15 @@ export class StudyInterface {
         document.getElementById('editTags').value = currentCard.tags || '';
         
         document.getElementById('editCardModal').classList.remove('hidden');
+
+        // DEBUG: Check if form exists
+        setTimeout(() => {
+            const form = document.getElementById('editCardForm');
+            const submitBtn = document.querySelector('#editCardForm button[type="submit"]');
+            console.log('Form exists:', !!form);
+            console.log('Submit button exists:', !!submitBtn);
+            console.log('Form element:', form);
+        }, 100);
     }
 
     _closeEditModal() {
