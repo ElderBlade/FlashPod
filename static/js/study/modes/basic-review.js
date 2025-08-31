@@ -1,5 +1,6 @@
 // static/js/study/modes/basic-review.js
 import { StudyState } from '../core/study-state.js';
+import { TextUtils } from '../utils/text-utils.js';
 
 /**
  * Mode 1: Basic Review
@@ -51,6 +52,9 @@ export class BasicReview {
         // Update content
         frontContent.textContent = displayContent.frontText;
         backContent.textContent = displayContent.backText;
+
+        // Dynamically adjust text size
+        TextUtils.adjustCardTextSizes();
         
         // Update labels
         if (frontLabel) frontLabel.textContent = displayContent.frontLabel;

@@ -170,8 +170,8 @@ export class DeckEditor {
         
         cardRows.forEach((row, index) => {
             const cardId = row.dataset.cardId;
-            const term = row.querySelector('input[name="term"]')?.value.trim();
-            const definition = row.querySelector('textarea[name="definition"]')?.value.trim();
+            const term = row.querySelector('input[name="term"]')?.value;
+            const definition = row.querySelector('textarea[name="definition"]')?.value;
             
             if (term && definition) {
                 const originalCard = this.editingCards.find(c => c.id == cardId);

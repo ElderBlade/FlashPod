@@ -113,12 +113,31 @@
 .card-content {
     font-size: clamp(1.5rem, 4vw, 2rem);
     line-height: 1.4;
-    text-align: center;
+    text-align: justify;           /* Changed from center to justify */
     color: #111827;
     word-wrap: break-word;
     overflow-wrap: break-word;
     padding: 1rem;
     max-width: 100%;
+    /* Add these new properties for dynamic sizing */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+/* Dynamic text sizing classes */
+.card-content.text-small {
+    font-size: clamp(1rem, 3vw, 1.5rem);
+}
+
+.card-content.text-tiny {
+    font-size: clamp(0.875rem, 2.5vw, 1.25rem);
+}
+
+.card-content.text-micro {
+    font-size: clamp(0.75rem, 2vw, 1rem);
 }
 
 /* Edit Button */

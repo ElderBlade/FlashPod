@@ -1,5 +1,6 @@
 // static/js/study/ui/flashcard.js
 import { StudyState } from '../core/study-state.js';
+import { TextUtils } from '../utils/text-utils.js';
 
 /**
  * Flashcard UI component
@@ -34,6 +35,9 @@ export class Flashcard {
         // Update content
         frontContent.textContent = displayContent.frontText;
         backContent.textContent = displayContent.backText;
+
+        // Dynamically adjust text size
+        TextUtils.adjustCardTextSizes();
         
         // Update labels
         if (frontLabel) frontLabel.textContent = displayContent.frontLabel;
