@@ -1,0 +1,33 @@
+{
+  "name": "FlashPod - Smart Flashcard Learning",
+  "short_name": "FlashPod",
+  "description": "Progressive web app for creating and studying flashcards with spaced repetition",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#2563eb",
+  "background_color": "#ffffff",
+  "categories": ["education", "productivity"],
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/static/manifest/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/manifest/icon-512x512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/static/manifest/icon-1024x1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
