@@ -350,8 +350,39 @@ textarea:focus-visible {
         height: 300px;
     }
     
+    /* Mobile-specific dynamic sizing classes */
+    .card-content.text-small {
+        font-size: clamp(1rem, 3vw, 1.25rem);
+    }
+
+    .card-content.text-tiny {
+        font-size: clamp(0.875rem, 2.5vw, 1.125rem);
+    }
+
+    .card-content.text-micro {
+        font-size: clamp(0.75rem, 2vw, 1rem);
+    }
+
+    .flashcard-front,
+    .flashcard-back {
+        padding: 1.5rem 1rem; /* Less horizontal padding on mobile */
+    }
+    
+    /* Ensure text doesn't overflow */
     .card-content {
-        font-size: 1.25rem;
+        max-height: calc(100% - 3rem); /* Account for label space */
+        overflow-y: auto;
+        scrollbar-width: thin;
+    }
+    
+    /* Hide scrollbar on WebKit browsers */
+    .card-content::-webkit-scrollbar {
+        width: 3px;
+    }
+    
+    .card-content::-webkit-scrollbar-thumb {
+        background-color: rgba(0,0,0,0.2);
+        border-radius: 3px;
     }
     
     .nav-button,

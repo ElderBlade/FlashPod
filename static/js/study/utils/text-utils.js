@@ -43,14 +43,32 @@ export class TextUtils {
      * Apply text sizing to both front and back content elements
      * @param {Object} options - Configuration options
      */
+    // In static/js/study/utils/text-utils.js
     static adjustCardTextSizes(options = {}) {
+        // Detect mobile
+        const isMobile = window.innerWidth <= 768;
+        
+        // Default options with mobile adjustments
+        const defaultOptions = isMobile ? {
+            smallThreshold: 175,  // Smaller threshold for mobile
+            tinyThreshold: 300,
+            microThreshold: 450,
+            newlineWeight: 15     // Less weight per newline on mobile
+        } : {
+            smallThreshold: 500,
+            tinyThreshold: 600,
+            microThreshold: 700,
+            newlineWeight: 20
+        };
+        
+        const finalOptions = { ...defaultOptions, ...options };
+        
         const frontContent = document.getElementById('frontContent');
         const backContent = document.getElementById('backContent');
         
-        if (frontContent) this.adjustTextSize(frontContent, options);
-        if (backContent) this.adjustTextSize(backContent, options);
+        if (frontContent) this.adjustTextSize(frontContent, finalOptions);
+        if (backContent) this.adjustTextSize(backContent, finalOptions);
     }
-    
     /**
      * Get text length statistics for debugging/optimization
      * @param {HTMLElement} element 
