@@ -14,15 +14,15 @@ export class CardAbsorptionAnimator {
      * @param {Function} advanceCardCallback - Function to advance to next card
      */
     async showAbsorptionEffect(response, advanceCardCallback) {
-        if (this.animationInProgress) return;
+        // if (this.animationInProgress) return;
         
-        this.animationInProgress = true;
+        // this.animationInProgress = true;
         const isRemembered = response === 'remember';
         
         // Option 2: Card shrinks and flies to counter
         await this._cardFlyToCounter(isRemembered, advanceCardCallback);
         
-        this.animationInProgress = false;
+        // this.animationInProgress = false;
     }
 
     /**
@@ -34,10 +34,10 @@ export class CardAbsorptionAnimator {
         
         if (!flashcard || !targetBadge) return;
         
-        // Create a clone for the animation
+        // Create a clone for THIS specific animation
         const cardClone = this._createCardClone(flashcard);
         
-        // Get positions
+        // Get positions at the time this animation starts
         const cardRect = flashcard.getBoundingClientRect();
         const targetRect = targetBadge.getBoundingClientRect();
         
@@ -52,12 +52,10 @@ export class CardAbsorptionAnimator {
         this._addTrailEffect(cardClone, isRemembered);
         
         return new Promise((resolve) => {
-            // Start the card advancement immediately to render new card underneath
-            setTimeout(() => {
-                if (advanceCardCallback) {
-                    advanceCardCallback();
-                }
-            }, 100); // Small delay to ensure clone is visible first
+            // Advance card immediately - each animation advances independently
+            if (advanceCardCallback) {
+                advanceCardCallback();
+            }
             
             // Start the flying animation
             requestAnimationFrame(() => {
@@ -74,7 +72,7 @@ export class CardAbsorptionAnimator {
                 this._pulseCounter(targetBadge, isRemembered);
             }, 400);
             
-            // Cleanup
+            // Cleanup this specific animation
             setTimeout(() => {
                 cardClone.remove();
                 resolve();
@@ -251,13 +249,8 @@ export class CardAbsorptionAnimator {
      * Cleanup method
      */
     cleanup() {
-        const style = document.querySelector('#cardAbsorptionKeyframes');
-        if (style) style.remove();
-        
-        // Remove any lingering clones or particles
-        document.querySelectorAll('[style*="z-index: 1000"], [style*="z-index: 1001"]')
-            .forEach(el => {
-                if (el.id !== 'flashcard') el.remove();
-            });
+        // Remove any remaining animation clones
+        const clones = document.querySelectorAll('[style*="position: fixed"][style*="z-index: 1000"]');
+        clones.forEach(clone => clone.remove());
     }
 }

@@ -90,12 +90,13 @@ export class SimpleSpaced {
             this.moveToKnown(currentCard.id);
         }
         
-        // Hide response buttons
+        // Hide response buttons immediately for this card
         modeData.isCollectingResponse = false;
         this.manager.interface.hideResponseButtons();
         
         this.manager.interface.updateModeSpecificUI('simple-spaced', modeData);
 
+        // Trigger animation - this will handle card advancement
         await this.showAbsorptionEffect(response);
     }
 

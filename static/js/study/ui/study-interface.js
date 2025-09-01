@@ -79,7 +79,7 @@ export class StudyInterface {
                     modeIndicator.innerHTML = `
                         <div class="flex items-center space-x-4 text-sm text-gray-600">
                             <span class="bg-orange-100 text-orange-700 px-2 py-1 rounded">
-                                Still Learning: ${modeData.stillLearning.length}
+                                Learning: ${modeData.stillLearning.length}
                             </span>
                             <span class="bg-green-100 text-green-700 px-2 py-1 rounded">
                                 Known: ${modeData.known.length}

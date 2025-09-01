@@ -76,7 +76,10 @@ export class KeyboardHandler {
         if (currentMode === 'simple-spaced' && modeData && modeData.isCollectingResponse) {
             if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
                 // These will be handled by mode-specific handler
-                return false;
+                // return false;
+                if (modeData.isCollectingResponse || this.manager.state.isFlipped) {
+                    return false; // Block - let mode-specific handler deal with it
+                }
             }
         }
         
@@ -241,7 +244,7 @@ export class KeyboardHandler {
      */
     _showRoundInfo() {
         const modeData = this.manager.state.modeData['simple-spaced'];
-        const message = `Round ${modeData.currentRound} - Still Learning: ${modeData.stillLearning.length}, Known: ${modeData.known.length}`;
+        const message = `Round ${modeData.currentRound} - Learning: ${modeData.stillLearning.length}, Known: ${modeData.known.length}`;
         this._showMessage(message, 'info');
     }
 
