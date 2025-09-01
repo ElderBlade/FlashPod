@@ -179,12 +179,11 @@ export class SimpleSpaced {
                     <div class="text-6xl mb-4">🎉</div>
                     <h3 class="text-xl font-semibold text-gray-900 mb-4">Session Complete!</h3>
                     <div class="text-gray-600 text-sm mb-6">
-                        Congratulations! You've mastered all ${this.manager.state.totalCards} cards!
+                        Congratulations! You've mastered all ${modeData.known.length} cards!
                         <br><br>
                         📊 Session Summary:<br>
                         • Rounds completed: ${modeData.currentRound}<br>
                         • Total time: ${totalTime} minutes<br>
-                        • Cards mastered: ${modeData.known.length}
                         <br><br>
                         All cards are now in your "Known" pile! 🧠✨
                     </div>

@@ -33,34 +33,10 @@ export class BasicReview {
      * Render current card
      */
     async renderCard() {
-        const state = this.manager.state;
-        const displayContent = StudyState.getCardDisplayContent(state);
+        // Use the common flashcard module for rendering
+        this.manager.interface.renderCurrentCard();
         
-        if (!displayContent) return;
-        
-        // Get DOM elements
-        const frontContent = document.getElementById('frontContent');
-        const backContent = document.getElementById('backContent');
-        const frontLabel = document.querySelector('.flashcard-front .card-label');
-        const backLabel = document.querySelector('.flashcard-back .card-label');
-        
-        if (!frontContent || !backContent) return;
-        
-        // Reset card flip state
-        this._resetCardFlip();
-        
-        // Update content
-        frontContent.textContent = displayContent.frontText;
-        backContent.textContent = displayContent.backText;
-
-        // Dynamically adjust text size
-        TextUtils.adjustCardTextSizes();
-        
-        // Update labels
-        if (frontLabel) frontLabel.textContent = displayContent.frontLabel;
-        if (backLabel) backLabel.textContent = displayContent.backLabel;
-        
-        // Update progress
+        // Update progress and navigation (basic mode specific)
         this.manager.interface.updateProgress();
         this.manager.interface.updateNavigationButtons();
     }
@@ -69,8 +45,6 @@ export class BasicReview {
      * Handle card flip event
      */
     async onCardFlip(direction) {
-        // Basic mode doesn't need special flip handling
-        // Just track that the card was studied
         const modeData = StudyState.getModeData(this.manager.state, 'basic');
         
         if (!this.manager.state.isFlipped) {
@@ -188,27 +162,6 @@ export class BasicReview {
         
         // Update keyboard hints
         this.manager.interface.modeToggle.updateKeyboardHints();
-    }
-
-    /**
-     * Reset card flip state
-     */
-    _resetCardFlip() {
-        const flashcard = document.getElementById('flashcard');
-        if (!flashcard) return;
-        
-        // Remove all flip states instantly
-        flashcard.style.transition = 'none';
-        flashcard.classList.remove('flipped', 'flip-horizontal', 'flip-vertical-up', 'flip-vertical-down', 'flipping');
-        
-        // Force reflow
-        flashcard.offsetHeight;
-        
-        // Restore transitions
-        flashcard.style.transition = '';
-        
-        // Set default flip direction
-        flashcard.classList.add('flip-horizontal');
     }
 
     /**
