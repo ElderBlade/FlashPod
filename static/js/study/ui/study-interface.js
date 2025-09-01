@@ -400,9 +400,7 @@ export class StudyInterface {
             </div>
 
             <!-- Navigation Controls -->
-            <div class="navigation-container flex justify-between items-center mt-8 max-w-4xl mx-auto">
-                <!-- Left spacer (desktop only) -->
-                <div class="w-48 hidden md:block"></div>
+            <div class="navigation-container flex justify-between items-center mt-8 max-w-4xl mx-auto px-16">
                 
                 <!-- Mode Toggle with side buttons -->
                 <div id="modeToggle" class="flex items-center bg-gray-100 rounded-lg p-1">
