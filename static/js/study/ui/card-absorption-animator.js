@@ -139,7 +139,7 @@ export class CardAbsorptionAnimator {
             const text = badge.textContent;
             if (isRemembered && text.includes('Known:')) {
                 return badge;
-            } else if (!isRemembered && text.includes('Still Learning:')) {
+            } else if (!isRemembered && text.includes('Learning:')) {
                 return badge;
             }
         }
