@@ -45,7 +45,7 @@ export class DeckLibrary {
         
         if (decks.length === 0) {
             container.innerHTML = `
-                <div class="col-span-full text-center py-12 text-gray-500">
+                <div class="col-span-full text-center py-12 text-gray-500 dark:text-gray-400">
                     <p>No decks yet. Create your first deck to get started!</p>
                 </div>
             `;
@@ -57,10 +57,10 @@ export class DeckLibrary {
 
     getEmptyDecksHTML() {
         return `
-            <div class="col-span-full text-center py-8 text-gray-500">
-                <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="col-span-full text-center py-8 text-gray-500 dark:text-gray-400">
+                <svg class="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                          d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                 </svg>
                 <p>No decks yet. Create your first deck to get started!</p>
             </div>
@@ -69,13 +69,13 @@ export class DeckLibrary {
 
     getRecentDeckCardHTML(deck) {
         return `
-            <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors cursor-pointer">
-                <h4 class="font-medium text-gray-900 mb-2">${deck.name}</h4>
-                <p class="text-sm text-gray-500 mb-3">${deck.description || 'No description'}</p>
+            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer border border-transparent dark:border-gray-600">
+                <h4 class="font-medium text-gray-900 dark:text-white mb-2">${deck.name}</h4>
+                <p class="text-sm text-gray-500 dark:text-gray-300 mb-3">${deck.description || 'No description'}</p>
                 <div class="flex justify-between items-center text-sm">
-                    <span class="text-gray-500">${deck.card_count} cards</span>
+                    <span class="text-gray-500 dark:text-gray-400">${deck.card_count} cards</span>
                     <button onclick="window.app.studyDeck(${deck.id})" 
-                            class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 cursor-pointer">
+                            class="bg-blue-600 dark:bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 dark:hover:bg-blue-600 cursor-pointer transition-colors">
                         Study
                     </button>
                 </div>
@@ -85,22 +85,22 @@ export class DeckLibrary {
 
     getDeckCardHTML(deck) {
         return `
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">${deck.name}</h3>
-                <p class="text-gray-600 mb-4">${deck.description || 'No description'}</p>
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md dark:hover:shadow-gray-900/20 transition-all duration-300">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">${deck.name}</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">${deck.description || 'No description'}</p>
                 <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-500">${deck.card_count} cards</span>
+                    <span class="text-sm text-gray-500 dark:text-gray-400">${deck.card_count} cards</span>
                     <div class="space-x-2">
                         <button onclick="window.app.studyDeck(${deck.id})" 
-                                class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 cursor-pointer">
+                                class="bg-blue-600 dark:bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 dark:hover:bg-blue-600 cursor-pointer transition-colors">
                             Study
                         </button>
                         <button onclick="window.app.editDeck(${deck.id})" 
-                                class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded text-sm hover:bg-yellow-200 cursor-pointer">
+                                class="bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 px-3 py-1 rounded text-sm hover:bg-yellow-200 dark:hover:bg-yellow-800 cursor-pointer transition-colors">
                             Edit
                         </button>
                         <button onclick="window.app.exportDeck(${deck.id})" 
-                                class="bg-green-100 text-green-700 px-3 py-1 rounded text-sm hover:bg-green-200 cursor-pointer">
+                                class="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-3 py-1 rounded text-sm hover:bg-green-200 dark:hover:bg-green-800 cursor-pointer transition-colors">
                             Export
                         </button>
                     </div>

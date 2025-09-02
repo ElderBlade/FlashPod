@@ -329,10 +329,10 @@ export class StudyInterface {
             <!-- Study Header -->
             <div class="flex justify-between items-center mb-6">
                 <div class="flex items-center space-x-4">
-                    <button id="exitStudyBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                    <button id="exitStudyBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-colors dark:bg-gray-600 dark:hover:bg-gray-700">
                         Exit Study
                     </button>
-                    <div class="text-sm text-gray-600">
+                    <div class="text-sm text-gray-600 dark:text-gray-400">
                         <span id="cardProgress">Card 1 of 0</span>
                     </div>
                 </div>
@@ -342,32 +342,32 @@ export class StudyInterface {
             </div>
 
             <!-- Progress Bar -->
-            <div class="w-full bg-gray-200 rounded-full h-2 mb-8">
-                <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-8">
+                <div id="progressBar" class="bg-blue-600 dark:bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
             </div>
 
             <!-- Flashcard Container -->
             <div class="max-w-4xl mx-auto">
                 <div class="card-container">
-                    <div id="flashcard" class="flashcard">
+                    <div id="flashcard" class="flashcard dark:bg-gray-800 dark:border-gray-700 dark:shadow-gray-900/20">
                         <div class="flashcard-inner">
                             <div class="flashcard-front">
-                                <button id="editCardBtn" class="edit-btn">
+                                <button id="editCardBtn" class="edit-btn dark:text-gray-500 dark:hover:text-gray-300">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                     </svg>
                                 </button>
-                                <div class="card-label">Term</div>
-                                <div id="frontContent" class="card-content"></div>
+                                <div class="card-label dark:text-gray-400">Term</div>
+                                <div id="frontContent" class="card-content dark:text-white"></div>
                             </div>
                             <div class="flashcard-back">
-                                <button class="edit-btn" onclick="this.closest('.page-view').studyInterface._openEditModal()">
+                                <button class="edit-btn dark:text-gray-500 dark:hover:text-gray-300" onclick="this.closest('.page-view').studyInterface._openEditModal()">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                     </svg>
                                 </button>
-                                <div class="card-label">Definition</div>
-                                <div id="backContent" class="card-content"></div>
+                                <div class="card-label dark:text-gray-400">Definition</div>
+                                <div id="backContent" class="card-content dark:text-white"></div>
                             </div>
                         </div>
                     </div>
@@ -382,19 +382,19 @@ export class StudyInterface {
             <!-- Response Buttons (for spaced repetition modes) -->
             <div id="responseButtons" class="hidden max-w-4xl mx-auto mt-6">
                 <div class="flex justify-center space-x-6">
-                    <button id="dontRememberBtn" class="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-lg font-medium transition-colors flex items-center">
+                    <button id="dontRememberBtn" class="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white px-8 py-3 rounded-lg font-medium transition-colors flex items-center">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                         Don't Remember
-                        <kbd class="ml-3 px-2 py-1 text-xs bg-red-400 rounded">←</kbd>
+                        <kbd class="ml-3 px-2 py-1 text-xs bg-red-400 dark:bg-red-500 rounded">←</kbd>
                     </button>
-                    <button id="rememberBtn" class="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg font-medium transition-colors flex items-center">
+                    <button id="rememberBtn" class="bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white px-8 py-3 rounded-lg font-medium transition-colors flex items-center">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                         </svg>
                         Remember
-                        <kbd class="ml-3 px-2 py-1 text-xs bg-green-400 rounded">→</kbd>
+                        <kbd class="ml-3 px-2 py-1 text-xs bg-green-400 dark:bg-green-500 rounded">→</kbd>
                     </button>
                 </div>
             </div>

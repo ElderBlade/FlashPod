@@ -14,28 +14,28 @@
     <link href="/static/css/style.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="/static/img/flashpod-logo-icon.png">
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-300">
     <!-- Mobile Overlay -->
     <div id="overlay" class="overlay"></div>
     
     <div class="flex h-screen">
         <!-- Sidebar Navigation -->
-        <div id="sidebar" class="sidebar bg-white w-64 shadow-lg flex flex-col">
+        <div id="sidebar" class="sidebar bg-white dark:bg-gray-800 w-64 shadow-lg flex flex-col transition-colors duration-300">
             <!-- App Header -->
             <div class="px-6 py-6">
-                <h1 class="text-2xl font-bold text-gray-900">FlashPod</h1>
-                <p class="text-sm text-gray-500 mt-1">Smart Flashcard Learning</p>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">FlashPod</h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Smart Flashcard Learning</p>
             </div>
 
             <!-- User Info -->
-            <div class="px-6 py-4 border-gray-200">
+            <div class="px-6 py-4 bg-white dark:bg-gray-800 transition-colors duration-300">
                 <div class="flex items-center">
-                    <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                    <div class="w-10 h-10 bg-blue-600 dark:bg-blue-500 rounded-full flex items-center justify-center">
                         <span id="userInitials" class="text-white font-semibold text-sm"></span>
                     </div>
                     <div class="ml-3">
-                        <p id="userGreeting" class="text-sm font-medium text-gray-900"></p>
-                        <p class="text-xs text-gray-500">Premium User</p>
+                        <p id="userGreeting" class="text-sm font-medium text-gray-900 dark:text-white"></p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Premium User</p>
                     </div>
                 </div>
             </div>
@@ -88,10 +88,10 @@
             </nav>
 
             <!-- Version Info Footer -->
-            <div class="px-4 py-2 border-t border-gray-200 bg-gray-50">
-                <div class="flex items-center justify-between text-xs text-gray-500">
+            <div class="px-4 py-2 border-t border-gray-200 bg-gray-50 dark:border-gray-700">
+                <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-700">
                     <span id="appVersion">FlashPod v{{version}}</span>
-                    <a href="https://github.com/Elderblade/FlashPod" target="_blank" class="hover:text-gray-700 transition-colors">
+                    <a href="https://github.com/Elderblade/FlashPod" target="_blank" class="hover:text-gray-700 dark:hover:text-white transition-colors">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
                         </svg>
@@ -100,7 +100,7 @@
             </div> 
 
             <!-- Logout Button -->
-            <div class="px-4 py-4 border-t border-gray-200">
+            <div class="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
                 <button id="logoutBtn" class="w-full flex items-center px-4 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
@@ -124,39 +124,38 @@
             </div>
 
             <!-- Desktop Header -->
-            <header class="hidden md:block bg-white shadow-sm px-6 py-4">
+            <header class="hidden md:block bg-white dark:bg-gray-800 shadow-sm px-6 py-4 transition-colors duration-300">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h2 id="page-title" class="text-2xl font-bold text-gray-900">Dashboard</h2>
-                        <p id="page-subtitle" class="text-sm text-gray-500 mt-1">Welcome back! Here's your learning progress.</p>
+                        <h2 id="page-title" class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h2>
+                        <p id="page-subtitle" class="text-sm text-gray-500 dark:text-gray-400 mt-1">Welcome back! Here's your learning progress.</p>
                     </div>
-                    <div class="flex items-center space-x-4">
-                        <div class="relative">
-                            <button id="settings-button" class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                </svg>
-                            </button>
+                    
+                    <!-- Dark Mode Toggle - Moved to right side -->
+                    <div class="relative">
+                        <input type="checkbox" class="absolute left-[-999em]" id="dark-mode-toggle"/>
+                        <label for="dark-mode-toggle" class="toggle cursor-pointer inline-block relative w-[60px] h-[34px] bg-sky-300 rounded-[56px] transition-all duration-200 ease-[cubic-bezier(0.445,0.05,0.55,0.95)]">
+                            <!-- Sun/Moon Handler -->
+                            <span class="toggle__handler inline-block relative z-10 top-[2px] left-[2px] w-[30px] h-[30px] bg-orange-200 rounded-full shadow-lg transition-all duration-400 ease-[cubic-bezier(0.68,-0.55,0.265,1.55)] transform -rotate-45">
+                                <!-- Moon Craters -->
+                                <span class="crater crater--1 absolute top-[12px] left-[7px] w-[3px] h-[3px] bg-orange-100 opacity-0 transition-opacity duration-200 ease-in-out rounded-full"></span>
+                                <span class="crater crater--2 absolute top-[19px] left-[15px] w-[4px] h-[4px] bg-orange-100 opacity-0 transition-opacity duration-200 ease-in-out rounded-full"></span>
+                                <span class="crater crater--3 absolute top-[7px] left-[17px] w-[5px] h-[5px] bg-orange-100 opacity-0 transition-opacity duration-200 ease-in-out rounded-full"></span>
+                            </span>
+                            <!-- Stars -->
+                            <span class="star star--1 absolute top-[7px] left-[24px] z-0 w-[20px] h-[2px] bg-white transition-all duration-300 ease-[cubic-bezier(0.445,0.05,0.55,0.95)] rounded-full"></span>
+                            <span class="star star--2 absolute top-[12px] left-[19px] z-10 w-[20px] h-[2px] bg-white transition-all duration-300 ease-[cubic-bezier(0.445,0.05,0.55,0.95)] rounded-full"></span>
+                            <span class="star star--3 absolute top-[18px] left-[27px] z-0 w-[20px] h-[2px] bg-white transition-all duration-300 ease-[cubic-bezier(0.445,0.05,0.55,0.95)] rounded-full"></span>
+                            <span class="star star--4 absolute top-[11px] left-[7px] z-0 w-[1px] h-[1px] bg-white opacity-0 transition-all duration-300 ease-[cubic-bezier(0.445,0.05,0.55,0.95)] rounded-full transform translate-x-[2px]"></span>
+                            <span class="star star--5 absolute top-[22px] left-[11px] z-0 w-[2px] h-[2px] bg-white opacity-0 transition-all duration-300 ease-[cubic-bezier(0.445,0.05,0.55,0.95)] rounded-full transform translate-x-[2px]"></span>
+                            <span class="star star--6 absolute top-[24px] left-[19px] z-0 w-[1px] h-[1px] bg-white opacity-0 transition-all duration-300 ease-[cubic-bezier(0.445,0.05,0.55,0.95)] rounded-full transform translate-x-[2px]"></span>
                             
-                            <!-- Dropdown menu (initially hidden) -->
-                            <div id="settings-dropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 hidden z-50">
-                                <div class="px-4 py-2 border-b border-gray-100">
-                                    <p class="text-sm font-medium text-gray-900" id="dropdown-username">User</p>
-                                    <p class="text-xs text-gray-500">Premium Account</p>
-                                </div>
-                                <a href="#" id="settings-preferences" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Study Preferences</a>
-                                <a href="#" id="settings-account" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Account Settings</a>
-                                <a href="#" id="settings-theme" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Theme</a>
-                                <div class="border-t border-gray-100"></div>
-                                <button id="dropdown-logout" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Logout</button>
-                            </div>
-                        </div>
+                        </label>
                     </div>
                 </div>
             </header>
 
-            <div class="hidden md:block h-px bg-gray-200"></div>
+            <div class="hidden md:block h-px bg-gray-200 dark:bg-gray-700"></div>
 
             <!-- Mobile Page Title -->
             <div class="mobile-page-header md:hidden">
@@ -171,77 +170,81 @@
                     <!-- Stats Grid -->
                     <div class="stats-grid-mobile grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
                         <!-- Cards Learned -->
-                        <div class="stats-card-mobile bg-white rounded-xl shadow-sm p-4 md:p-6 border border-gray-100">
+                        <div class="stats-card-mobile bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 md:p-6 border border-gray-100 dark:border-gray-700 transition-colors duration-300">
                             <div class="flex items-center">
-                                <div class="p-2 bg-green-100 rounded-lg">
-                                    <svg class="stats-icon w-4 h-4 md:w-6 md:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+                                    <svg class="stats-icon w-4 h-4 md:w-6 md:h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
                                 </div>
                                 <div class="stats-text ml-3 md:ml-4">
-                                    <p class="stats-label text-xs md:text-sm font-medium text-gray-500">Learned</p>
-                                    <p id="cards-learned" class="stats-value text-lg md:text-2xl font-bold text-gray-900">127</p>
+                                    <p class="stats-label text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400">Learned</p>
+                                    <p id="cards-learned" class="stats-value text-lg md:text-2xl font-bold text-gray-900 dark:text-white">127</p>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Retention Rate -->
-                        <div class="stats-card-mobile bg-white rounded-xl shadow-sm p-4 md:p-6 border border-gray-100">
+                        <!-- Retention -->
+                        <div class="stats-card-mobile bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 md:p-6 border border-gray-100 dark:border-gray-700 transition-colors duration-300">
                             <div class="flex items-center">
-                                <div class="p-2 bg-blue-100 rounded-lg">
-                                    <svg class="stats-icon w-4 h-4 md:w-6 md:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                                    <svg class="stats-icon w-4 h-4 md:w-6 md:h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
                                     </svg>
                                 </div>
                                 <div class="stats-text ml-3 md:ml-4">
-                                    <p class="stats-label text-xs md:text-sm font-medium text-gray-500">Retention</p>
-                                    <p id="retention-rate" class="stats-value text-lg md:text-2xl font-bold text-gray-900">84%</p>
+                                    <p class="stats-label text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400">Retention</p>
+                                    <p id="retention-rate" class="stats-value text-lg md:text-2xl font-bold text-gray-900 dark:text-white">84%</p>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Total Reviews -->
-                        <div class="stats-card-mobile bg-white rounded-xl shadow-sm p-4 md:p-6 border border-gray-100">
+                        <!-- Reviews -->
+                        <div class="stats-card-mobile bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 md:p-6 border border-gray-100 dark:border-gray-700 transition-colors duration-300">
                             <div class="flex items-center">
-                                <div class="p-2 bg-purple-100 rounded-lg">
-                                    <svg class="stats-icon w-4 h-4 md:w-6 md:h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                                    <svg class="stats-icon w-4 h-4 md:w-6 md:h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
                                     </svg>
                                 </div>
                                 <div class="stats-text ml-3 md:ml-4">
-                                    <p class="stats-label text-xs md:text-sm font-medium text-gray-500">Reviews</p>
-                                    <p id="total-reviews" class="stats-value text-lg md:text-2xl font-bold text-gray-900">1.2k</p>
+                                    <p class="stats-label text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400">Reviews</p>
+                                    <p id="total-reviews" class="stats-value text-lg md:text-2xl font-bold text-gray-900 dark:text-white">1.2k</p>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Review Time -->
-                        <div class="stats-card-mobile bg-white rounded-xl shadow-sm p-4 md:p-6 border border-gray-100">
+                        <!-- Time -->
+                        <div class="stats-card-mobile bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 md:p-6 border border-gray-100 dark:border-gray-700 transition-colors duration-300">
                             <div class="flex items-center">
-                                <div class="p-2 bg-orange-100 rounded-lg">
-                                    <svg class="stats-icon w-4 h-4 md:w-6 md:h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="p-2 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
+                                    <svg class="stats-icon w-4 h-4 md:w-6 md:h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
                                 </div>
                                 <div class="stats-text ml-3 md:ml-4">
-                                    <p class="stats-label text-xs md:text-sm font-medium text-gray-500">Time</p>
-                                    <p id="review-time" class="stats-value text-lg md:text-2xl font-bold text-gray-900">2.3h</p>
+                                    <p class="stats-label text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400">Time</p>
+                                    <p id="study-time" class="stats-value text-lg md:text-2xl font-bold text-gray-900 dark:text-white">2.3h</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Recently Reviewed Decks -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
-                        <div class="px-4 md:px-6 py-4 border-b border-gray-200">
-                            <h3 class="text-base md:text-lg font-semibold text-gray-900">Recently Reviewed Decks</h3>
-                            <p class="text-xs md:text-sm text-gray-500 mt-1">Your most recently studied decks</p>
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-300">
+                        <div class="px-4 md:px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recently Reviewed Decks</h3>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Your most recently studied decks</p>
+                                </div>
+                            </div>
                         </div>
                         <div class="p-4 md:p-6">
                             <div id="recent-decks" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <!-- Recent decks will be loaded here -->
-                                <div class="text-center py-8 text-gray-500">
-                                    <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                                    <svg class="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                                     </svg>
                                     <p class="text-sm md:text-base">Loading recent decks...</p>
@@ -258,47 +261,47 @@
                     </div>
                 </div>
 
-                <div id="flashcards-view" class="page-view hidden p-4 md:p-6">
+                <div id="flashcards-view" class="page-view hidden p-4 md:p-6 dark:text-white">
                     <p>Flash card study interface coming soon...</p>
                 </div>
 
                 <div id="new-deck-view" class="page-view hidden p-4 md:p-6">
                     
                     <!-- New Deck Form -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
                         <form id="deckForm" class="space-y-6">
                             <!-- Deck Info Section -->
                             <div class="">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Deck Name</label>
-                                    <input type="text" id="deckName" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">Deck Name</label>
+                                    <input type="text" id="deckName" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2 mt-2">Description</label>
-                                    <textarea id="deckDescription" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" rows="3"></textarea>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2 mt-2 dark:text-gray-300">Description</label>
+                                    <textarea id="deckDescription" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400" rows="3"></textarea>
                                 </div>
                             </div>
 
                             <!-- Import Section -->
                             <div class="border-t pt-3">
                                 <div class="block mb-4">
-                                    <button type="button" id="importCardsBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 my-2 rounded-md font-medium transition-colors flex items-center">
+                                    <button type="button" id="importCardsBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300 px-4 py-2 my-2 rounded-md font-medium transition-colors flex items-center">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
                                         </svg>
                                         Import Cards
                                     </button>
-                                    <h3 class="text-lg font-medium text-gray-900">Flashcards</h3>
+                                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">Flashcards</h3>
                                     
                                 </div>
 
                                 <!-- Cards Container -->
-                                <div id="cardsContainer" class="space-y-3 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-4">
+                                <div id="cardsContainer" class="space-y-3 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-4 dark:border-gray-600">
                                     <!-- Card rows will be added here -->
                                 </div>
 
                                 <!-- Add Card Button -->
-                                <button type="button" id="addCardBtn" class="w-full border-2 border-dashed border-gray-300 rounded-lg px-4 py-3 text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors flex items-center justify-center">
+                                <button type="button" id="addCardBtn" class="w-full border-2 border-dashed border-gray-300 rounded-lg px-4 py-3 text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors flex items-center justify-center dark:border-gray-600 dark:text-gray-400 dark:hover:border-gray-500 dark:hover:text-gray-300">
                                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                                     </svg>
@@ -307,11 +310,11 @@
                             </div>
 
                             <!-- Form Actions -->
-                            <div class="flex gap-4 pt-6 border-t">
-                                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                            <div class="flex gap-4 pt-6 border-t dark:border-gray-700">
+                                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors dark:bg-blue-500 dark:hover:bg-blue-600">
                                     Create Deck
                                 </button>
-                                <button type="button" id="cancelDeck" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                                <button type="button" id="cancelDeck" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition-colors dark:bg-gray-600 dark:hover:bg-gray-700">
                                     Cancel
                                 </button>
                             </div>
@@ -321,26 +324,26 @@
 
                 <!-- Import Section -->
                 <div id="import-view" class="page-view hidden p-4 md:p-6">
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
                         <div class="mb-6">
-                            <h2 class="text-xl font-semibold text-gray-900 mb-2">Import Flashcards</h2>
-                            <p class="text-sm text-gray-600 mb-4">
+                            <h2 class="text-xl font-semibold text-gray-900 mb-2 dark:text-white">Import Flashcards</h2>
+                            <p class="text-sm text-gray-600 mb-4 dark:text-gray-300">
                                 Paste your flashcard data below. Each line should contain a term and definition separated by a tab or comma.
                             </p>
                             
                             <!-- Format Examples -->
-                            <div class="bg-gray-50 rounded-lg p-4 mb-4">
-                                <h3 class="text-sm font-medium text-gray-700 mb-2">Supported Formats:</h3>
-                                <div class="text-xs text-gray-600 space-y-1 font-mono">
-                                    <div>• Tab-separated: <span class="bg-white px-1 rounded">Word 1&nbsp;&nbsp;&nbsp;&nbsp;Definition 1</span></div>
-                                    <div>• Comma-separated: <span class="bg-white px-1 rounded">Word 1, Definition 1</span></div>
+                            <div class="bg-gray-50 rounded-lg p-4 mb-4 dark:bg-gray-900 dark:border-gray-700">
+                                <h3 class="text-sm font-medium text-gray-700 mb-2 dark:text-white">Supported Formats:</h3>
+                                <div class="text-xs text-gray-600 space-y-1 font-mono dark:text-gray-300">
+                                    <div>• Tab-separated: <span class="px-1 rounded ">Word 1&nbsp;&nbsp;&nbsp;&nbsp;Definition 1</span></div>
+                                    <div>• Comma-separated: <span class="px-1 rounded">Word 1, Definition 1</span></div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="space-y-4">
                             <div>
-                                <label for="importDataField" class="block text-sm font-medium text-gray-700 mb-2">
+                                <label for="importDataField" class="block text-sm font-medium text-gray-700 mb-2 dark:text-white">
                                     Flashcard Data
                                 </label>
                                 <textarea 
@@ -356,7 +359,7 @@
                             </div>
 
                             <!-- Action Buttons -->
-                            <div class="flex gap-4 pt-4 border-t">
+                            <div class="flex gap-4 pt-4 border-t dark:border-gray-700">
                                 <button 
                                     id="parseImportBtn" 
                                     class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
@@ -373,7 +376,7 @@
 
                             <!-- Parsed Cards Section -->
                             <div id="importCardsSection" class="hidden">
-                                <div class="border-t pt-6">
+                                <div class="border-t pt-6 dark:border-gray-700">
                                     <div class="flex justify-between items-center mb-4">
                                         <h3 class="text-lg font-medium text-gray-900">
                                             Parsed Cards (<span id="cardCount">0</span>)
@@ -399,10 +402,10 @@
                 <!-- Edit Section-->
                 <div id="edit-deck-view" class="page-view hidden p-4 md:p-6">
                     <!-- Edit Deck Form -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700">
                         <div class="flex items-center justify-between mb-6">
-                            <h3 class="text-xl font-semibold text-gray-900">Edit Deck</h3>
-                            <button id="cancelEdit" class="text-gray-500 hover:text-gray-700">
+                            <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Edit Deck</h3>
+                            <button id="cancelEdit" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                 </svg>
@@ -415,18 +418,18 @@
                             <!-- Deck Info Section -->
                             <div class="">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Deck Name</label>
-                                    <input type="text" id="editDeckName" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">Deck Name</label>
+                                    <input type="text" id="editDeckName" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2 mt-2">Description</label>
-                                    <textarea id="editDeckDescription" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" rows="3"></textarea>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2 mt-2 dark:text-gray-300">Description</label>
+                                    <textarea id="editDeckDescription" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400" rows="3"></textarea>
                                 </div>
                             </div>
 
                             <!-- Cards Section -->
                             <div class="mb-4">
-                                <h3 class="text-lg font-medium text-gray-900">Flashcards</h3>
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-white">Flashcards</h3>
                             </div>
 
                                 <!-- Cards Container for Edit -->
@@ -438,7 +441,7 @@
                                 </div>
 
                                 <!-- Add Card Button -->
-                                <button type="button" id="addCardToEdit" class="w-full border-2 border-dashed border-gray-300 rounded-lg px-4 py-3 text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors flex items-center justify-center">
+                                <button type="button" id="addCardToEdit" class="w-full border-2 border-dashed border-gray-300 rounded-lg px-4 py-3 text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors flex items-center justify-center dark:border-gray-600 dark:text-gray-400 dark:hover:border-gray-500 dark:hover:text-gray-300">
                                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                                     </svg>
@@ -447,14 +450,14 @@
                             </div>
 
                             <!-- Form Actions -->
-                            <div class="flex gap-4 pt-6 border-t">
-                                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                            <div class="flex gap-4 pt-6 border-t dark:border-gray-700">
+                                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors dark:bg-blue-500 dark:hover:bg-blue-600">
                                     Save Changes
                                 </button>
-                                <button type="button" id="cancelEditDeck" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                                <button type="button" id="cancelEditDeck" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition-colors dark:bg-gray-600 dark:hover:bg-gray-700">
                                     Cancel
                                 </button>
-                                <button type="button" id="deleteDeck" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition-colors ml-auto">
+                                <button type="button" id="deleteDeck" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition-colors ml-auto dark:bg-red-600 dark:hover:bg-red-700">
                                     Delete Deck
                                 </button>
                             </div>

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* Flashcard Container and 3D Setup */
 .card-container {
@@ -333,6 +334,69 @@ textarea:focus-visible {
     background-color: rgba(239, 68, 68, 0.1);
     border-color: #ef4444;
     transition: all 0.3s ease;
+}
+
+
+/* Day/Night Toggle - CodePen Style */
+
+/* Checked state - Night mode */
+#dark-mode-toggle:checked + .toggle {
+    background-color: #5b7fc7; /* Darker blue for night */
+}
+
+/* Sun/Moon handler transformation */
+#dark-mode-toggle:checked + .toggle .toggle__handler {
+    background-color: #ffe5b5; /* Moon color */
+    transform: translate3d(18px, 18px, 0); /* Move right and straighten */
+; /* Move right and straighten */
+}
+
+/* Show moon craters when in dark mode */
+#dark-mode-toggle:checked + .toggle .crater {
+    opacity: 1;
+}
+
+/* Star animations for night mode */
+#dark-mode-toggle:checked + .toggle .star--1 {
+    width: 2px;
+    height: 2px;
+}
+
+#dark-mode-toggle:checked + .toggle .star--2 {
+    width: 4px;
+    height: 4px;
+    transform: translate3d(-5px, 0, 0);
+}
+
+#dark-mode-toggle:checked + .toggle .star--3 {
+    width: 2px;
+    height: 2px;
+    transform: translate3d(-7px, 0, 0);
+}
+
+/* Show additional stars with staggered delays */
+#dark-mode-toggle:checked + .toggle .star--4,
+#dark-mode-toggle:checked + .toggle .star--5,
+#dark-mode-toggle:checked + .toggle .star--6 {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+}
+
+#dark-mode-toggle:checked + .toggle .star--4 {
+    transition: all 300ms 200ms cubic-bezier(0.445, 0.05, 0.55, 0.95);
+}
+
+#dark-mode-toggle:checked + .toggle .star--5 {
+    transition: all 300ms 300ms cubic-bezier(0.445, 0.05, 0.55, 0.95);
+}
+
+#dark-mode-toggle:checked + .toggle .star--6 {
+    transition: all 300ms 400ms cubic-bezier(0.445, 0.05, 0.55, 0.95);
+}
+
+/* Custom easing functions for smooth animations */
+.toggle__handler {
+    transition: all 400ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
 

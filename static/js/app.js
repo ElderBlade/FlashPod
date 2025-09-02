@@ -8,6 +8,7 @@ import { DeckLibrary } from './features/deck-library.js';
 import { DeckManager } from './features/deck-manager.js';
 import { DeckEditor } from './features/deck-editor.js';
 import { ImportManager } from './features/import-manager.js';
+import { DarkModeToggle } from './ui/dark-mode-toggle.js';
 
 class FlashPodApp {
     constructor() {
@@ -21,6 +22,7 @@ class FlashPodApp {
         this.deckManager = new DeckManager(this.navigation);
         this.deckEditor = new DeckEditor(this.navigation);
         this.importManager = new ImportManager(this.navigation);
+        this.darkModeToggle = new DarkModeToggle();
         
         // Expose global methods for onclick handlers
         window.app = this;
