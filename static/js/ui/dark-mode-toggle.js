@@ -2,6 +2,7 @@
 export class DarkModeToggle {
     constructor() {
         this.toggle = document.getElementById('dark-mode-toggle');
+        this.mobileToggle = document.getElementById('mobile-dark-mode-toggle');
         this.storageKey = 'flashpod_dark_mode';
         
         this.init();
@@ -23,10 +24,27 @@ export class DarkModeToggle {
     }
     
     setupEventListeners() {
-        this.toggle.addEventListener('change', (e) => {
-            console.log('Toggle changed:', e.target.checked); // Debug log
-            this.toggleDarkMode();
-        });
+        // Desktop toggle
+        if (this.toggle) {
+            this.toggle.addEventListener('change', (e) => {
+                this.setDarkMode(e.target.checked);
+                // Sync mobile toggle
+                if (this.mobileToggle) {
+                    this.mobileToggle.checked = e.target.checked;
+                }
+            });
+        }
+        
+        // Mobile toggle
+        if (this.mobileToggle) {
+            this.mobileToggle.addEventListener('change', (e) => {
+                this.setDarkMode(e.target.checked);
+                // Sync desktop toggle
+                if (this.toggle) {
+                    this.toggle.checked = e.target.checked;
+                }
+            });
+        }
         
         // Completely disable system theme changes
         if (window.matchMedia) {
@@ -42,18 +60,16 @@ export class DarkModeToggle {
     }
     
     setDarkMode(isDark) {
-        console.log('Setting dark mode:', isDark); // Debug log
-        
         if (isDark) {
             document.documentElement.classList.add('dark');
-            this.toggle.checked = true;
+            if (this.toggle) this.toggle.checked = true;
+            if (this.mobileToggle) this.mobileToggle.checked = true;
             localStorage.setItem(this.storageKey, 'dark');
-            console.log('Dark mode enabled'); // Debug log
         } else {
             document.documentElement.classList.remove('dark');
-            this.toggle.checked = false;
+            if (this.toggle) this.toggle.checked = false;
+            if (this.mobileToggle) this.mobileToggle.checked = false;
             localStorage.setItem(this.storageKey, 'light');
-            console.log('Dark mode disabled'); // Debug log
         }
         
         // Dispatch custom event

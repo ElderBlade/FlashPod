@@ -132,14 +132,34 @@
         <!-- Main Content Area -->
         <div class="main-content flex-1 flex flex-col overflow-hidden">
             <!-- Mobile Header (visible only on mobile) -->
-            <div class="mobile-header md:hidden">
+            <div class="mobile-header md:hidden flex items-center justify-between p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
                 <button id="hamburger" class="hamburger" aria-label="Toggle navigation menu">
                     <span></span>
                     <span></span>
                     <span></span>
                 </button>
-                <h2 class="text-lg font-bold text-gray-900">FlashPod</h2>
-                <div class="w-6"></div> <!-- Spacer for alignment -->
+                <h2 class="text-lg font-bold text-gray-900 dark:text-white">FlashPod</h2>
+                
+                <!-- Dark Mode Toggle for Mobile -->
+                <div class="relative">
+                    <input type="checkbox" class="absolute left-[-999em]" id="mobile-dark-mode-toggle"/>
+                    <label for="mobile-dark-mode-toggle" class="toggle dark-toggle cursor-pointer inline-block relative w-[60px] h-[34px] bg-sky-300 rounded-[56px] transition-all duration-200 ease-[cubic-bezier(0.445,0.05,0.55,0.95)]">
+                        <!-- Sun/Moon Handler -->
+                        <span class="toggle__handler inline-block relative z-10 top-[2px] left-[2px] w-[30px] h-[30px] bg-orange-200 rounded-full shadow-lg transition-all duration-400 ease-[cubic-bezier(0.68,-0.55,0.265,1.55)] transform -rotate-45">
+                            <!-- Moon Craters -->
+                            <span class="crater crater--1 absolute top-[12px] left-[7px] w-[3px] h-[3px] bg-orange-100 opacity-0 transition-opacity duration-200 ease-in-out rounded-full"></span>
+                            <span class="crater crater--2 absolute top-[19px] left-[15px] w-[4px] h-[4px] bg-orange-100 opacity-0 transition-opacity duration-200 ease-in-out rounded-full"></span>
+                            <span class="crater crater--3 absolute top-[7px] left-[17px] w-[5px] h-[5px] bg-orange-100 opacity-0 transition-opacity duration-200 ease-in-out rounded-full"></span>
+                        </span>
+                        <!-- Stars -->
+                        <span class="star star--1 absolute top-[7px] left-[24px] z-0 w-[20px] h-[2px] bg-white transition-all duration-300 ease-[cubic-bezier(0.445,0.05,0.55,0.95)] rounded-full"></span>
+                        <span class="star star--2 absolute top-[12px] left-[19px] z-10 w-[20px] h-[2px] bg-white transition-all duration-300 ease-[cubic-bezier(0.445,0.05,0.55,0.95)] rounded-full"></span>
+                        <span class="star star--3 absolute top-[18px] left-[27px] z-0 w-[20px] h-[2px] bg-white transition-all duration-300 ease-[cubic-bezier(0.445,0.05,0.55,0.95)] rounded-full"></span>
+                        <span class="star star--4 absolute top-[11px] left-[7px] z-0 w-[1px] h-[1px] bg-white opacity-0 transition-all duration-300 ease-[cubic-bezier(0.445,0.05,0.55,0.95)] rounded-full transform translate-x-[2px]"></span>
+                        <span class="star star--5 absolute top-[22px] left-[11px] z-0 w-[2px] h-[2px] bg-white opacity-0 transition-all duration-300 ease-[cubic-bezier(0.445,0.05,0.55,0.95)] rounded-full transform translate-x-[2px]"></span>
+                        <span class="star star--6 absolute top-[24px] left-[19px] z-0 w-[1px] h-[1px] bg-white opacity-0 transition-all duration-300 ease-[cubic-bezier(0.445,0.05,0.55,0.95)] rounded-full transform translate-x-[2px]"></span>
+                    </label>
+                </div>
             </div>
 
             <!-- Desktop Header -->
@@ -153,7 +173,7 @@
                     <!-- Dark Mode Toggle - Moved to right side -->
                     <div class="relative">
                         <input type="checkbox" class="absolute left-[-999em]" id="dark-mode-toggle"/>
-                        <label for="dark-mode-toggle" class="toggle cursor-pointer inline-block relative w-[60px] h-[34px] bg-sky-300 rounded-[56px] transition-all duration-200 ease-[cubic-bezier(0.445,0.05,0.55,0.95)]">
+                        <label for="dark-mode-toggle" class="toggle dark-toggle cursor-pointer inline-block relative w-[60px] h-[34px] bg-sky-300 rounded-[56px] transition-all duration-200 ease-[cubic-bezier(0.445,0.05,0.55,0.95)]">
                             <!-- Sun/Moon Handler -->
                             <span class="toggle__handler inline-block relative z-10 top-[2px] left-[2px] w-[30px] h-[30px] bg-orange-200 rounded-full shadow-lg transition-all duration-400 ease-[cubic-bezier(0.68,-0.55,0.265,1.55)] transform -rotate-45">
                                 <!-- Moon Craters -->
@@ -177,9 +197,9 @@
             <div class="hidden md:block h-px bg-gray-200 dark:bg-gray-700"></div>
 
             <!-- Mobile Page Title -->
-            <div class="mobile-page-header md:hidden">
-                <h2 id="mobile-page-title" class="mobile-page-title">Dashboard</h2>
-                <p id="mobile-page-subtitle" class="mobile-page-subtitle">Welcome back!</p>
+            <div class="mobile-page-header md:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
+                <h2 id="mobile-page-title" class="mobile-page-title text-gray-900 dark:text-white">Dashboard</h2>
+                <p id="mobile-page-subtitle" class="mobile-page-subtitle text-gray-500 dark:text-gray-400">Welcome back!</p>
             </div>
 
             <!-- Main Content -->
