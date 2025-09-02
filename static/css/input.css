@@ -400,6 +400,12 @@ textarea:focus-visible {
 }
 
 
+/* Prevent transition flash on page load */
+.no-transitions * {
+    transition: none !important;
+}
+
+
 /* Windows-specific optimizations */
 @media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
     .flashcard-inner {

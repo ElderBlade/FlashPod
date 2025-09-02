@@ -9,6 +9,25 @@
 
     <!-- For Android and others -->
     <link rel="manifest" href="/static/manifest/manifest.json">
+
+    <script>
+        (function() {
+            // Check saved theme immediately
+            const savedTheme = localStorage.getItem('flashpod_dark_mode');
+            
+            if (savedTheme === 'dark') {
+                // Apply dark mode immediately before page renders
+                document.documentElement.classList.add('dark');
+            } else if (savedTheme === 'light') {
+                // Ensure light mode
+                document.documentElement.classList.remove('dark');
+            } else {
+                // No saved preference - default to light mode
+                // (Don't follow system preference to avoid flash)
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
     
     <title>FlashPod - Dashboard</title>
     <link href="/static/css/style.css" rel="stylesheet">
@@ -473,5 +492,25 @@
 
     <script type="module" src="/static/js/app.js"></script>
     <script type="module" src="/static/js/study.js"></script>
+    <script>
+        (function() {
+            // Temporarily disable transitions
+            document.documentElement.classList.add('no-transitions');
+            
+            // Check saved theme immediately
+            const savedTheme = localStorage.getItem('flashpod_dark_mode');
+            
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            
+            // Re-enable transitions after a brief delay
+            setTimeout(() => {
+                document.documentElement.classList.remove('no-transitions');
+            }, 100);
+        })();
+    </script>
 </body>
 </html>
