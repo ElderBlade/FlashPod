@@ -141,6 +141,23 @@ async def import_file(request):
         
         # Read file content
         file_content = upload_file.body.decode('utf-8')
+        lines = file_content.splitlines()
+        
+        # Extract metadata from FlashPod export format
+        metadata = {
+            'deck_name': None,
+            'description': None,
+            'is_flashpod_export': False
+        }
+        
+        # Check for FlashPod export metadata
+        for line in lines:
+            if line.startswith('# FlashPod Export'):
+                metadata['is_flashpod_export'] = True
+            elif line.startswith('# Deck Name: '):
+                metadata['deck_name'] = line[13:].strip()  # Remove "# Deck Name: "
+            elif line.startswith('# Description: '):
+                metadata['description'] = line[15:].strip()  # Remove "# Description: "
         
         # Parse CSV with proper handling
         cards_data = []
@@ -151,8 +168,8 @@ async def import_file(request):
         if first_row and (first_row[0].lower() == 'term' or first_row[0].lower() == 'front'):
             pass  # Skip header
         else:
-            # Process first row as data
-            if len(first_row) >= 2:
+            # Process first row as data if it's not a comment or header
+            if first_row and len(first_row) >= 2 and not first_row[0].startswith('#'):
                 cards_data.append({
                     'term': first_row[0].strip(),
                     'definition': first_row[1].strip()
@@ -160,13 +177,16 @@ async def import_file(request):
         
         # Process remaining rows
         for row in csv_reader:
-            if len(row) >= 2 and row[0].strip():
+            if len(row) >= 2 and row[0].strip() and not row[0].startswith('#'):
                 cards_data.append({
                     'term': row[0].strip(),
                     'definition': row[1].strip()
                 })
         
-        return json({"cards": cards_data})
+        return json({
+            "cards": cards_data,
+            "metadata": metadata
+        })
         
     except Exception as e:
         return json({"error": f"Failed to parse file: {str(e)}"}, status=400)

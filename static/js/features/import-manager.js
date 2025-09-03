@@ -63,11 +63,50 @@ export class ImportManager {
             
             this.displayParsedCards(result.cards);
             document.getElementById('importCardsSection')?.classList.remove('hidden');
-            MessageUI.show(`Imported ${result.cards.length} cards from file!`, 'success');
+            
+            // Auto-populate deck name and description if this is a FlashPod export
+            if (result.metadata) {
+                this.populateDeckFields(result.metadata);
+                
+                if (result.metadata.is_flashpod_export) {
+                    MessageUI.show(`Imported ${result.cards.length} cards from FlashPod export! Deck name and description auto-filled.`, 'success');
+                } else {
+                    MessageUI.show(`Imported ${result.cards.length} cards from file!`, 'success');
+                }
+            } else {
+                MessageUI.show(`Imported ${result.cards.length} cards from file!`, 'success');
+            }
             
         } catch (error) {
             MessageUI.show(`File upload failed: ${error.message}`, 'error');
             console.error('Upload error:', error);
+        }
+    }
+
+    populateDeckFields(metadata) {
+        if (!metadata.is_flashpod_export) {
+            return; // Only auto-populate for FlashPod exports
+        }
+        
+        const deckNameInput = document.getElementById('deckName');
+        const deckDescriptionInput = document.getElementById('deckDescription');
+        
+        if (metadata.deck_name && deckNameInput) {
+            deckNameInput.value = metadata.deck_name;
+            // Add visual feedback that it was auto-filled
+            deckNameInput.classList.add('bg-blue-50', 'border-blue-200');
+            setTimeout(() => {
+                deckNameInput.classList.remove('bg-blue-50', 'border-blue-200');
+            }, 2000);
+        }
+        
+        if (metadata.description && deckDescriptionInput) {
+            deckDescriptionInput.value = metadata.description;
+            // Add visual feedback that it was auto-filled
+            deckDescriptionInput.classList.add('bg-blue-50', 'border-blue-200');
+            setTimeout(() => {
+                deckDescriptionInput.classList.remove('bg-blue-50', 'border-blue-200');
+            }, 2000);
         }
     }
 
