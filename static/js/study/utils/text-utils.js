@@ -13,14 +13,15 @@ export class TextUtils {
         if (!element) return;
         
         const {
-            smallThreshold = 500,
-            tinyThreshold = 600,
-            microThreshold = 700,
-            newlineWeight = 20  // Each newline counts as ~20 characters
+            smallThreshold = 300,
+            tinyThreshold = 450,
+            microThreshold = 600,
+            nanoThreshold = 750,
+            newlineWeight = 30
         } = options;
         
         // Remove existing size classes
-        element.classList.remove('text-small', 'text-tiny', 'text-micro');
+        element.classList.remove('text-small', 'text-tiny', 'text-micro', 'text-nano');
         
         // Calculate weighted text length
         const text = element.textContent || element.innerHTML.replace(/<br>/g, '\n');
@@ -28,7 +29,10 @@ export class TextUtils {
         const weightedLength = text.length + (newlineCount * newlineWeight);
         
         // Apply size class based on weighted length
-        if (weightedLength > microThreshold) {
+        // Apply size class based on weighted length
+        if (weightedLength > nanoThreshold) {
+            element.classList.add('text-nano');
+        } else if (weightedLength > microThreshold) {
             element.classList.add('text-micro');
         } else if (weightedLength > tinyThreshold) {
             element.classList.add('text-tiny');
@@ -50,15 +54,17 @@ export class TextUtils {
         
         // Default options with mobile adjustments
         const defaultOptions = isMobile ? {
-            smallThreshold: 175,  // Smaller threshold for mobile
-            tinyThreshold: 300,
-            microThreshold: 450,
-            newlineWeight: 15     // Less weight per newline on mobile
+            smallThreshold: 150,  // Reduced from 175
+            tinyThreshold: 250,   // Reduced from 300
+            microThreshold: 350,  // Reduced from 450
+            nanoThreshold: 500,   // New mobile threshold
+            newlineWeight: 25     // Increased from 15
         } : {
-            smallThreshold: 500,
-            tinyThreshold: 600,
-            microThreshold: 700,
-            newlineWeight: 20
+            smallThreshold: 300,
+            tinyThreshold: 450,
+            microThreshold: 600,
+            nanoThreshold: 750,
+            newlineWeight: 30
         };
         
         const finalOptions = { ...defaultOptions, ...options };
