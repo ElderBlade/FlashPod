@@ -1,4 +1,5 @@
 # app/routes/decks.py
+from datetime import datetime
 from sanic import Blueprint
 from sanic.response import json, HTTPResponse
 from models.database import get_db_session
@@ -124,6 +125,55 @@ async def delete_deck(request, deck_id):
         session.close()
 
 
+@decks_bp.route("/import-file", methods=["POST"])
+@require_auth
+async def import_file(request):
+    """Import cards from uploaded file"""
+    import csv
+    import io
+    
+    session = get_db_session()
+    try:
+        # Get uploaded file
+        upload_file = request.files.get('file')
+        if not upload_file:
+            return json({"error": "No file uploaded"}, status=400)
+        
+        # Read file content
+        file_content = upload_file.body.decode('utf-8')
+        
+        # Parse CSV with proper handling
+        cards_data = []
+        csv_reader = csv.reader(io.StringIO(file_content))
+        
+        # Skip header if present
+        first_row = next(csv_reader, None)
+        if first_row and (first_row[0].lower() == 'term' or first_row[0].lower() == 'front'):
+            pass  # Skip header
+        else:
+            # Process first row as data
+            if len(first_row) >= 2:
+                cards_data.append({
+                    'term': first_row[0].strip(),
+                    'definition': first_row[1].strip()
+                })
+        
+        # Process remaining rows
+        for row in csv_reader:
+            if len(row) >= 2 and row[0].strip():
+                cards_data.append({
+                    'term': row[0].strip(),
+                    'definition': row[1].strip()
+                })
+        
+        return json({"cards": cards_data})
+        
+    except Exception as e:
+        return json({"error": f"Failed to parse file: {str(e)}"}, status=400)
+    finally:
+        session.close()
+
+
 @decks_bp.route("/<deck_id:int>/export", methods=["GET"])
 async def export_deck(request, deck_id):
     """Export deck as CSV"""
@@ -140,9 +190,20 @@ async def export_deck(request, deck_id):
             is_active=True
         ).order_by(Card.display_order, Card.created_at).all()
         
-        # Create CSV content
+        # Create CSV content with metadata
         csv_lines = []
-        csv_lines.append("Term,Definition,Tags")  # Header
+        
+        # Add metadata as comments (will be ignored by most CSV readers)
+        csv_lines.append(f"# FlashPod Export")
+        csv_lines.append(f"# Deck Name: {deck.name}")
+        if deck.description:
+            csv_lines.append(f"# Description: {deck.description}")
+        csv_lines.append(f"# Cards: {len(cards)}")
+        csv_lines.append(f"# Export Date: {datetime.now().isoformat()}")
+        csv_lines.append("")  # Empty line
+        
+        # Add header
+        csv_lines.append("Term,Definition,Tags")
         
         for card in cards:
             # Escape CSV fields properly

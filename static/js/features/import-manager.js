@@ -30,6 +30,45 @@ export class ImportManager {
                 this.navigation.navigateTo('import');
             });
         }
+
+        // File upload handler
+        const fileUpload = document.getElementById('fileUpload');
+        if (fileUpload) {
+            fileUpload.addEventListener('change', (e) => this.handleFileUpload(e));
+        }
+
+    }
+
+    async handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+            MessageUI.show('Uploading and parsing file...', 'info');
+            
+            const response = await fetch(`${window.Config?.API_BASE || '/api'}/decks/import-file`, {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.error || 'Upload failed');
+            }
+            
+            this.displayParsedCards(result.cards);
+            document.getElementById('importCardsSection')?.classList.remove('hidden');
+            MessageUI.show(`Imported ${result.cards.length} cards from file!`, 'success');
+            
+        } catch (error) {
+            MessageUI.show(`File upload failed: ${error.message}`, 'error');
+            console.error('Upload error:', error);
+        }
     }
 
     handleParseImport() {
