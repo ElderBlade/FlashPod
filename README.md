@@ -38,11 +38,142 @@
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### Container Deployment (Recommended)
+
+FlashPod can be deployed using Docker or Podman containers for easy setup and isolation.
+
+#### Prerequisites
+- Docker or Podman installed on your system
+
+#### Option 1: Docker Compose (Recommended)
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-username/flashpod.git
+   cd flashpod
+   ```
+
+2. **Build the container image**
+   ```bash
+   # Using Docker
+   docker build -f docker/Dockerfile -t localhost/flashpod .
+   
+   # Using Podman
+   podman build -f docker/Dockerfile -t localhost/flashpod .
+   ```
+3. **docker-compose.yml**
+   ```yml
+   services:
+     flashpod:
+       image: localhost/flashpod:latest
+       container_name: flashpod
+       ports:
+         - "8000:8000"
+       environment:
+         - JWT_SECRET=change-this-secure-jwt-secret-key
+         - SECRET_KEY=change-this-secure-secret-key
+         - DEBUG=false
+         - JWT_EXPIRATION_HOURS=24
+       volumes:
+         - flashpod:/data
+       user: "1001:1001"
+       read_only: true
+       tmpfs:
+         - /tmp
+       security_opt:
+         - no-new-privileges:true
+       restart: always
+
+   volumes:
+     flashpod:
+       driver: local
+   ```
+
+5. **Start with Docker Compose**
+   ```bash
+   docker-compose up -d
+   ```
+
+6. **Access FlashPod**
+   Open your browser to `http://localhost:8000`
+
+#### Option 2: Docker Run
+
+1. **Clone and build** (same as above)
+
+2. **Run container**
+   ```bash
+   docker run -d \
+     --name flashpod \
+     --restart=always \
+     -p 8000:8000 \
+     -e JWT_SECRET=change-this-secure-jwt-secret-key \
+     -e SECRET_KEY=change-this-secure-secret-key \
+     -e DEBUG=false \
+     -e JWT_EXPIRATION_HOURS=24 \
+     -v flashpod:/data \
+     --user 1001:1001 \
+     --read-only \
+     --tmpfs /tmp \
+     --security-opt no-new-privileges:true \
+     localhost/flashpod:latest
+   ```
+
+#### Option 3: Podman with Quadlet (Linux with systemd)
+
+1. **Clone and build** (same as above)
+
+2. **Quadlet file** - place file `/etc/containers/systemd/users/$(UID)` or `/etc/containers/systemd/users/`
+   ```bash
+   [Unit]
+   Description=FlashPod - Smart Flashcard Learning Platform
+   Wants=network-online.target
+   After=network-online.target
+
+   [Container]
+   Image=localhost/flashpod:latest
+   ContainerName=flashpod
+   PublishPort=8000:8000
+
+   # Environment variables
+   Environment=JWT_SECRET=change-this-secure-jwt-secret-key
+   Environment=SECRET_KEY=change-this-secure-secret-key
+   Environment=DEBUG=false
+   Environment=JWT_EXPIRATION_HOURS=24
+
+   # Data persistence
+   Volume=flashpod:/data:Z
+
+   # Security
+   User=1001:1001
+   ReadOnlyTmpfs=true
+   Tmpfs=/tmp
+   NoNewPrivileges=true
+
+   [Service]
+   Restart=always
+   TimeoutStartSec=300
+
+   [Install]
+   WantedBy=multi-user.target
+   EOF
+   ```
+
+3. **Start service**
+   ```bash
+   systemctl --user daemon-reload
+   systemctl --user enable --now flashpod.service
+   ```
+
+### 🛠️ Development Setup
+
+For development or if you prefer running without containers:
+
+#### Prerequisites
 - Python 3.8+
 - Node.js 16+ (for CSS building)
 
-### Installation
+#### Installation
 
 1. **Clone the repository**
    ```bash
@@ -76,6 +207,19 @@
 ### Demo Account
 - **Username:** `testuser`
 - **Password:** `password123`
+
+### Security Notes
+
+**⚠️ Important:** Change the default secrets before production use:
+- `JWT_SECRET`: Used for JWT token signing
+- `SECRET_KEY`: Used for session security
+
+Generate secure secrets:
+```bash
+# Generate random secrets
+openssl rand -hex 32  # For JWT_SECRET
+openssl rand -hex 32  # For SECRET_KEY
+```
 
 ---
 
@@ -117,56 +261,6 @@ Term 2	Definition 2
 Term 1, Definition 1
 Term 2, Definition 2
 ```
-
----
-
-## 🛠️ Development
-
-### Tech Stack
-- **Backend:** Python (Sanic framework)
-- **Database:** SQLite with SQLAlchemy ORM
-- **Frontend:** Vanilla JavaScript ES6 modules
-- **Styling:** Tailwind CSS
-- **Authentication:** JWT with HTTP-only cookies
-
-### Project Structure
-```
-flashpod/
-├── app/
-│   ├── main.py              # Application entry point
-│   ├── models/              # Database models
-│   ├── routes/              # API endpoints
-│   └── middleware/          # Authentication & security
-├── static/
-│   ├── js/                  # Frontend JavaScript modules
-│   └── css/                 # Tailwind CSS
-├── templates/               # HTML templates
-└── data/                    # SQLite database location
-```
-
-### Development Setup
-
-1. **Start development server**
-   ```bash
-   cd app
-   python main.py
-   ```
-
-2. **Watch CSS changes**
-   ```bash
-   npm run build-css  # Watch mode
-   ```
-
-### API Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/auth/login` | POST | User authentication |
-| `/api/auth/register` | POST | User registration |
-| `/api/decks` | GET/POST | Deck management |
-| `/api/cards/deck/{id}` | GET/POST | Card operations |
-| `/api/study/deck/{id}/session` | GET | Start study session |
-| `/api/pods` | GET/POST | Pod management |
 
 ---
 
