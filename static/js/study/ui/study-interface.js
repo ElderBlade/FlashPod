@@ -68,10 +68,17 @@ export class StudyInterface {
         const modeIndicator = document.getElementById('modeIndicator');
         const responseButtons = document.getElementById('responseButtons');
         
+        // Declare button elements once at function scope
+        const simpleButtons = document.getElementById('simpleSpacedButtons');
+        const sm2Buttons = document.getElementById('sm2Buttons');
+        
         switch (modeName) {
             case 'basic':
                 if (modeIndicator) modeIndicator.innerHTML = '';
                 if (responseButtons) responseButtons.classList.add('hidden');
+                // Hide both button sets
+                if (simpleButtons) simpleButtons.classList.add('hidden');
+                if (sm2Buttons) sm2Buttons.classList.add('hidden');
                 break;
                 
             case 'simple-spaced':
@@ -88,11 +95,17 @@ export class StudyInterface {
                         </div>
                     `;
                 }
-                if (responseButtons) {
+                
+                // Always hide SM-2 buttons for simple mode
+                if (sm2Buttons) sm2Buttons.classList.add('hidden');
+                
+                if (responseButtons && simpleButtons) {
                     if (modeData.isCollectingResponse) {
                         responseButtons.classList.remove('hidden');
+                        simpleButtons.classList.remove('hidden');
                     } else {
                         responseButtons.classList.add('hidden');
+                        simpleButtons.classList.add('hidden');
                     }
                 }
                 break;
@@ -102,18 +115,29 @@ export class StudyInterface {
                     modeIndicator.innerHTML = `
                         <div class="flex items-center space-x-3 text-sm text-gray-600">
                             <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                                Due: ${modeData.dueCards.length}
+                                Due: ${modeData.dueCards?.length || 0}
                             </span>
                             <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded">
-                                Learning: ${modeData.learningCards.length}
+                                Learning: ${modeData.learningCards?.length || 0}
                             </span>
                             <span class="bg-green-100 text-green-700 px-2 py-1 rounded">
-                                Mature: ${modeData.matureCards.length}
+                                Mature: ${modeData.matureCards?.length || 0}
                             </span>
                         </div>
                     `;
                 }
-                if (responseButtons) responseButtons.classList.remove('hidden');
+                
+                // ALWAYS hide simple buttons for SM-2 mode
+                if (simpleButtons) simpleButtons.classList.add('hidden');
+                
+                // Show/hide response buttons and SM-2 buttons based on collection state
+                if (modeData.isCollectingResponse) {
+                    responseButtons.classList.remove('hidden');
+                    sm2Buttons.classList.remove('hidden');
+                } else {
+                    // responseButtons.classList.add('hidden'); 
+                    sm2Buttons.classList.add('hidden');
+                }
                 break;
         }
     }
@@ -313,6 +337,19 @@ export class StudyInterface {
             case 'fullSpacedModeBtn':
                 this.manager.switchMode('full-spaced');
                 break;
+            // SM-2 buttons
+            case 'againBtn':
+                this.manager.handleResponse(1);
+                break;
+            case 'hardBtn':
+                this.manager.handleResponse(2);
+                break;
+            case 'goodBtn':
+                this.manager.handleResponse(3);
+                break;
+            case 'easyBtn':
+                this.manager.handleResponse(4);
+                break;
         }
 
         e.preventDefault();
@@ -381,7 +418,8 @@ export class StudyInterface {
 
             <!-- Response Buttons (for spaced repetition modes) -->
             <div id="responseButtons" class="hidden max-w-4xl mx-auto mt-6">
-                <div class="flex justify-center space-x-6">
+                <!-- Simple Spaced Mode Buttons -->
+                <div id="simpleSpacedButtons" class="flex justify-center space-x-6">
                     <button id="dontRememberBtn" class="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white px-8 py-3 rounded-lg font-medium transition-colors flex items-center">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -395,6 +433,30 @@ export class StudyInterface {
                         </svg>
                         Remember
                         <kbd class="ml-3 px-2 py-1 text-xs bg-green-400 dark:bg-green-500 rounded">→</kbd>
+                    </button>
+                </div>
+
+                <!-- SM-2 Mode Buttons -->
+                <div id="sm2Buttons" class="hidden flex justify-center space-x-3">
+                    <button id="againBtn" class="response-btn bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 px-4 py-3 rounded-lg font-medium transition-colors flex items-center text-sm shadow-sm">
+                        <span class="mr-2 font-bold text-red-600">1</span>
+                        Again
+                        <kbd class="ml-2 px-1.5 py-0.5 text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded border">1</kbd>
+                    </button>
+                    <button id="hardBtn" class="response-btn bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 px-4 py-3 rounded-lg font-medium transition-colors flex items-center text-sm shadow-sm">
+                        <span class="mr-2 font-bold text-orange-600">2</span>
+                        Hard
+                        <kbd class="ml-2 px-1.5 py-0.5 text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded border">2</kbd>
+                    </button>
+                    <button id="goodBtn" class="response-btn bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 px-4 py-3 rounded-lg font-medium transition-colors flex items-center text-sm shadow-sm">
+                        <span class="mr-2 font-bold text-green-600">3</span>
+                        Good
+                        <kbd class="ml-2 px-1.5 py-0.5 text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded border">3</kbd>
+                    </button>
+                    <button id="easyBtn" class="response-btn bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 px-4 py-3 rounded-lg font-medium transition-colors flex items-center text-sm shadow-sm">
+                        <span class="mr-2 font-bold text-blue-600">4</span>
+                        Easy
+                        <kbd class="ml-2 px-1.5 py-0.5 text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded border">4</kbd>
                     </button>
                 </div>
             </div>

@@ -20,6 +20,7 @@ from routes.decks import decks_bp
 from routes.cards import cards_bp
 from routes.pods import pods_bp
 from routes.study import study_bp
+from routes.card_reviews import card_reviews
 
 # Import auth decorator and helpers
 try:
@@ -176,6 +177,13 @@ def create_app():
     app.blueprint(cards_bp)
     app.blueprint(pods_bp)
     app.blueprint(study_bp)
+    app.blueprint(card_reviews)
+
+    print("📋 Registered blueprints:")
+    for blueprint_name, blueprint in app.blueprints.items():
+        print(f"  - {blueprint_name}: {blueprint.url_prefix}")
+        for route in blueprint.routes:
+            print(f"    {route.methods} {route.path}")
     
     # Middleware for content types only
     @app.middleware('response')
