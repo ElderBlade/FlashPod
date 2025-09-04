@@ -50,7 +50,7 @@ FlashPod can be deployed using Docker or Podman containers for easy setup and is
 1. **Clone the repository**
    ```bash
    git clone https://github.com/ElderBlade/FlashPod.git
-   cd flashpod
+   cd FlashPod
    ```
 
 2. **Build the container image**
