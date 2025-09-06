@@ -178,12 +178,6 @@ def create_app():
     app.blueprint(pods_bp)
     app.blueprint(study_bp)
     app.blueprint(card_reviews)
-
-    print("📋 Registered blueprints:")
-    for blueprint_name, blueprint in app.blueprints.items():
-        print(f"  - {blueprint_name}: {blueprint.url_prefix}")
-        for route in blueprint.routes:
-            print(f"    {route.methods} {route.path}")
     
     # Middleware for content types only
     @app.middleware('response')

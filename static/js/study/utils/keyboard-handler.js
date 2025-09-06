@@ -125,21 +125,6 @@ export class KeyboardHandler {
                 e.preventDefault();
                 this.manager.exitStudy();
                 return true;
-                
-            case '1': // Quick mode switches
-                e.preventDefault();
-                this.manager.switchMode('basic');
-                return true;
-                
-            case '2':
-                e.preventDefault();
-                this.manager.switchMode('simple-spaced');
-                return true;
-                
-            case '3':
-                e.preventDefault();
-                this.manager.switchMode('full-spaced');
-                return true;
         }
         
         return false; // Event not handled
@@ -296,7 +281,6 @@ export class KeyboardHandler {
             { key: 'S', action: 'Toggle shuffle' },
             { key: 'T', action: 'Toggle term/definition' },
             { key: 'Escape', action: 'Exit study' },
-            { key: '1,2,3', action: 'Quick mode switch' }
         ];
 
         const modeSpecificShortcuts = {

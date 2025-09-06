@@ -1,6 +1,7 @@
 # app/routes/cards.py
 from sanic import Blueprint
 from sanic.response import json
+from sqlalchemy import func
 from models.database import get_db_session
 from models.deck import Deck
 from models.card import Card

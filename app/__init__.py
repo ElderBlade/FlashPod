@@ -4,8 +4,8 @@ FlashPod - Smart Flashcard Learning Platform
 """
 
 # Version information
-__version__ = "0.8.9"
-__version_info__ = (0, 8, 9)
+__version__ = "0.8.10"
+__version_info__ = (0, 8, 10)
 
 # Application metadata
 __title__ = "FlashPod"

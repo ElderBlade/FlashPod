@@ -19,6 +19,14 @@ export class FullSpaced {
         }
 
         this._updateActiveCards();
+
+        // Check if there are no cards to study
+        if (state.cards.length === 0) {
+            // Show a different message for no cards available
+            this._showNoCardsMessage();
+            return;
+        }
+
         await this._updateInterface();
         console.log(`SM-2 initialized - Due: ${modeData.dueCards.length}, New: ${modeData.newCards.length}`);
     }
@@ -122,9 +130,9 @@ export class FullSpaced {
         state.currentCardId = activeCards[0]?.id;
         
         // Check if session should end
-        if (activeCards.length === 0) {
-            this._endSession();
-        }
+        // if (activeCards.length === 0) {
+        //     this._endSession();
+        // }
     }
 
     async onCardFlip(direction) {
@@ -368,28 +376,223 @@ export class FullSpaced {
         const modeData = this.manager.state.modeData['full-spaced'];
         const stats = modeData.sessionStats;
         
-        // Calculate session summary
+        // Calculate final session summary
         stats.timeSpent = Math.round((new Date() - stats.sessionStartTime) / 1000 / 60);
         stats.averageRating = stats.cardsReviewed > 0 ? 
             (stats.ratingsSum / stats.cardsReviewed).toFixed(1) : 0;
         
         console.log('SM-2 session completed:', stats);
         
-        // Show completion message
+        // Show completion modal instead of restarting
         this._showSessionComplete(stats);
     }
 
     _showSessionComplete(stats) {
-        const message = `
-            Session Complete!
-            ${stats.cardsReviewed} cards reviewed
-            ${stats.newCardsLearned} new cards learned
-            Average rating: ${stats.averageRating}
-            Time: ${stats.timeSpent} minutes
+        const totalTime = Math.round((new Date() - stats.sessionStartTime) / 1000 / 60);
+        
+        const modalHTML = `
+            <div id="sm2CompletionModal" class="modal-backdrop fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                    <div class="text-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Session Complete!</h3>
+                        <div class="text-gray-600">
+                            Excellent work! You've reviewed ${stats.cardsReviewed} cards with the SM-2 algorithm.
+                            <br><br>
+                            📊 Session Summary:<br>
+                            • Cards reviewed: ${stats.cardsReviewed}<br>
+                            • New cards learned: ${stats.newCardsLearned}<br>
+                            • Average rating: ${stats.averageRating}<br>
+                            • Total time: ${totalTime} minutes<br>
+                        </div>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button data-action="study-again" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            Study More
+                        </button>
+                        <button data-action="finish" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                            Finish
+                        </button>
+                    </div>
+                </div>
+            </div>
         `;
         
-        // You can implement a proper modal here
-        alert(message);
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // Add event listeners - FIX: Call methods without underscores
+        const modal = document.getElementById('sm2CompletionModal');
+        modal.addEventListener('click', async (e) => {
+            const action = e.target.dataset.action;
+            if (action === 'study-again') {
+                await this.restartSession();  // No underscore!
+            } else if (action === 'finish') {
+                this.finishSession();   // No underscore!
+            }
+        });
+    }
+
+    async restartSession() {
+        // Reset session and restart
+        const state = this.manager.state;
+        const modeData = state.modeData['full-spaced'];
+        
+        // Reset session stats
+        modeData.sessionStats = {
+            sessionStartTime: new Date(),
+            cardsReviewed: 0,
+            newCardsLearned: 0,
+            ratingsSum: 0,
+            timeSpent: 0,
+            averageRating: 0
+        };
+        
+        // Reinitialize cards
+        await this._initializeCardCategories();
+
+        modeData.newCards = state.originalCards.map(card => card.id);
+        modeData.dueCards = [];
+        modeData.learningCards = [];
+        modeData.matureCards = [];
+
+        this._updateActiveCards();
+        
+        // Reset current position
+        state.currentIndex = 0;
+        state.currentCardId = state.cards[0]?.id;
+        state.isFlipped = false;
+        
+        // Remove modal and update interface
+        document.getElementById('sm2CompletionModal')?.remove();
+        if (state.cards.length === 0) {
+            this.manager._showMessage('No cards available to study', 'error');
+            this.manager.exitStudy();
+            return;
+        }
+        
+        this.manager.interface.updateProgress();
+        this.manager.interface.updateNavigationButtons();
+        this.manager.interface.updateModeSpecificUI('full-spaced', modeData);
+        this.manager.interface.renderCurrentCard();
+        
+        this.manager._showMessage('Session restarted!', 'info');
+    }
+
+    _showNoCardsMessage() {
+        const modalHTML = `
+            <div id="sm2NoCardsModal" class="modal-backdrop fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                    <div class="text-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">No Cards to Review</h3>
+                        <div class="text-gray-600">
+                            Great job! You have no cards due for review right now.
+                            <br><br>
+                            • All cards have been studied recently<br>
+                            • Come back later when cards are due for review<br>
+                            • Or study all cards regardless of schedule<br>
+                        </div>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button data-action="study-all" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            Study All Cards
+                        </button>
+                        <button data-action="finish" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                            Back to Library
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        const modal = document.getElementById('sm2NoCardsModal');
+        modal.addEventListener('click', async (e) => {
+            const action = e.target.dataset.action;
+            if (action === 'study-all') {
+                await this._forceStudyAllCards();
+            } else if (action === 'finish') {
+                document.getElementById('sm2NoCardsModal')?.remove();
+                this.manager.exitStudy();
+            }
+        });
+    }
+
+    async _forceStudyAllCards() {
+        // Force all cards to be "new" so they can be studied
+        const state = this.manager.state;
+        const modeData = state.modeData['full-spaced'];
+        
+        modeData.newCards = state.originalCards.map(card => card.id);
+        modeData.dueCards = [];
+        
+        this._updateActiveCards();
+        document.getElementById('sm2NoCardsModal')?.remove();
+        
+        if (state.cards.length > 0) {
+            await this._updateInterface();
+            this.manager.interface.renderCurrentCard();
+            this.manager._showMessage('Studying all cards!', 'info');
+        }
+    }
+
+    _getNextStudyCards() {
+        const state = this.manager.state;
+        const modeData = state.modeData['full-spaced'];
+        const now = new Date();
+        
+        let dueCount = 0;
+        let nextDueDate = null;
+        
+        // Check all cards for next due dates
+        for (const [cardId, nextReview] of modeData.nextReviewDates) {
+            if (nextReview <= now) {
+                dueCount++;
+            } else if (!nextDueDate || nextReview < nextDueDate) {
+                nextDueDate = nextReview;
+            }
+        }
+        
+        // Add any remaining new cards
+        const newCardsCount = modeData.newCards.length;
+        
+        return {
+            total: dueCount + newCardsCount,
+            due: dueCount,
+            new: newCardsCount,
+            nextDate: nextDueDate ? nextDueDate.toLocaleDateString() : 'Tomorrow'
+        };
+    }
+
+    _continueLearningSession() {
+        // Re-initialize with remaining cards
+        this._updateActiveCards();
+        
+        if (this.manager.state.cards.length > 0) {
+            // Reset session state but keep progress
+            const modeData = this.manager.state.modeData['full-spaced'];
+            modeData.sessionStats.sessionStartTime = new Date();
+            this.manager.state.currentIndex = 0;
+            this.manager.state.isFlipped = false;
+            
+            // Update interface
+            this.manager.interface.updateProgress();
+            this.manager.interface.updateNavigationButtons();
+            this.manager.interface.updateModeSpecificUI('full-spaced', modeData);
+            this.manager.interface.renderCurrentCard();
+            
+            // Remove modal
+            document.getElementById('sm2CompletionModal')?.remove();
+            
+            this.manager._showMessage('Continuing with remaining cards!', 'info');
+        } else {
+            this._finishSession();
+        }
+    }
+
+    finishSession() {
+        // Remove modal
+        document.getElementById('sm2CompletionModal')?.remove();
+        this.manager.exitStudy();
     }
 
     async _updateInterface() {
@@ -410,5 +613,31 @@ export class FullSpaced {
 
     async renderCard() {
         this.manager.interface.renderCurrentCard();
+    }
+
+    /**
+     * Cleanup method called when switching modes or ending study
+     */
+    async cleanup() {
+        const modeData = this.manager.state.modeData['full-spaced'];
+        
+        // Reset response collection state
+        modeData.isCollectingResponse = false;
+        
+        // Hide response buttons
+        this.manager.interface.hideResponseButtons();
+        
+        // Save any pending review data
+        if (this.manager.session && modeData.pendingReviews && modeData.pendingReviews.length > 0) {
+            try {
+                await this.manager.session.batchRecordReviews(modeData.pendingReviews);
+                modeData.pendingReviews = [];
+                console.log('Saved pending reviews during cleanup');
+            } catch (error) {
+                console.warn('Failed to save pending reviews during cleanup:', error);
+            }
+        }
+        
+        console.log('FullSpaced mode cleanup completed');
     }
 }

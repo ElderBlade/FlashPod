@@ -174,7 +174,7 @@ export class SimpleSpaced {
         
         // Create completion modal
         const modalHTML = `
-            <div id="completionModal" class="modal-backdrop fixed inset-0 bg-opacity-50 flex items-center justify-center z-50"">
+            <div id="completionModal" class="modal-backdrop fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
                 <div class="bg-white rounded-lg p-8 max-w-md mx-4 text-center shadow-xl">
                     <div class="text-6xl mb-4">🎉</div>
                     <h3 class="text-xl font-semibold text-gray-900 mb-4">Session Complete!</h3>
