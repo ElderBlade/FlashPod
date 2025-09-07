@@ -2,7 +2,11 @@
 from datetime import datetime
 from sanic import Blueprint
 from sanic.response import json, HTTPResponse
+from sqlalchemy import desc, func, and_
+from datetime import datetime, timedelta
 from models.database import get_db_session
+from models.study_session import StudySession
+from models.card_review import CardReview
 from models.user import User
 from models.deck import Deck
 from models.card import Card
@@ -292,3 +296,230 @@ async def get_user_decks(request, user_id):
         return json({"error": str(e)}, status=500)
     finally:
         session.close()
+
+
+@decks_bp.route('/my-decks-with-stats', methods=['GET'])
+@require_auth
+async def get_my_decks_with_stats(request):
+    """Get user's decks with last session statistics"""
+    session = get_db_session()
+    try:
+        user_id = request.ctx.user['id']
+        
+        # Get user's decks
+        decks = session.query(Deck).filter_by(user_id=user_id).all()
+        
+        deck_data = []
+        for deck in decks:
+            # Only get sessions that have actual card reviews (not basic mode)
+            latest_session = session.query(StudySession).filter(
+                StudySession.user_id == user_id,
+                StudySession.deck_id == deck.id,
+                StudySession.id.in_(
+                    session.query(CardReview.session_id).filter(
+                        CardReview.session_id.isnot(None)
+                    ).distinct()
+                )
+            ).order_by(desc(StudySession.started_at)).first()
+            
+            # Get session stats
+            session_stats = None
+            if latest_session:
+                # Calculate duration
+                duration_minutes = 0
+                if latest_session.ended_at and latest_session.started_at:
+                    delta = latest_session.ended_at - latest_session.started_at
+                    duration_minutes = round(delta.total_seconds() / 60)
+                
+                # Get card reviews from this session to determine mode
+                session_reviews = session.query(CardReview).filter_by(
+                    session_id=latest_session.id
+                ).all()
+                
+                if session_reviews:
+                    # Check if reviews have SM-2 data (ease_factor, next_review_date)
+                    has_sm2_data = any(review.ease_factor != 2.5 or review.next_review_date 
+                                     for review in session_reviews)
+                    
+                    if has_sm2_data:
+                        # SM-2 mode
+                        next_review, cards_due = get_sm2_due_info(session, deck.id, user_id)
+                        session_stats = {
+                            'mode': 'full-spaced',
+                            'next_review': next_review.isoformat() if next_review else None,
+                            'cards_due': cards_due,
+                            'duration_minutes': duration_minutes,
+                            'retention_rate': calculate_sm2_retention(session, deck.id, user_id),
+                            'is_overdue': next_review < datetime.now() if next_review else False
+                        }
+                    else:
+                        # Simple spaced mode
+                        session_stats = {
+                            'mode': 'simple-spaced',
+                            'last_reviewed': latest_session.started_at.isoformat(),
+                            'duration_minutes': duration_minutes,
+                            'retention_rate': calculate_simple_retention(session, deck.id, user_id),
+                            'total_cards': latest_session.cards_studied or 0
+                        }
+            
+            deck_data.append({
+                'id': deck.id,
+                'name': deck.name,
+                'description': deck.description,
+                'card_count': deck.card_count,
+                'created_at': deck.created_at.isoformat(),
+                'session_stats': session_stats  # Will be None if no valid sessions
+            })
+        
+        return json({'decks': deck_data})
+        
+    except Exception as e:
+        print(f"Error getting decks with stats: {e}")
+        import traceback
+        traceback.print_exc()
+        return json({'error': str(e)}, status=500)
+    finally:
+        session.close()
+
+
+def calculate_simple_retention(db_session, deck_id, user_id):
+    """Calculate retention rate for simple-spaced mode"""
+    try:
+        # Get cards from this deck
+        deck_cards = db_session.query(Card).filter_by(deck_id=deck_id).all()
+        if not deck_cards:
+            return 0
+        
+        card_ids = [card.id for card in deck_cards]
+        
+        # Get recent reviews (last 30 days)
+        thirty_days_ago = datetime.now() - timedelta(days=30)
+        recent_reviews = db_session.query(CardReview).filter(
+            and_(
+                CardReview.card_id.in_(card_ids),
+                CardReview.user_id == user_id,
+                CardReview.reviewed_at >= thirty_days_ago
+            )
+        ).all()
+        
+        if not recent_reviews:
+            return 0
+        
+        # Calculate retention (reviews with quality >= 3 are "remembered")
+        good_reviews = sum(1 for review in recent_reviews if review.response_quality >= 3)
+        return round((good_reviews / len(recent_reviews)) * 100)
+        
+    except Exception as e:
+        print(f"Error calculating simple retention: {e}")
+        return 0
+
+
+def get_sm2_due_info(db_session, deck_id, user_id):
+    """Get next review date and cards due for SM-2 mode"""
+    try:
+        # Get cards from this deck
+        deck_cards = db_session.query(Card).filter_by(deck_id=deck_id).all()
+        if not deck_cards:
+            return None, 0
+        
+        card_ids = [card.id for card in deck_cards]
+        total_cards = len(card_ids)
+        
+        # Get the latest review for each card
+        latest_reviews_subquery = db_session.query(
+            CardReview.card_id,
+            func.max(CardReview.reviewed_at).label('latest_reviewed_at')
+        ).filter(
+            CardReview.card_id.in_(card_ids),
+            CardReview.user_id == user_id
+        ).group_by(CardReview.card_id).subquery()
+        
+        latest_reviews = db_session.query(CardReview).join(
+            latest_reviews_subquery,
+            and_(
+                CardReview.card_id == latest_reviews_subquery.c.card_id,
+                CardReview.reviewed_at == latest_reviews_subquery.c.latest_reviewed_at
+            )
+        ).filter(CardReview.user_id == user_id).all()
+        
+        # Build review schedule
+        now = datetime.now()
+        reviewed_card_ids = set()
+        review_dates = []
+        cards_due_now = 0
+        
+        for review in latest_reviews:
+            reviewed_card_ids.add(review.card_id)
+            if review.next_review_date:
+                if review.next_review_date <= now:
+                    # Already due/overdue
+                    cards_due_now += 1
+                else:
+                    # Scheduled for future
+                    review_dates.append(review.next_review_date)
+        
+        # Cards never reviewed are also available now
+        never_reviewed_count = total_cards - len(reviewed_card_ids)
+        cards_due_now += never_reviewed_count
+        
+        # Find the next review session
+        if cards_due_now > 0:
+            # Cards are due now, so next session is "now"
+            return None, cards_due_now
+        elif review_dates:
+            # Find the earliest future review date (next session)
+            next_session_date = min(review_dates)
+            
+            # Count cards due at that next session date
+            # Group by date (ignoring time) to find all cards due on the same day
+            cards_due_next_session = sum(
+                1 for date in review_dates 
+                if date.date() == next_session_date.date()
+            )
+            
+            return next_session_date, cards_due_next_session
+        else:
+            # No future reviews scheduled
+            return None, 0
+        
+    except Exception as e:
+        print(f"Error getting SM-2 due info: {e}")
+        import traceback
+        traceback.print_exc()
+        return None, 0
+
+
+def calculate_sm2_retention(db_session, deck_id, user_id):
+    """Calculate retention rate for SM-2 mode"""
+    try:
+        # Get cards from this deck
+        deck_cards = db_session.query(Card).filter_by(deck_id=deck_id).all()
+        if not deck_cards:
+            return 0
+        
+        card_ids = [card.id for card in deck_cards]
+        
+        # Get recent reviews (last 30 days)
+        thirty_days_ago = datetime.now() - timedelta(days=30)
+        recent_reviews = db_session.query(CardReview).filter(
+            and_(
+                CardReview.card_id.in_(card_ids),
+                CardReview.user_id == user_id,
+                CardReview.reviewed_at >= thirty_days_ago
+            )
+        ).all()
+        
+        if not recent_reviews:
+            return 0
+        
+        # For SM-2, retention = average response quality as percentage
+        # Quality 1=25%, 2=50%, 3=75%, 4=100%
+        quality_to_percent = {1: 25, 2: 50, 3: 75, 4: 100}
+        total_retention = sum(quality_to_percent.get(review.response_quality, 0) 
+                            for review in recent_reviews)
+        
+        return round(total_retention / len(recent_reviews))
+        
+    except Exception as e:
+        print(f"Error calculating SM-2 retention: {e}")
+        return 0

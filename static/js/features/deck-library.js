@@ -9,7 +9,7 @@ export class DeckLibrary {
 
     async loadRecentDecks() {
         try {
-            const data = await DeckService.getMyDecks();
+            const data = await DeckService.getMyDecksWithStats(); 
             this.decks = data.decks;
             this.displayRecentDecks(data.decks.slice(0, 6));
         } catch (error) {
@@ -19,7 +19,7 @@ export class DeckLibrary {
 
     async loadAllDecks() {
         try {
-            const data = await DeckService.getMyDecks();
+            const data = await DeckService.getMyDecksWithStats();
             this.decks = data.decks;
             this.displayAllDecks(data.decks);
         } catch (error) {
@@ -68,12 +68,15 @@ export class DeckLibrary {
     }
 
     getRecentDeckCardHTML(deck) {
+        const statsHTML = this.getSessionStatsHTML(deck.session_stats);
+        
         return `
             <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer border border-transparent dark:border-gray-600">
                 <h4 class="font-medium text-gray-900 dark:text-white mb-2">${deck.name}</h4>
                 <p class="text-sm text-gray-500 dark:text-gray-300 mb-3">${deck.description || 'No description'}</p>
                 <div class="flex justify-between items-center text-sm">
                     <span class="text-gray-500 dark:text-gray-400">${deck.card_count} cards</span>
+                    ${statsHTML}
                     <button onclick="window.app.studyDeck(${deck.id})" 
                             class="bg-blue-600 dark:bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 dark:hover:bg-blue-600 cursor-pointer transition-colors">
                         Study
@@ -84,12 +87,15 @@ export class DeckLibrary {
     }
 
     getDeckCardHTML(deck) {
+        const statsHTML = this.getSessionStatsHTML(deck.session_stats);
+        
         return `
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md dark:hover:shadow-gray-900/20 transition-all duration-300">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">${deck.name}</h3>
                 <p class="text-gray-600 dark:text-gray-300 mb-4">${deck.description || 'No description'}</p>
                 <div class="flex justify-between items-center">
                     <span class="text-sm text-gray-500 dark:text-gray-400">${deck.card_count} cards</span>
+                    ${statsHTML}
                     <div class="space-x-2">
                         <button onclick="window.app.studyDeck(${deck.id})" 
                                 class="bg-blue-600 dark:bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 dark:hover:bg-blue-600 cursor-pointer transition-colors">
@@ -107,5 +113,36 @@ export class DeckLibrary {
                 </div>
             </div>
         `;
+    }
+
+    getSessionStatsHTML(stats) {
+        if (!stats) return '';
+        
+        if (stats.mode === 'simple-spaced') {
+            const lastReviewDate = new Date(stats.last_reviewed);
+            const formattedDate = lastReviewDate.toLocaleDateString('en-US', { 
+                month: 'short', day: 'numeric' 
+            });
+            
+            return `<span class="text-xs text-gray-500 dark:text-gray-400">Last: ${formattedDate} • ${stats.retention_rate}% • ${stats.duration_minutes}m</span>`;
+            
+        } else if (stats.mode === 'full-spaced') {
+            const nextReviewDate = stats.next_review ? new Date(stats.next_review) : null;
+            const isOverdue = stats.is_overdue;
+            
+            let nextReviewText = 'No reviews';
+            let dateClass = 'text-gray-500 dark:text-gray-400';
+            
+            if (nextReviewDate) {
+                nextReviewText = nextReviewDate.toLocaleDateString('en-US', { 
+                    month: 'short', day: 'numeric' 
+                });
+                dateClass = isOverdue ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400';
+            }
+            
+            return `<span class="text-xs ${dateClass}">🔔 Next: ${nextReviewText} • 📝 Due: ${stats.cards_due} • 📊${stats.retention_rate}% ⏱️ ${stats.duration_minutes}</span>`;
+        }
+        
+        return '';
     }
 }

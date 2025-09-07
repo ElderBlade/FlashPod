@@ -49,4 +49,12 @@ export class DeckService {
         }
         throw new Error('Failed to export deck');
     }
+
+    static async getMyDecksWithStats() {
+        const response = await API.get('/decks/my-decks-with-stats');
+        if (response.ok) {
+            return await response.json();
+        }
+        throw new Error('Failed to load decks with stats');
+    }
 }
