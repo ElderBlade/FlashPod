@@ -478,13 +478,57 @@ export class FullSpaced {
     }
 
     _showNoCardsMessage() {
+        const modeData = this.manager.state.modeData['full-spaced'];
+    
+        // Find the next review date
+        let nextReviewDate = null;
+        let nextReviewCardCount = 0;
+        
+        if (modeData.nextReviewDates.size > 0) {
+            // Get all future review dates
+            const now = new Date();
+            const futureDates = Array.from(modeData.nextReviewDates.values())
+                .filter(date => date > now)
+                .sort((a, b) => a - b);
+            
+            if (futureDates.length > 0) {
+                nextReviewDate = futureDates[0];
+                
+                // Count how many cards are due on that date
+                nextReviewCardCount = Array.from(modeData.nextReviewDates.values())
+                    .filter(date => date.toDateString() === nextReviewDate.toDateString()).length;
+            }
+        }
+        
+        // Format the date and time
+        let nextReviewText = '';
+        if (nextReviewDate) {
+            const options = { 
+                weekday: 'short', 
+                month: 'short', 
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+            };
+            const formattedDate = nextReviewDate.toLocaleDateString('en-US', options);
+            const timeFromNow = this._getTimeFromNow(nextReviewDate);
+            
+            nextReviewText = `
+                <br>
+                🕐 Next review: <strong>${formattedDate}</strong> (${timeFromNow})
+                <br>
+                📝 ${nextReviewCardCount} card${nextReviewCardCount !== 1 ? 's' : ''} due
+            `;
+        }
+
         const modalHTML = `
             <div id="sm2NoCardsModal" class="modal-backdrop fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
                 <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-                    <div class="text-center mb-6">
-                        <h3 class="text-xl font-bold text-gray-900 mb-2">No Cards to Review</h3>
-                        <div class="text-gray-600">
+                    <div class="mb-6 text-left">
+                        <h3 class="text-xl font-bold text-gray-900 mb-2 text-center">No Cards to Review</h3>
+                        <div class="text-gray-600 text-left">
                             Great job! You have no cards due for review right now.
+                            ${nextReviewText}
                             <br><br>
                             • All cards have been studied recently<br>
                             • Come back later when cards are due for review<br>
@@ -515,6 +559,25 @@ export class FullSpaced {
                 this.manager.exitStudy();
             }
         });
+    }
+
+    _getTimeFromNow(futureDate) {
+        const now = new Date();
+        const diff = futureDate - now;
+        
+        const minutes = Math.floor(diff / (1000 * 60));
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        
+        if (days > 0) {
+            return `in ${days} day${days !== 1 ? 's' : ''}`;
+        } else if (hours > 0) {
+            return `in ${hours} hour${hours !== 1 ? 's' : ''}`;
+        } else if (minutes > 0) {
+            return `in ${minutes} minute${minutes !== 1 ? 's' : ''}`;
+        } else {
+            return 'very soon';
+        }
     }
 
     async _forceStudyAllCards() {
