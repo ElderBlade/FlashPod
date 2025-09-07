@@ -70,10 +70,8 @@ export class SimpleSpaced {
         const currentCard = state.cards[state.currentIndex];
         if (!currentCard) return;
 
-        // Record response
-        if (this.manager.session) {
-            await this.manager.session.recordSimpleSpacedResponse(currentCard.id, response);
-        }
+        // Save review to backend
+        await this._saveReview(currentCard.id, response);
         
         // Track in mode data
         if (!modeData.responses.has(currentCard.id)) {
@@ -300,5 +298,43 @@ export class SimpleSpaced {
         }
 
         this.absorptionAnimator.cleanup();
+    }
+
+    async _saveReview(cardId, userResponse) {
+        try {
+            const responseQuality = userResponse === 'remember' ? 4 : 1;
+            
+            const reviewData = {
+                card_id: cardId,
+                session_id: this.manager.session.sessionId,
+                response_quality: responseQuality,
+                response_time: null,
+                // Required SM-2 fields with defaults for Simple mode
+                ease_factor: 2.5,
+                interval_days: 1,
+                repetitions: 0
+            };
+            
+            const apiResponse = await fetch('/api/cards/reviews', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(reviewData)
+            });
+            
+            if (!apiResponse.ok) {
+                const errorText = await apiResponse.text();
+                throw new Error(`Failed to save review: ${apiResponse.status} ${errorText}`);
+            } else {
+                console.log('Recorded card review!');
+            }
+            
+            return await apiResponse.json();
+        } catch (error) {
+            console.error('Error saving review:', error);
+            // Continue anyway - we have local state
+        }
     }
 }

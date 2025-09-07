@@ -95,35 +95,6 @@ export class StudySession {
     }
 
     /**
-     * Record a card review (for spaced repetition modes)
-     */
-    async recordCardReview(cardId, responseQuality, responseTime = null) {
-        if (!this.sessionData) {
-            console.warn('No active session to record review');
-            return null;
-        }
-
-        const reviewData = {
-            card_id: cardId,
-            response_quality: responseQuality,
-            response_time: responseTime
-        };
-
-        // Add session ID if we have a real backend session
-        if (!this.sessionData || String(this.sessionData.id).startsWith('local_')) {
-            return; // Skip for local sessions
-}
-        try {
-            const response = await this.api.recordCardReview(reviewData);
-            console.log(`Recorded review for card ${cardId}: quality=${responseQuality}`);
-            return response.review;
-        } catch (error) {
-            console.error('Failed to record card review:', error);
-            return null;
-        }
-    }
-
-    /**
      * Update session progress
      */
     async updateProgress(cardsStudied, cardsCorrect = null) {
@@ -200,41 +171,6 @@ export class StudySession {
             console.warn('Failed to load card reviews:', error);
             return [];
         }
-    }
-
-    /**
-     * Batch record multiple card reviews
-     */
-    async batchRecordReviews(reviews) {
-        if (!reviews || reviews.length === 0) return;
-
-        try {
-            const response = await this.api.batchRecordReviews(reviews);
-            console.log(`Batch recorded ${reviews.length} card reviews`);
-            return response;
-        } catch (error) {
-            console.error('Failed to batch record reviews:', error);
-            
-            // Fallback: try individual recordings
-            const results = [];
-            for (const review of reviews) {
-                const result = await this.recordCardReview(
-                    review.card_id, 
-                    review.response_quality, 
-                    review.response_time
-                );
-                results.push(result);
-            }
-            return results;
-        }
-    }
-
-    /**
-     * Record simple spaced response
-     */
-    async recordSimpleSpacedResponse(cardId, response) {
-        const responseQuality = response === 'remember' ? 4 : 1;
-        return await this.recordCardReview(cardId, responseQuality);
     }
 
     /**

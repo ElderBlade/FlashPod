@@ -98,27 +98,6 @@ export class APIClient {
         });
     }
 
-    // Card Review Management
-    /**
-     * Record a single card review
-     */
-    async recordCardReview(reviewData) {
-        return await this.request('/study/card-review', {
-            method: 'POST',
-            body: JSON.stringify(reviewData)
-        });
-    }
-
-    /**
-     * Batch record multiple card reviews
-     */
-    async batchRecordReviews(reviews) {
-        return await this.request('/study/card-reviews/batch', {
-            method: 'POST',
-            body: JSON.stringify({ reviews })
-        });
-    }
-
     /**
      * Get card review history for cards
      */

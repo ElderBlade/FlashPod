@@ -124,7 +124,7 @@ export class DeckLibrary {
                 month: 'short', day: 'numeric' 
             });
             
-            return `<span class="text-xs text-gray-500 dark:text-gray-400">Last: ${formattedDate} • ${stats.retention_rate}% • ${stats.duration_minutes}m</span>`;
+            return `<span class="text-xs text-gray-500 dark:text-gray-400">📅 Last: ${formattedDate} • 📊${stats.retention_rate}% • ⏱️ ${stats.duration_minutes}m</span>`;
             
         } else if (stats.mode === 'full-spaced') {
             const nextReviewDate = stats.next_review ? new Date(stats.next_review) : null;

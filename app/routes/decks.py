@@ -311,6 +311,7 @@ async def get_my_decks_with_stats(request):
         
         deck_data = []
         for deck in decks:
+            
             # Only get sessions that have actual card reviews (not basic mode)
             latest_session = session.query(StudySession).filter(
                 StudySession.user_id == user_id,
@@ -336,11 +337,11 @@ async def get_my_decks_with_stats(request):
                     session_id=latest_session.id
                 ).all()
                 
-                if session_reviews:
+                if session_reviews:                    
                     # Check if reviews have SM-2 data (ease_factor, next_review_date)
                     has_sm2_data = any(review.ease_factor != 2.5 or review.next_review_date 
                                      for review in session_reviews)
-                    
+                                        
                     if has_sm2_data:
                         # SM-2 mode
                         next_review, cards_due = get_sm2_due_info(session, deck.id, user_id)
@@ -361,7 +362,7 @@ async def get_my_decks_with_stats(request):
                             'retention_rate': calculate_simple_retention(session, deck.id, user_id),
                             'total_cards': latest_session.cards_studied or 0
                         }
-            
+                        
             deck_data.append({
                 'id': deck.id,
                 'name': deck.name,
@@ -398,7 +399,8 @@ def calculate_simple_retention(db_session, deck_id, user_id):
             and_(
                 CardReview.card_id.in_(card_ids),
                 CardReview.user_id == user_id,
-                CardReview.reviewed_at >= thirty_days_ago
+                CardReview.reviewed_at >= thirty_days_ago,
+                CardReview.response_quality.isnot(None)  # ADD THIS LINE - filter out NULL values
             )
         ).all()
         
