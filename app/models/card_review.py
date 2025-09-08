@@ -2,7 +2,7 @@
 from sqlalchemy import Column, Integer, DateTime, ForeignKey, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from .database import Base
 
 class CardReview(Base):
@@ -67,6 +67,6 @@ class CardReview(Base):
         )
         
         # Set next review date
-        self.next_review_date = datetime.utcnow() + timedelta(days=self.interval_days)
+        self.next_review_date = datetime.now(timezone.utc) + timedelta(days=self.interval_days)
         
         return self.next_review_date

@@ -466,8 +466,19 @@ def get_sm2_due_info(db_session, deck_id, user_id):
         
         # Find the next review session
         if cards_due_now > 0:
-            # Cards are due now, so next session is "now"
-            return None, cards_due_now
+            # Cards are due now - find the earliest overdue date to show as "overdue since"
+            overdue_dates = []
+            for review in latest_reviews:
+                if review.next_review_date and review.next_review_date <= now:
+                    overdue_dates.append(review.next_review_date)
+            
+            if overdue_dates:
+                # Return the earliest overdue date
+                earliest_overdue = min(overdue_dates)
+                return earliest_overdue, cards_due_now
+            else:
+                # No specific overdue date available, return current time
+                return now, cards_due_now
         elif review_dates:
             # Find the earliest future review date (next session)
             next_session_date = min(review_dates)
