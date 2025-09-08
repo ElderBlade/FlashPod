@@ -71,16 +71,23 @@ export class DeckLibrary {
         const statsHTML = this.getSessionStatsHTML(deck.session_stats);
         
         return `
-            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer border border-transparent dark:border-gray-600">
-                <h4 class="font-medium text-gray-900 dark:text-white mb-2">${deck.name}</h4>
-                <p class="text-sm text-gray-500 dark:text-gray-300 mb-3">${deck.description || 'No description'}</p>
-                <div class="flex justify-between items-center text-sm">
-                    <span class="text-gray-500 dark:text-gray-400">${deck.card_count} cards</span>
-                    ${statsHTML}
-                    <button onclick="window.app.studyDeck(${deck.id})" 
-                            class="bg-blue-600 dark:bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 dark:hover:bg-blue-600 cursor-pointer transition-colors">
-                        Study
-                    </button>
+            <div class="deck-card-mobile bg-gray-50 dark:bg-gray-700 rounded-lg p-3 md:p-4 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer border border-transparent dark:border-gray-600">
+                <div class="deck-content">
+                    <div class="deck-header">
+                        <h4 class="font-medium text-gray-900 dark:text-white mb-1">${deck.name}</h4>
+                        <p class="text-sm text-gray-500 dark:text-gray-300 mb-2">${deck.description || 'No description'}</p>
+                    </div>
+                    
+                    <div class="deck-footer">
+                        <div class="deck-info">
+                            <span class="text-sm text-gray-500 dark:text-gray-400">${deck.card_count} cards</span>
+                            ${statsHTML}
+                        </div>
+                        <button onclick="window.app.studyDeck(${deck.id})" 
+                                class="bg-blue-600 dark:bg-blue-500 text-white px-3 py-1.5 rounded text-xs md:text-sm hover:bg-blue-700 dark:hover:bg-blue-600 cursor-pointer transition-colors flex-shrink-0">
+                            Study
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
@@ -90,23 +97,25 @@ export class DeckLibrary {
         const statsHTML = this.getSessionStatsHTML(deck.session_stats);
         
         return `
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md dark:hover:shadow-gray-900/20 transition-all duration-300">
+            <div class="deck-card-mobile bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 md:p-6 hover:shadow-md dark:hover:shadow-gray-900/20 transition-all duration-300">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">${deck.name}</h3>
-                <p class="text-gray-600 dark:text-gray-300 mb-4">${deck.description || 'No description'}</p>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-500 dark:text-gray-400">${deck.card_count} cards</span>
-                    ${statsHTML}
-                    <div class="space-x-2">
+                <p class="text-gray-600 dark:text-gray-300 mb-3 text-sm md:text-base">${deck.description || 'No description'}</p>
+                <div class="deck-footer">
+                    <div class="deck-info">
+                        <span class="text-sm text-gray-500 dark:text-gray-400">${deck.card_count} cards</span>
+                        ${statsHTML}
+                    </div>
+                    <div class="deck-actions">
                         <button onclick="window.app.studyDeck(${deck.id})" 
-                                class="bg-blue-600 dark:bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 dark:hover:bg-blue-600 cursor-pointer transition-colors">
+                                class="bg-blue-600 dark:bg-blue-500 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700 dark:hover:bg-blue-600 cursor-pointer transition-colors">
                             Study
                         </button>
                         <button onclick="window.app.editDeck(${deck.id})" 
-                                class="bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 px-3 py-1 rounded text-sm hover:bg-yellow-200 dark:hover:bg-yellow-800 cursor-pointer transition-colors">
+                                class="bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 px-3 py-1.5 rounded text-sm hover:bg-yellow-200 dark:hover:bg-yellow-800 cursor-pointer transition-colors">
                             Edit
                         </button>
                         <button onclick="window.app.exportDeck(${deck.id})" 
-                                class="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-3 py-1 rounded text-sm hover:bg-green-200 dark:hover:bg-green-800 cursor-pointer transition-colors">
+                                class="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-3 py-1.5 rounded text-sm hover:bg-green-200 dark:hover:bg-green-800 cursor-pointer transition-colors">
                             Export
                         </button>
                     </div>
@@ -124,7 +133,7 @@ export class DeckLibrary {
                 month: 'short', day: 'numeric' 
             });
             
-            return `<span class="text-xs text-gray-500 dark:text-gray-400">📅 Last: ${formattedDate} • 📊${stats.retention_rate}% • ⏱️ ${stats.duration_minutes}m</span>`;
+            return `<span class="deck-stats-mobile text-xs text-gray-500 dark:text-gray-400">📅 ${formattedDate} • 📊 ${stats.retention_rate}% • ⏱️ ${stats.duration_minutes}m</span>`;
             
         } else if (stats.mode === 'full-spaced') {
             const nextReviewDate = stats.next_review ? new Date(stats.next_review) : null;
@@ -140,7 +149,7 @@ export class DeckLibrary {
                 dateClass = isOverdue ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400';
             }
             
-            return `<span class="text-xs ${dateClass}">🔔 Next: ${nextReviewText} • 📝 Due: ${stats.cards_due} • 📊${stats.retention_rate}% ⏱️ ${stats.duration_minutes}</span>`;
+            return `<span class="deck-stats-mobile text-xs ${dateClass}">🔔 ${nextReviewText} • 📝 ${stats.cards_due} • 📊 ${stats.retention_rate}%</span>`;
         }
         
         return '';
