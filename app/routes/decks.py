@@ -453,12 +453,17 @@ def get_sm2_due_info(db_session, deck_id, user_id):
         for review in latest_reviews:
             reviewed_card_ids.add(review.card_id)
             if review.next_review_date:
-                if review.next_review_date <= now:
+                # Handle timezone-naive dates by treating them as UTC
+                review_date = review.next_review_date
+                if review_date.tzinfo is None:
+                    review_date = review_date.replace(tzinfo=timezone.utc)
+                
+                if review_date <= now:
                     # Already due/overdue
                     cards_due_now += 1
                 else:
                     # Scheduled for future
-                    review_dates.append(review.next_review_date)
+                    review_dates.append(review_date)
         
         # Cards never reviewed are also available now
         never_reviewed_count = total_cards - len(reviewed_card_ids)
@@ -469,8 +474,13 @@ def get_sm2_due_info(db_session, deck_id, user_id):
             # Cards are due now - find the earliest overdue date to show as "overdue since"
             overdue_dates = []
             for review in latest_reviews:
-                if review.next_review_date and review.next_review_date <= now:
-                    overdue_dates.append(review.next_review_date)
+                if review.next_review_date:
+                    review_date = review.next_review_date
+                    if review_date.tzinfo is None:
+                        review_date = review_date.replace(tzinfo=timezone.utc)
+                    
+                    if review_date <= now:
+                        overdue_dates.append(review_date)
             
             if overdue_dates:
                 # Return the earliest overdue date

@@ -5,7 +5,7 @@ from sanic import response as sanic_response
 from models.database import get_db_session, hash_password, verify_password
 from models.user import User
 from middleware.auth import create_jwt_token, get_user_from_request
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 auth_bp = Blueprint("auth", url_prefix="/api/auth")
 
@@ -127,7 +127,7 @@ async def logout(request):
     
     # Clear the auth cookie
     response.cookies['auth_token'] = ''
-    response.cookies['auth_token']['expires'] = datetime.utcnow() - timedelta(days=1)
+    response.cookies['auth_token']['expires'] = datetime.now(timezone.utc) - timedelta(days=1)
     response.cookies['auth_token']['httponly'] = True
     
     return response

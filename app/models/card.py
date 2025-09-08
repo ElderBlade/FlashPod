@@ -1,4 +1,5 @@
 # app/models/card.py
+from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -15,8 +16,8 @@ class Card(Base):
     back_type = Column(String(20), default='text')
     difficulty = Column(Integer, default=0)
     display_order = Column(Integer, default=0)  # New field for ordering
-    created_at = Column(DateTime, default=func.current_timestamp())
-    updated_at = Column(DateTime, default=func.current_timestamp(), onupdate=func.current_timestamp())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     is_active = Column(Boolean, default=True)
     tags = Column(Text)
     

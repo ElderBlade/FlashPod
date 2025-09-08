@@ -13,6 +13,23 @@ export class FullSpaced {
     async initialize(state) {
         const modeData = state.modeData['full-spaced'];
         
+        // Initialize sessionStats if not present (first time initialization)
+        if (!modeData.sessionStats) {
+            modeData.sessionStats = {
+                sessionStartTime: new Date(),
+                cardsReviewed: 0,
+                newCardsLearned: 0,
+                ratingsSum: 0,
+                timeSpent: 0,
+                averageRating: 0
+            };
+        }
+        
+        // Store original session size for progress tracking (before cards are filtered)
+        if (!modeData.originalSessionSize) {
+            modeData.originalSessionSize = state.originalCards.length;
+        }
+        
         // Initialize if first time
         if (modeData.dueCards.length === 0 && modeData.newCards.length === 0) {
             await this._initializeCardCategories();
@@ -28,7 +45,7 @@ export class FullSpaced {
         }
 
         await this._updateInterface();
-        console.log(`SM-2 initialized - Due: ${modeData.dueCards.length}, New: ${modeData.newCards.length}`);
+        console.log(`SM-2 initialized - Due: ${modeData.dueCards.length}, New: ${modeData.newCards.length}, Original session size: ${modeData.originalSessionSize}`);
     }
 
     async _initializeCardCategories() {

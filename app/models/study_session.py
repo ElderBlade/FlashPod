@@ -1,4 +1,5 @@
 # app/models/study_session.py
+from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, CheckConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -11,7 +12,7 @@ class StudySession(Base):
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     deck_id = Column(Integer, ForeignKey('decks.id', ondelete='CASCADE'), nullable=True)
     pod_id = Column(Integer, ForeignKey('pods.id', ondelete='CASCADE'), nullable=True)
-    started_at = Column(DateTime, default=func.current_timestamp())
+    started_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     ended_at = Column(DateTime, nullable=True)
     cards_studied = Column(Integer, default=0)
     cards_correct = Column(Integer, default=0)

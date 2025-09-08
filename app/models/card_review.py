@@ -12,7 +12,7 @@ class CardReview(Base):
     card_id = Column(Integer, ForeignKey('cards.id', ondelete='CASCADE'), nullable=False)
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     session_id = Column(Integer, ForeignKey('study_sessions.id', ondelete='SET NULL'), nullable=True)
-    reviewed_at = Column(DateTime, default=func.current_timestamp())
+    reviewed_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     response_quality = Column(Integer, nullable=True)  # 1-5 scale (1=again, 5=easy)
     response_time = Column(Integer, nullable=True)  # Time in milliseconds
     ease_factor = Column(Float, default=2.5)  # Spaced repetition ease factor

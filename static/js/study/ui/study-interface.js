@@ -163,23 +163,44 @@ export class StudyInterface {
     }
 
     /**
-     * Update progress display
+    * Update progress display
      */
     updateProgress() {
         const state = this.manager.state;
-        const progress = this.manager.state.currentIndex + 1;
-        const total = this.manager.state.totalCards;
-        const percentage = (progress / total) * 100;
-
-        const progressBar = document.getElementById('progressBar');
-        const cardProgress = document.getElementById('cardProgress');
-
-        if (progressBar) {
-            progressBar.style.width = `${percentage}%`;
-        }
         
-        if (cardProgress) {
-            cardProgress.textContent = `Card ${progress} of ${total}`;
+        // Handle SM-2 mode differently - show cards reviewed vs total session cards
+        if (state.mode === 'full-spaced') {
+            const modeData = state.modeData['full-spaced'];
+            const cardsReviewed = modeData.sessionStats.cardsReviewed;
+            const totalSessionCards = modeData.originalSessionSize || state.originalCards.length;
+            const percentage = totalSessionCards > 0 ? (cardsReviewed / totalSessionCards) * 100 : 0;
+
+            const progressBar = document.getElementById('progressBar');
+            const cardProgress = document.getElementById('cardProgress');
+
+            if (progressBar) {
+                progressBar.style.width = `${percentage}%`;
+            }
+            
+            if (cardProgress) {
+                cardProgress.textContent = `${cardsReviewed} reviewed of ${totalSessionCards} due`;
+            }
+        } else {
+            // Original logic for basic and simple-spaced modes
+            const progress = state.currentIndex + 1;
+            const total = state.totalCards;
+            const percentage = (progress / total) * 100;
+
+            const progressBar = document.getElementById('progressBar');
+            const cardProgress = document.getElementById('cardProgress');
+
+            if (progressBar) {
+                progressBar.style.width = `${percentage}%`;
+            }
+            
+            if (cardProgress) {
+                cardProgress.textContent = `Card ${progress} of ${total}`;
+            }
         }
     }
 

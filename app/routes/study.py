@@ -7,7 +7,7 @@ from models.card import Card
 from models.study_session import StudySession
 from models.card_review import CardReview
 from middleware.auth import require_auth
-from datetime import datetime
+from datetime import datetime, timezone
 
 study_bp = Blueprint("study", url_prefix="/api/study")
 
@@ -106,7 +106,7 @@ async def complete_study_session(request, session_id):
             return json({"error": "Study session not found"}, status=404)
         
         # Mark session as completed
-        study_session.ended_at = datetime.utcnow()
+        study_session.ended_at = datetime.now(timezone.utc)
         
         session.commit()
         
