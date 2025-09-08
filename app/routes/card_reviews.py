@@ -2,7 +2,7 @@
 from sanic import Blueprint, json as sanic_json
 from sanic.response import json
 from sqlalchemy import desc
-from datetime import datetime
+from datetime import datetime, timezone
 from models.card_review import CardReview
 from models.card import Card
 from models.deck import Deck
@@ -110,7 +110,7 @@ async def create_review(request):
             interval_days=data['interval_days'],
             repetitions=data['repetitions'],
             next_review_date=datetime.fromisoformat(data['next_review_date'].replace('Z', '+00:00')) if data.get('next_review_date') else None,
-            reviewed_at=datetime.utcnow()
+            reviewed_at=datetime.now(timezone.utc)
         )
         
         session.add(review)

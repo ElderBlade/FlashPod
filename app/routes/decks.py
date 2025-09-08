@@ -3,7 +3,7 @@ from datetime import datetime
 from sanic import Blueprint
 from sanic.response import json, HTTPResponse
 from sqlalchemy import desc, func, and_
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from models.database import get_db_session
 from models.study_session import StudySession
 from models.card_review import CardReview
@@ -351,7 +351,7 @@ async def get_my_decks_with_stats(request):
                             'cards_due': cards_due,
                             'duration_minutes': duration_minutes,
                             'retention_rate': calculate_sm2_retention(session, deck.id, user_id),
-                            'is_overdue': next_review < datetime.now() if next_review else False
+                            'is_overdue': next_review < datetime.now(timezone.utc) if next_review else False
                         }
                     else:
                         # Simple spaced mode
@@ -445,7 +445,7 @@ def get_sm2_due_info(db_session, deck_id, user_id):
         ).filter(CardReview.user_id == user_id).all()
         
         # Build review schedule
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         reviewed_card_ids = set()
         review_dates = []
         cards_due_now = 0

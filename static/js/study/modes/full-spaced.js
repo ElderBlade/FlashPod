@@ -351,6 +351,11 @@ export class FullSpaced {
             this._endSession();
             return;
         }
+
+        // Update progress bar
+        this.manager.interface.updateProgress();
+        this.manager.interface.updateNavigationButtons();
+    
         
         // Update interface to hide buttons
         console.log('Updating interface after rating');
