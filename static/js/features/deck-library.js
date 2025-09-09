@@ -11,7 +11,23 @@ export class DeckLibrary {
         try {
             const data = await DeckService.getMyDecksWithStats(); 
             this.decks = data.decks;
-            this.displayRecentDecks(data.decks.slice(0, 6));
+            
+            // Filter and sort decks by actual review time
+            const recentlyReviewedDecks = data.decks
+                .filter(deck => deck.session_stats !== null)
+                .sort((a, b) => {
+                    // Get the review date for sorting
+                    const dateA = a.session_stats.mode === 'simple-spaced' 
+                        ? new Date(a.session_stats.last_reviewed)
+                        : new Date(a.session_stats.next_review); // For SM-2, use next_review as proxy
+                    const dateB = b.session_stats.mode === 'simple-spaced'
+                        ? new Date(b.session_stats.last_reviewed) 
+                        : new Date(b.session_stats.next_review); // For SM-2, use next_review as proxy
+                    return dateB - dateA; // Most recent first
+                })
+                .slice(0, 6); // Take first 6 after sorting
+                
+            this.displayRecentDecks(recentlyReviewedDecks);
         } catch (error) {
             console.error('Failed to load recent decks:', error);
         }

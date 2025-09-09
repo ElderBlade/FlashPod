@@ -10,6 +10,12 @@ export class FullSpaced {
         this.modeName = 'full-spaced';
     }
 
+    _isDateOnOrBefore(date1, date2) {
+        const d1 = new Date(date1.getFullYear(), date1.getMonth(), date1.getDate());
+        const d2 = new Date(date2.getFullYear(), date2.getMonth(), date2.getDate());
+        return d1 <= d2;
+    }
+
     async initialize(state) {
         const modeData = state.modeData['full-spaced'];
         
@@ -25,17 +31,17 @@ export class FullSpaced {
             };
         }
         
-        // Store original session size for progress tracking (before cards are filtered)
-        if (!modeData.originalSessionSize) {
-            modeData.originalSessionSize = state.originalCards.length;
-        }
-        
         // Initialize if first time
         if (modeData.dueCards.length === 0 && modeData.newCards.length === 0) {
             await this._initializeCardCategories();
         }
 
         this._updateActiveCards();
+
+        // Store original session size for progress tracking (before cards are filtered)
+        if (!modeData.originalSessionSize) {
+            modeData.originalSessionSize = state.cards.length;
+        }
 
         // Check if there are no cards to study
         if (state.cards.length === 0) {
@@ -76,7 +82,7 @@ export class FullSpaced {
                 
                 // Check if due for review
                 const nextReview = new Date(review.next_review_date);
-                if (nextReview <= now) {
+                if (this._isDateOnOrBefore(nextReview, now)) {
                     modeData.dueCards.push(card.id);
                 } else if (review.repetitions < 3) {
                     modeData.learningCards.push(card.id);
@@ -257,6 +263,9 @@ export class FullSpaced {
                 repetitions: reviewResult.repetitions,
                 next_review_date: reviewResult.next_review_date.toISOString()
             };
+
+            console.log('Session ID being sent:', this.manager.session.sessionId); // Add this
+            console.log('Manager session object:', this.manager.session); // Add this too
             
             console.log('Request body:', requestBody);
             
@@ -510,7 +519,7 @@ export class FullSpaced {
             // Get all future review dates
             const now = new Date();
             const futureDates = Array.from(modeData.nextReviewDates.values())
-                .filter(date => date > now)
+                .filter(!this._isDateOnOrBefore(date, now))
                 .sort((a, b) => a - b);
             
             if (futureDates.length > 0) {
@@ -630,7 +639,7 @@ export class FullSpaced {
         
         // Check all cards for next due dates
         for (const [cardId, nextReview] of modeData.nextReviewDates) {
-            if (nextReview <= now) {
+            if (this._isDateOnOrBefore(nextReview, now)) {
                 dueCount++;
             } else if (!nextDueDate || nextReview < nextDueDate) {
                 nextDueDate = nextReview;

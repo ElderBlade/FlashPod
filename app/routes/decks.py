@@ -312,12 +312,15 @@ async def get_my_decks_with_stats(request):
         deck_data = []
         for deck in decks:
             
-            # Only get sessions that have actual card reviews (not basic mode)
+            # Get latest session that has card reviews for this deck
             latest_session = session.query(StudySession).filter(
                 StudySession.user_id == user_id,
-                StudySession.deck_id == deck.id,
+                StudySession.deck_id == deck.id
+            ).filter(
                 StudySession.id.in_(
-                    session.query(CardReview.session_id).filter(
+                    session.query(CardReview.session_id).join(Card).filter(
+                        Card.deck_id == deck.id,
+                        CardReview.user_id == user_id,
                         CardReview.session_id.isnot(None)
                     ).distinct()
                 )
@@ -351,7 +354,7 @@ async def get_my_decks_with_stats(request):
                             'cards_due': cards_due,
                             'duration_minutes': duration_minutes,
                             'retention_rate': calculate_sm2_retention(session, deck.id, user_id),
-                            'is_overdue': next_review < datetime.now(timezone.utc) if next_review else False
+                            'is_overdue': next_review.date() <= datetime.now(timezone.utc).date() if next_review else False
                         }
                     else:
                         # Simple spaced mode
@@ -458,7 +461,7 @@ def get_sm2_due_info(db_session, deck_id, user_id):
                 if review_date.tzinfo is None:
                     review_date = review_date.replace(tzinfo=timezone.utc)
                 
-                if review_date <= now:
+                if review_date.date() <= now.date():
                     # Already due/overdue
                     cards_due_now += 1
                 else:
