@@ -460,22 +460,22 @@ export class StudyInterface {
                 <!-- SM-2 Mode Buttons -->
                 <div id="sm2Buttons" class="hidden flex justify-center space-x-3">
                     <button id="againBtn" class="response-btn bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 px-4 py-3 rounded-lg font-medium transition-colors flex items-center text-sm shadow-sm">
-                        <span class="mr-2 font-bold text-red-600">1</span>
+                        <span class="mr-1">🔴</span>
                         Again
                         <kbd class="ml-2 px-1.5 py-0.5 text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded border">1</kbd>
                     </button>
                     <button id="hardBtn" class="response-btn bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 px-4 py-3 rounded-lg font-medium transition-colors flex items-center text-sm shadow-sm">
-                        <span class="mr-2 font-bold text-orange-600">2</span>
+                        <span class="mr-1">🟠</span>
                         Hard
                         <kbd class="ml-2 px-1.5 py-0.5 text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded border">2</kbd>
                     </button>
                     <button id="goodBtn" class="response-btn bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 px-4 py-3 rounded-lg font-medium transition-colors flex items-center text-sm shadow-sm">
-                        <span class="mr-2 font-bold text-green-600">3</span>
+                        <span class="mr-1">🟢</span>
                         Good
                         <kbd class="ml-2 px-1.5 py-0.5 text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded border">3</kbd>
                     </button>
                     <button id="easyBtn" class="response-btn bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 px-4 py-3 rounded-lg font-medium transition-colors flex items-center text-sm shadow-sm">
-                        <span class="mr-2 font-bold text-blue-600">4</span>
+                        <span class="mr-1">🔵</span>
                         Easy
                         <kbd class="ml-2 px-1.5 py-0.5 text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded border">4</kbd>
                     </button>
