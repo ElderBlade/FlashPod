@@ -152,10 +152,6 @@ export class FullSpaced {
         state.currentIndex = 0;
         state.currentCardId = activeCards[0]?.id;
         
-        // Check if session should end
-        // if (activeCards.length === 0) {
-        //     this._endSession();
-        // }
     }
 
     async onCardFlip(direction) {
@@ -516,10 +512,10 @@ export class FullSpaced {
         let nextReviewCardCount = 0;
         
         if (modeData.nextReviewDates.size > 0) {
-            // Get all future review dates
+            // Get all future review dates, filtering out null values
             const now = new Date();
             const futureDates = Array.from(modeData.nextReviewDates.values())
-                .filter(!this._isDateOnOrBefore(date, now))
+                .filter(date => date !== null && date > now)  // Use strict > comparison, not _isDateOnOrBefore
                 .sort((a, b) => a - b);
             
             if (futureDates.length > 0) {
@@ -527,7 +523,7 @@ export class FullSpaced {
                 
                 // Count how many cards are due on that date
                 nextReviewCardCount = Array.from(modeData.nextReviewDates.values())
-                    .filter(date => date.toDateString() === nextReviewDate.toDateString()).length;
+                    .filter(date => date !== null && date.toDateString() === nextReviewDate.toDateString()).length;
             }
         }
         
@@ -538,8 +534,6 @@ export class FullSpaced {
                 weekday: 'short', 
                 month: 'short', 
                 day: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit'
             };
             const formattedDate = nextReviewDate.toLocaleDateString('en-US', options);
             const timeFromNow = this._getTimeFromNow(nextReviewDate);
