@@ -47,11 +47,17 @@ export class TimezoneHandler {
 
     isDateOnOrBeforeToday(date) {
         const today = this.getCurrentDateInServerTimezone();
-        const compareDate = new Date(date.toLocaleString("en-US", {
+        
+        // Convert both dates to just date components in server timezone
+        const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        
+        // Convert input date to server timezone
+        const inputInServerTz = new Date(date.toLocaleString("en-US", {
             timeZone: this.serverTimezone.name
         }));
+        const compareDate = new Date(inputInServerTz.getFullYear(), inputInServerTz.getMonth(), inputInServerTz.getDate());
         
-        return compareDate.toDateString() <= today.toDateString();
+        return compareDate <= todayDate;
     }
 }
 

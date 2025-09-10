@@ -12,12 +12,6 @@ export class FullSpaced {
         this.modeName = 'full-spaced';
     }
 
-    _isDateOnOrBefore(date1, date2) {
-        const d1 = new Date(date1.getFullYear(), date1.getMonth(), date1.getDate());
-        const d2 = new Date(date2.getFullYear(), date2.getMonth(), date2.getDate());
-        return d1 <= d2;
-    }
-
     async initialize(state) {
         const modeData = state.modeData['full-spaced'];
         
@@ -84,7 +78,7 @@ export class FullSpaced {
                 
                 // Check if due for review
                 const nextReview = new Date(review.next_review_date);
-                if (this._isDateOnOrBefore(nextReview, now)) {
+                if (timezoneHandler.isDateOnOrBeforeToday(nextReview)) {
                     modeData.dueCards.push(card.id);
                 } else if (review.repetitions < 3) {
                     modeData.learningCards.push(card.id);
@@ -548,11 +542,6 @@ export class FullSpaced {
         // Format the date and time
         let nextReviewText = '';
         if (nextReviewDate) {
-            // const formattedDate = nextReviewDate.toLocaleDateString('en-US', {
-            //     month: 'short',
-            //     day: 'numeric',
-            //     timeZone: 'America/Los_Angeles'
-            // });
             const formattedDate = timezoneHandler.formatDateInServerTimezone(
                 nextReviewDate.toISOString(), 
                 { 
@@ -662,7 +651,7 @@ export class FullSpaced {
         
         // Check all cards for next due dates
         for (const [cardId, nextReview] of modeData.nextReviewDates) {
-            if (this._isDateOnOrBefore(nextReview, now)) {
+            if (timezoneHandler.isDateOnOrBeforeToday(nextReview)) {
                 dueCount++;
             } else if (!nextDueDate || nextReview < nextDueDate) {
                 nextDueDate = nextReview;
@@ -676,7 +665,11 @@ export class FullSpaced {
             total: dueCount + newCardsCount,
             due: dueCount,
             new: newCardsCount,
-            nextDate: nextDueDate ? nextDueDate.toLocaleDateString() : 'Tomorrow'
+            nextDate: nextDueDate ? 
+            timezoneHandler.formatDateInServerTimezone(
+                nextDueDate.toISOString(), 
+                { month: 'short', day: 'numeric' }
+            ) : 'Tomorrow'
         };
     }
 
