@@ -4,6 +4,8 @@
  * Full SM-2 Spaced Repetition Mode Implementation
  * Advanced spaced repetition with 4-point difficulty rating system
  */
+import { timezoneHandler } from '../../utils/timezone.js';
+
 export class FullSpaced {
     constructor(studyManager) {
         this.manager = studyManager;
@@ -514,9 +516,9 @@ export class FullSpaced {
         if (modeData.nextReviewDates.size > 0) {
             // Get all future review dates, filtering out null values
             
-            const now = new Date();
+            const now = timezoneHandler.getCurrentDateInServerTimezone();
             const futureDates = Array.from(modeData.nextReviewDates.values())
-                .filter(date => date !== null && !this._isDateOnOrBefore(date, now))
+                .filter(date => date !== null && !timezoneHandler.isDateOnOrBeforeToday(date))
                 .sort((a, b) => a - b);
             
             if (futureDates.length > 0) {

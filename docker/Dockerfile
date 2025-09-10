@@ -54,6 +54,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         build-essential \
         curl \
+        tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 # Create app user with configurable UID/GID

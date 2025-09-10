@@ -11,6 +11,7 @@ from models.user import User
 from models.deck import Deck
 from models.card import Card
 from middleware.auth import require_auth
+from config.timezone import tz_config
 import re
 
 decks_bp = Blueprint("decks", url_prefix="/api/decks")
@@ -421,6 +422,7 @@ def calculate_simple_retention(db_session, deck_id, user_id):
 
 def get_sm2_due_info(db_session, deck_id, user_id):
     """Get next review date and cards due for SM-2 mode"""
+    
     try:
         # Get cards from this deck
         deck_cards = db_session.query(Card).filter_by(deck_id=deck_id).all()
@@ -447,8 +449,8 @@ def get_sm2_due_info(db_session, deck_id, user_id):
             )
         ).filter(CardReview.user_id == user_id).all()
         
-        # Build review schedule
-        now = datetime.now(timezone.utc)
+        # Build review schedule using configured timezone
+        now = tz_config.now()  # Now using configured timezone
         reviewed_card_ids = set()
         review_dates = []
         cards_due_now = 0
@@ -456,16 +458,16 @@ def get_sm2_due_info(db_session, deck_id, user_id):
         for review in latest_reviews:
             reviewed_card_ids.add(review.card_id)
             if review.next_review_date:
-                # Handle timezone-naive dates by treating them as UTC
                 review_date = review.next_review_date
                 if review_date.tzinfo is None:
                     review_date = review_date.replace(tzinfo=timezone.utc)
-
-                if review_date.date() <= now.date():
-                    # Already due/overdue
+                
+                # Convert to local timezone for date comparison
+                local_review_date = tz_config.utc_to_local(review_date)
+                
+                if local_review_date.date() <= now.date():
                     cards_due_now += 1
                 else:
-                    # Scheduled for future
                     review_dates.append(review_date)
         
         # Cards never reviewed are also available now
@@ -482,8 +484,10 @@ def get_sm2_due_info(db_session, deck_id, user_id):
                     if review_date.tzinfo is None:
                         review_date = review_date.replace(tzinfo=timezone.utc)
                     
-                    if review_date <= now:
-                        overdue_dates.append(review_date)
+                    # Convert to local timezone for comparison
+                    local_review_date = tz_config.utc_to_local(review_date)
+                    if local_review_date <= now:  # Use converted date
+                        overdue_dates.append(local_review_date)  # Store converted date
             
             if overdue_dates:
                 # Return the earliest overdue date
@@ -497,10 +501,11 @@ def get_sm2_due_info(db_session, deck_id, user_id):
             next_session_date = min(review_dates)
             
             # Count cards due at that next session date
-            # Group by date (ignoring time) to find all cards due on the same day
+            # Convert to local timezone for date comparison
+            next_local_date = tz_config.utc_to_local(next_session_date)
             cards_due_next_session = sum(
                 1 for date in review_dates 
-                if date.date() == next_session_date.date()
+                if tz_config.utc_to_local(date).date() == next_local_date.date()
             )
             
             return next_session_date, cards_due_next_session
@@ -517,6 +522,7 @@ def get_sm2_due_info(db_session, deck_id, user_id):
 
 def calculate_sm2_retention(db_session, deck_id, user_id):
     """Calculate retention rate for SM-2 mode"""
+    
     try:
         # Get cards from this deck
         deck_cards = db_session.query(Card).filter_by(deck_id=deck_id).all()

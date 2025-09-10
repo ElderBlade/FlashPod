@@ -1,6 +1,7 @@
 // static/js/features/deck-library.js
 import { DeckService } from '../services/deck-service.js';
 import { MessageUI } from '../ui/message.js';
+import { timezoneHandler } from '../utils/timezone.js';
 
 export class DeckLibrary {
     constructor() {
@@ -146,7 +147,9 @@ export class DeckLibrary {
         if (stats.mode === 'simple-spaced') {
             const lastReviewDate = new Date(stats.last_reviewed);
             const formattedDate = lastReviewDate.toLocaleDateString('en-US', { 
-                month: 'short', day: 'numeric' 
+                month: 'short', 
+                day: 'numeric',
+                timeZone: 'UTC',
             });
             
             return `<span class="deck-stats-mobile text-xs text-gray-500 dark:text-gray-400">📅 ${formattedDate} • 📊 ${stats.retention_rate}% • ⏱️ ${stats.duration_minutes}m</span>`;
@@ -159,11 +162,10 @@ export class DeckLibrary {
             let dateClass = 'text-gray-500 dark:text-gray-400';
             
             if (nextReviewDate) {
-                nextReviewText = nextReviewDate.toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric',
-                    timeZone: 'UTC',
-                });
+                nextReviewText = timezoneHandler.formatDateInServerTimezone(
+                    stats.next_review,
+                    { month: 'short', day: 'numeric' }
+                );
                 dateClass = isOverdue ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400';
             }
             

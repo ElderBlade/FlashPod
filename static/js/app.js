@@ -9,6 +9,7 @@ import { DeckManager } from './features/deck-manager.js';
 import { DeckEditor } from './features/deck-editor.js';
 import { ImportManager } from './features/import-manager.js';
 import { DarkModeToggle } from './ui/dark-mode-toggle.js';
+import { timezoneHandler } from './utils/timezone.js'; 
 
 class FlashPodApp {
     constructor() {
@@ -30,8 +31,10 @@ class FlashPodApp {
         this.init();
     }
 
-    init() {
-        // Load user info
+    async init() {
+        
+        await timezoneHandler.initialize();
+
         const user = UserService.loadUserInfo();
         if (!user) return;
         
@@ -215,6 +218,6 @@ class FlashPodApp {
 }
 
 // Initialize app when DOM is ready
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
     new FlashPodApp();
 });
