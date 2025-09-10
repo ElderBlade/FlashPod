@@ -513,9 +513,10 @@ export class FullSpaced {
         
         if (modeData.nextReviewDates.size > 0) {
             // Get all future review dates, filtering out null values
+            
             const now = new Date();
             const futureDates = Array.from(modeData.nextReviewDates.values())
-                .filter(date => date !== null && date > now)  // Use strict > comparison, not _isDateOnOrBefore
+                .filter(date => date !== null && !this._isDateOnOrBefore(date, now))
                 .sort((a, b) => a - b);
             
             if (futureDates.length > 0) {

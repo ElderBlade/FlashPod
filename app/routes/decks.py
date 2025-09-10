@@ -460,7 +460,7 @@ def get_sm2_due_info(db_session, deck_id, user_id):
                 review_date = review.next_review_date
                 if review_date.tzinfo is None:
                     review_date = review_date.replace(tzinfo=timezone.utc)
-                
+
                 if review_date.date() <= now.date():
                     # Already due/overdue
                     cards_due_now += 1

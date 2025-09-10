@@ -160,7 +160,9 @@ export class DeckLibrary {
             
             if (nextReviewDate) {
                 nextReviewText = nextReviewDate.toLocaleDateString('en-US', { 
-                    month: 'short', day: 'numeric' 
+                    month: 'short', 
+                    day: 'numeric',
+                    timeZone: 'UTC',
                 });
                 dateClass = isOverdue ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400';
             }
