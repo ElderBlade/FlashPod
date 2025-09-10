@@ -509,36 +509,58 @@ export class FullSpaced {
     _showNoCardsMessage() {
         const modeData = this.manager.state.modeData['full-spaced'];
     
-        // Find the next review date
+        // Debug logging
+        console.log('Debug - nextReviewDates Map:', modeData.nextReviewDates);
+        
         let nextReviewDate = null;
         let nextReviewCardCount = 0;
         
-        if (modeData.nextReviewDates.size > 0) {
-            // Get all future review dates, filtering out null values
-            
+        if (modeData.nextReviewDates && modeData.nextReviewDates.size > 0) {
             const now = timezoneHandler.getCurrentDateInServerTimezone();
-            const futureDates = Array.from(modeData.nextReviewDates.values())
-                .filter(date => date !== null && !timezoneHandler.isDateOnOrBeforeToday(date))
+            
+            // Convert Map values to array and filter
+            const allDates = Array.from(modeData.nextReviewDates.values())
+                .filter(date => {
+                    if (!date) return false;
+                    // Ensure date is a Date object
+                    const dateObj = date instanceof Date ? date : new Date(date);
+                    return !isNaN(dateObj) && dateObj > now;
+                })
+                .map(date => date instanceof Date ? date : new Date(date))
                 .sort((a, b) => a - b);
             
-            if (futureDates.length > 0) {
-                nextReviewDate = futureDates[0];
+            console.log('Debug - filtered future dates:', allDates);
+            
+            if (allDates.length > 0) {
+                nextReviewDate = allDates[0];
                 
-                // Count how many cards are due on that date
+                // Simplified date comparison for counting
+                const nextReviewDateString = nextReviewDate.toDateString();
                 nextReviewCardCount = Array.from(modeData.nextReviewDates.values())
-                    .filter(date => date !== null && date.toDateString() === nextReviewDate.toDateString()).length;
+                    .filter(date => {
+                        if (!date) return false;
+                        const dateObj = date instanceof Date ? date : new Date(date);
+                        return dateObj.toDateString() === nextReviewDateString;
+                    }).length;
             }
         }
         
         // Format the date and time
         let nextReviewText = '';
         if (nextReviewDate) {
-            const options = { 
-                weekday: 'short', 
-                month: 'short', 
-                day: 'numeric',
-            };
-            const formattedDate = nextReviewDate.toLocaleDateString('en-US', options);
+            // const formattedDate = nextReviewDate.toLocaleDateString('en-US', {
+            //     month: 'short',
+            //     day: 'numeric',
+            //     timeZone: 'America/Los_Angeles'
+            // });
+            const formattedDate = timezoneHandler.formatDateInServerTimezone(
+                nextReviewDate.toISOString(), 
+                { 
+                    weekday: 'short', 
+                    month: 'short', 
+                    day: 'numeric' 
+                }
+            );
             const timeFromNow = this._getTimeFromNow(nextReviewDate);
             
             nextReviewText = `
@@ -547,6 +569,10 @@ export class FullSpaced {
                 <br>
                 📝 ${nextReviewCardCount} card${nextReviewCardCount !== 1 ? 's' : ''} due
             `;
+            
+            console.log('Debug - nextReviewText generated:', nextReviewText);
+        } else {
+            console.log('Debug - No next review date found');
         }
 
         const modalHTML = `
@@ -629,7 +655,7 @@ export class FullSpaced {
     _getNextStudyCards() {
         const state = this.manager.state;
         const modeData = state.modeData['full-spaced'];
-        const now = new Date();
+        const now = timezoneHandler.getCurrentDateInServerTimezone()
         
         let dueCount = 0;
         let nextDueDate = null;

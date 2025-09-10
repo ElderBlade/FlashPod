@@ -145,12 +145,10 @@ export class DeckLibrary {
         if (!stats) return '';
         
         if (stats.mode === 'simple-spaced') {
-            const lastReviewDate = new Date(stats.last_reviewed);
-            const formattedDate = lastReviewDate.toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric',
-                timeZone: 'UTC',
-            });
+            const formattedDate = timezoneHandler.formatDateInServerTimezone(
+            stats.last_reviewed,
+            { month: 'short', day: 'numeric' }
+        );
             
             return `<span class="deck-stats-mobile text-xs text-gray-500 dark:text-gray-400">📅 ${formattedDate} • 📊 ${stats.retention_rate}% • ⏱️ ${stats.duration_minutes}m</span>`;
             
