@@ -355,7 +355,7 @@ async def get_my_decks_with_stats(request):
                             'next_review': next_review.isoformat() if next_review else None,
                             'cards_due': cards_due,
                             'duration_minutes': duration_minutes,
-                            'retention_rate': calculate_sm2_retention(session, deck.id, user_id),
+                            'retention_rate': calculate_sm2_retention(session, user_id, deck.id),
                             'is_overdue': next_review.date() <= datetime.now(timezone.utc).date() if next_review else False
                         }
                     else:
