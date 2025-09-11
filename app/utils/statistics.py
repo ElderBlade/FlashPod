@@ -5,80 +5,61 @@ Centralizes all statistical calculations for better maintainability.
 """
 
 from datetime import datetime, timedelta
-from sqlalchemy import and_, func, distinct
+from sqlalchemy import and_, or_, func, distinct
 from models.card_review import CardReview
 from models.card import Card
+from models.deck import Deck
 from models.study_session import StudySession
 
 
 def get_cards_learned_count(db_session, user_id):
     """
-    Get total number of unique cards that have been successfully learned.
-    A card is considered "learned" if it has at least one review with response_quality >= 3.
+    Get total number of unique cards learned through SM-2 spaced repetition.
+    Only counts cards that have SM-2 data and successful reviews.
     """
     try:
-        learned_cards = db_session.query(distinct(CardReview.card_id)).filter(
+        learned_cards = db_session.query(distinct(CardReview.card_id)).join(
+            Card, CardReview.card_id == Card.id
+        ).filter(
             and_(
                 CardReview.user_id == user_id,
                 CardReview.response_quality >= 3,
-                CardReview.response_quality.isnot(None)
+                CardReview.response_quality.isnot(None),
+                Card.is_active == True,
+                # SM-2 indicator: non-default ease_factor OR next_review_date set
+                or_(
+                    CardReview.ease_factor != 2.5,
+                    CardReview.next_review_date.isnot(None)
+                )
             )
         ).count()
         
         return learned_cards
         
     except Exception as e:
-        print(f"Error calculating cards learned: {e}")
+        print(f"Error calculating SM-2 cards learned: {e}")
         return 0
 
 
-def get_retention_rate(db_session, user_id, days_back=30):
+def get_retention_rate(db_session, user_id):
     """
-    Calculate overall retention rate: unique cards with response_quality >= 3 / total unique cards reviewed.
-    Uses reviews from the last 30 days by default.
+    Calculate retention rate based only on SM-2 spaced repetition reviews.
     """
-    try:
-        cutoff_date = datetime.now() - timedelta(days=days_back)
-        
-        # Get unique cards reviewed in the time period
-        total_cards_reviewed = db_session.query(distinct(CardReview.card_id)).filter(
-            and_(
-                CardReview.user_id == user_id,
-                CardReview.reviewed_at >= cutoff_date,
-                CardReview.response_quality.isnot(None)
-            )
-        ).count()
-        
-        if total_cards_reviewed == 0:
-            return 0
-        
-        # Get unique cards with good retention (response_quality >= 3)
-        well_remembered_cards = db_session.query(distinct(CardReview.card_id)).filter(
-            and_(
-                CardReview.user_id == user_id,
-                CardReview.reviewed_at >= cutoff_date,
-                CardReview.response_quality >= 3,
-                CardReview.response_quality.isnot(None)
-            )
-        ).count()
-        
-        retention_rate = round((well_remembered_cards / total_cards_reviewed) * 100)
-        return retention_rate
-        
-    except Exception as e:
-        print(f"Error calculating retention rate: {e}")
-        return 0
+    return calculate_sm2_retention(db_session, user_id, deck_id=None)
 
 
 def get_total_reviews_count(db_session, user_id):
     """
-    Get total number of card reviews completed by the user.
+    Get total number of card reviews for cards that still exist and are active.
     """
     try:
-        total_reviews = db_session.query(CardReview).filter(
+        total_reviews = db_session.query(CardReview).join(
+            Card, CardReview.card_id == Card.id
+        ).filter(
             and_(
                 CardReview.user_id == user_id,
-                CardReview.response_quality.isnot(None)
+                CardReview.response_quality.isnot(None),
+                Card.is_active == True
             )
         ).count()
         
@@ -182,38 +163,38 @@ def get_dashboard_stats(db_session, user_id):
 def calculate_deck_retention_rate(db_session, deck_id, user_id, days_back=30):
     """
     Calculate retention rate for a specific deck.
-    Uses unique cards with response_quality >= 3 / total unique cards reviewed.
+    Only counts cards that still exist and are active.
     """
     try:
-        # Get cards from this deck
-        deck_cards = db_session.query(Card).filter_by(deck_id=deck_id).all()
-        if not deck_cards:
-            return 0
-        
-        card_ids = [card.id for card in deck_cards]
         cutoff_date = datetime.now() - timedelta(days=days_back)
         
-        # Get unique cards reviewed in this deck
-        total_cards_reviewed = db_session.query(distinct(CardReview.card_id)).filter(
+        # Get unique cards reviewed in this deck that still exist
+        total_cards_reviewed = db_session.query(distinct(CardReview.card_id)).join(
+            Card, CardReview.card_id == Card.id
+        ).filter(
             and_(
-                CardReview.card_id.in_(card_ids),
+                Card.deck_id == deck_id,
                 CardReview.user_id == user_id,
                 CardReview.reviewed_at >= cutoff_date,
-                CardReview.response_quality.isnot(None)
+                CardReview.response_quality.isnot(None),
+                Card.is_active == True
             )
         ).count()
         
         if total_cards_reviewed == 0:
             return 0
         
-        # Get unique cards with good retention
-        well_remembered_cards = db_session.query(distinct(CardReview.card_id)).filter(
+        # Get unique cards with good retention that still exist
+        well_remembered_cards = db_session.query(distinct(CardReview.card_id)).join(
+            Card, CardReview.card_id == Card.id
+        ).filter(
             and_(
-                CardReview.card_id.in_(card_ids),
+                Card.deck_id == deck_id,
                 CardReview.user_id == user_id,
                 CardReview.reviewed_at >= cutoff_date,
                 CardReview.response_quality >= 3,
-                CardReview.response_quality.isnot(None)
+                CardReview.response_quality.isnot(None),
+                Card.is_active == True
             )
         ).count()
         
@@ -225,20 +206,35 @@ def calculate_deck_retention_rate(db_session, deck_id, user_id, days_back=30):
         return 0
 
 
-def calculate_sm2_retention(db_session, deck_id, user_id):
+def calculate_sm2_retention(db_session, user_id, deck_id=None):
     """
-    Calculate retention rate for SM-2 mode (moved from decks.py).
-    For SM-2, retention = average response quality as percentage.
+    Calculate retention rate for SM-2 mode.
+    If deck_id is provided, calculates for that deck only.
+    If deck_id is None, calculates across all user's decks.
     """
     try:
-        # Get cards from this deck
-        deck_cards = db_session.query(Card).filter_by(deck_id=deck_id).all()
-        if not deck_cards:
-            return 0
+        # Get cards based on whether deck_id is specified
+        if deck_id is not None:
+            # Original logic for specific deck
+            deck_cards = db_session.query(Card).filter_by(deck_id=deck_id).all()
+            if not deck_cards:
+                return 0
+            card_ids = [card.id for card in deck_cards]
+        else:
+            # New logic for all user's cards
+            user_cards = db_session.query(Card).join(
+                Deck, Card.deck_id == Deck.id
+            ).filter(
+                and_(
+                    Deck.user_id == user_id,
+                    Card.is_active == True
+                )
+            ).all()
+            if not user_cards:
+                return 0
+            card_ids = [card.id for card in user_cards]
         
-        card_ids = [card.id for card in deck_cards]
-        
-        # Get recent reviews (last 30 days)
+        # Rest of the logic stays the same
         thirty_days_ago = datetime.now() - timedelta(days=30)
         recent_reviews = db_session.query(CardReview).filter(
             and_(
@@ -267,41 +263,39 @@ def calculate_sm2_retention(db_session, deck_id, user_id):
 
 def calculate_simple_retention(db_session, deck_id, user_id):
     """
-    Calculate retention rate for simple-spaced mode (moved from decks.py).
-    Uses the corrected formula: unique cards with quality >= 3 / total unique cards reviewed.
+    Calculate retention rate for simple-spaced mode.
+    Only counts cards that still exist and are active.
     """
     try:
-        # Get cards from this deck
-        deck_cards = db_session.query(Card).filter_by(deck_id=deck_id).all()
-        if not deck_cards:
-            return 0
-        
-        card_ids = [card.id for card in deck_cards]
-        
-        # Get recent reviews (last 30 days)
         thirty_days_ago = datetime.now() - timedelta(days=30)
         
-        # Get unique cards reviewed
-        total_cards_reviewed = db_session.query(distinct(CardReview.card_id)).filter(
+        # Get unique cards reviewed that still exist
+        total_cards_reviewed = db_session.query(distinct(CardReview.card_id)).join(
+            Card, CardReview.card_id == Card.id
+        ).filter(
             and_(
-                CardReview.card_id.in_(card_ids),
+                Card.deck_id == deck_id,
                 CardReview.user_id == user_id,
                 CardReview.reviewed_at >= thirty_days_ago,
-                CardReview.response_quality.isnot(None)
+                CardReview.response_quality.isnot(None),
+                Card.is_active == True
             )
         ).count()
         
         if total_cards_reviewed == 0:
             return 0
         
-        # Get unique cards with good retention (quality >= 3)
-        well_remembered_cards = db_session.query(distinct(CardReview.card_id)).filter(
+        # Get unique cards with good retention (quality >= 3) that still exist
+        well_remembered_cards = db_session.query(distinct(CardReview.card_id)).join(
+            Card, CardReview.card_id == Card.id
+        ).filter(
             and_(
-                CardReview.card_id.in_(card_ids),
+                Card.deck_id == deck_id,
                 CardReview.user_id == user_id,
                 CardReview.reviewed_at >= thirty_days_ago,
                 CardReview.response_quality >= 3,
-                CardReview.response_quality.isnot(None)
+                CardReview.response_quality.isnot(None),
+                Card.is_active == True
             )
         ).count()
         

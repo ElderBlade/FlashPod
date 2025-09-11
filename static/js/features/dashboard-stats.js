@@ -38,7 +38,6 @@ export class DashboardStats {
 
         Object.entries(elements).forEach(([id, value]) => {
             const element = document.getElementById(id);
-            console.log(`Element ${id}:`, element, 'Value:', value);
             if (element) {
                 element.textContent = value;
             }
