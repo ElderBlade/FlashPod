@@ -1,15 +1,17 @@
 // static/js/app.js - Main Application Entry Point
 import { Config } from './core/config.js';
-import { UserService } from './services/user-service.js';
-import { Navigation } from './ui/navigation.js';
-import { MobileNavigation } from './ui/mobile-navigation.js';
-import { MessageUI } from './ui/message.js';
+import { DarkModeToggle } from './ui/dark-mode-toggle.js';
+import { DashboardStats } from './features/dashboard-stats.js';
+import { DeckEditor } from './features/deck-editor.js';
 import { DeckLibrary } from './features/deck-library.js';
 import { DeckManager } from './features/deck-manager.js';
-import { DeckEditor } from './features/deck-editor.js';
 import { ImportManager } from './features/import-manager.js';
-import { DarkModeToggle } from './ui/dark-mode-toggle.js';
+import { MessageUI } from './ui/message.js';
+import { MobileNavigation } from './ui/mobile-navigation.js';
+import { Navigation } from './ui/navigation.js';
 import { timezoneHandler } from './utils/timezone.js'; 
+import { UserService } from './services/user-service.js';
+
 
 class FlashPodApp {
     constructor() {
@@ -24,6 +26,7 @@ class FlashPodApp {
         this.deckEditor = new DeckEditor(this.navigation);
         this.importManager = new ImportManager(this.navigation);
         this.darkModeToggle = new DarkModeToggle();
+        this.dashboardStats = new DashboardStats();
         
         // Expose global methods for onclick handlers
         window.app = this;
@@ -51,6 +54,11 @@ class FlashPodApp {
             if (navId === 'library') {
                 this.library.loadAllDecks();
             }
+
+            if (navId === 'home') {
+                this.dashboardStats.init();
+                this.library.loadRecentDecks();
+            }
         };
         
         // Setup deck manager callbacks
@@ -75,6 +83,8 @@ class FlashPodApp {
         
         // Load initial data
         this.library.loadRecentDecks();
+
+        this.dashboardStats.init();
         
         // Setup logout button
         const logoutBtn = document.getElementById('logoutBtn');

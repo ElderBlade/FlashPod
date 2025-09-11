@@ -10,6 +10,7 @@ from models.card_review import CardReview
 from models.user import User
 from models.deck import Deck
 from models.card import Card
+from utils.statistics import calculate_sm2_retention, calculate_simple_retention
 from middleware.auth import require_auth
 from config.timezone import tz_config
 import re
@@ -387,39 +388,6 @@ async def get_my_decks_with_stats(request):
         session.close()
 
 
-def calculate_simple_retention(db_session, deck_id, user_id):
-    """Calculate retention rate for simple-spaced mode"""
-    try:
-        # Get cards from this deck
-        deck_cards = db_session.query(Card).filter_by(deck_id=deck_id).all()
-        if not deck_cards:
-            return 0
-        
-        card_ids = [card.id for card in deck_cards]
-        
-        # Get recent reviews (last 30 days)
-        thirty_days_ago = datetime.now() - timedelta(days=30)
-        recent_reviews = db_session.query(CardReview).filter(
-            and_(
-                CardReview.card_id.in_(card_ids),
-                CardReview.user_id == user_id,
-                CardReview.reviewed_at >= thirty_days_ago,
-                CardReview.response_quality.isnot(None)  # ADD THIS LINE - filter out NULL values
-            )
-        ).all()
-        
-        if not recent_reviews:
-            return 0
-        
-        # Calculate retention (reviews with quality >= 3 are "remembered")
-        good_reviews = sum(1 for review in recent_reviews if review.response_quality >= 3)
-        return round((good_reviews / len(recent_reviews)) * 100)
-        
-    except Exception as e:
-        print(f"Error calculating simple retention: {e}")
-        return 0
-
-
 def get_sm2_due_info(db_session, deck_id, user_id):
     """Get next review date and cards due for SM-2 mode"""
     
@@ -518,40 +486,3 @@ def get_sm2_due_info(db_session, deck_id, user_id):
         import traceback
         traceback.print_exc()
         return None, 0
-
-
-def calculate_sm2_retention(db_session, deck_id, user_id):
-    """Calculate retention rate for SM-2 mode"""
-    
-    try:
-        # Get cards from this deck
-        deck_cards = db_session.query(Card).filter_by(deck_id=deck_id).all()
-        if not deck_cards:
-            return 0
-        
-        card_ids = [card.id for card in deck_cards]
-        
-        # Get recent reviews (last 30 days)
-        thirty_days_ago = datetime.now() - timedelta(days=30)
-        recent_reviews = db_session.query(CardReview).filter(
-            and_(
-                CardReview.card_id.in_(card_ids),
-                CardReview.user_id == user_id,
-                CardReview.reviewed_at >= thirty_days_ago
-            )
-        ).all()
-        
-        if not recent_reviews:
-            return 0
-        
-        # For SM-2, retention = average response quality as percentage
-        # Quality 1=25%, 2=50%, 3=75%, 4=100%
-        quality_to_percent = {1: 25, 2: 50, 3: 75, 4: 100}
-        total_retention = sum(quality_to_percent.get(review.response_quality, 0) 
-                            for review in recent_reviews)
-        
-        return round(total_retention / len(recent_reviews))
-        
-    except Exception as e:
-        print(f"Error calculating SM-2 retention: {e}")
-        return 0
