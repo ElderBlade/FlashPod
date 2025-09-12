@@ -1,5 +1,6 @@
 // static/js/study/core/study-session.js
 import { APIClient } from '../utils/api-client.js';
+import { timezoneHandler } from '../../utils/timezone.js';
 
 /**
  * Manages study session lifecycle and data loading
@@ -89,7 +90,7 @@ export class StudySession {
             this.sessionData = {
                 id: 'local_' + Date.now(),
                 type: type,
-                started_at: new Date().toISOString()
+                started_at: timezoneHandler.getCurrentDateInServerTimezone().toISOString()
             };
         }
     }
@@ -147,7 +148,7 @@ export class StudySession {
         if (!this.sessionData) return null;
 
         const startTime = new Date(this.sessionData.started_at);
-        const now = new Date();
+        const now = timezoneHandler.getCurrentDateInServerTimezone();
         const durationMinutes = Math.round((now - startTime) / (1000 * 60));
 
         return {
@@ -186,7 +187,7 @@ export class StudySession {
                 stillLearning: modeData.stillLearning,
                 known: modeData.known,
                 completedRounds: modeData.completedRounds,
-                timestamp: new Date().toISOString()
+                timestamp: timezoneHandler.getCurrentDateInServerTimezone().toISOString()
             };
             
             localStorage.setItem(progressKey, JSON.stringify(progressData));

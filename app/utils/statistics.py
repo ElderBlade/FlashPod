@@ -10,6 +10,7 @@ from models.card_review import CardReview
 from models.card import Card
 from models.deck import Deck
 from models.study_session import StudySession
+from config.timezone import tz_config
 
 
 def get_cards_learned_count(db_session, user_id):
@@ -166,7 +167,7 @@ def calculate_deck_retention_rate(db_session, deck_id, user_id, days_back=30):
     Only counts cards that still exist and are active.
     """
     try:
-        cutoff_date = datetime.now() - timedelta(days=days_back)
+        cutoff_date = tz_config.now() - timedelta(days=days_back)
         
         # Get unique cards reviewed in this deck that still exist
         total_cards_reviewed = db_session.query(distinct(CardReview.card_id)).join(

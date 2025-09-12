@@ -4,6 +4,8 @@
  * Centralized state management for all study modes
  * Provides a consistent state structure that can be extended by different modes
  */
+import { timezoneHandler } from '../../utils/timezone.js';
+
 export class StudyState {
     static create() {
         return {
@@ -92,7 +94,7 @@ export class StudyState {
             case 'basic':
                 state.modeData.basic = {
                     cardsStudied: 0,
-                    startTime: new Date()
+                    startTime: timezoneHandler.getCurrentDateInServerTimezone()
                 };
                 break;
                 
@@ -107,8 +109,8 @@ export class StudyState {
                     currentRound: currentStillLearning.length > 0 ? 1 : 0,
                     responses: new Map(),
                     isCollectingResponse: false,
-                    sessionStartTime: new Date(),
-                    roundStartTime: new Date(),
+                    sessionStartTime: timezoneHandler.getCurrentDateInServerTimezone(),
+                    roundStartTime: timezoneHandler.getCurrentDateInServerTimezone(),
                     completedRounds: []
                 };
                 break;
@@ -133,7 +135,7 @@ export class StudyState {
     static initializeModeData(state, mode, cards) {
         switch (mode) {
             case 'basic':
-                state.modeData.basic.startTime = new Date();
+                state.modeData.basic.startTime = timezoneHandler.getCurrentDateInServerTimezone();
                 break;
                 
             case 'simple-spaced':
@@ -145,8 +147,8 @@ export class StudyState {
                     currentRound: 1,
                     responses: new Map(),
                     isCollectingResponse: false,
-                    sessionStartTime: new Date(),
-                    roundStartTime: new Date(),
+                    sessionStartTime: timezoneHandler.getCurrentDateInServerTimezone(),
+                    roundStartTime: timezoneHandler.getCurrentDateInServerTimezone(),
                     completedRounds: []
                 };
                 break;

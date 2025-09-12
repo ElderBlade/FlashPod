@@ -3,6 +3,7 @@
  * Integrates with existing architecture
  */
 import { CardAbsorptionAnimator } from '../ui/card-absorption-animator.js';
+import { timezoneHandler } from '../../utils/timezone.js';
 
 export class SimpleSpaced {
     constructor(studyManager) {
@@ -19,8 +20,8 @@ export class SimpleSpaced {
             modeData.stillLearning = state.cards.map(card => card.id);
             modeData.known = [];
             modeData.currentRound = 1;
-            modeData.sessionStartTime = new Date();
-            modeData.roundStartTime = new Date();
+            modeData.sessionStartTime = timezoneHandler.getCurrentDateInServerTimezone();
+            modeData.roundStartTime = timezoneHandler.getCurrentDateInServerTimezone();
         }
 
         this.updateActiveCards();
@@ -79,7 +80,7 @@ export class SimpleSpaced {
         }
         modeData.responses.get(currentCard.id).push({
             response,
-            timestamp: new Date(),
+            timestamp: timezoneHandler.getCurrentDateInServerTimezone(),
             round: modeData.currentRound
         });
 
@@ -145,13 +146,13 @@ export class SimpleSpaced {
         // Record completed round
         modeData.completedRounds.push({
             round: modeData.currentRound,
-            endTime: new Date(),
+            endTime: timezoneHandler.getCurrentDateInServerTimezone(),
             cardsLearned: modeData.known.length
         });
         
         // Start new round
         modeData.currentRound++;
-        modeData.roundStartTime = new Date();
+        modeData.roundStartTime = timezoneHandler.getCurrentDateInServerTimezone();
         
         // Update active cards and interface
         this.updateActiveCards();
@@ -168,7 +169,7 @@ export class SimpleSpaced {
 
     handleSessionCompletion() {
         const modeData = this.manager.state.modeData['simple-spaced'];
-        const totalTime = Math.round((new Date() - new Date(modeData.sessionStartTime)) / 1000 / 60);
+        const totalTime = Math.round((timezoneHandler.getCurrentDateInServerTimezone() - new Date(modeData.sessionStartTime)) / 1000 / 60);
         
         // Create completion modal
         const modalHTML = `
@@ -220,7 +221,7 @@ export class SimpleSpaced {
         modeData.known = [];
         modeData.currentRound = 1;
         modeData.responses.clear();
-        modeData.sessionStartTime = new Date();
+        modeData.sessionStartTime = timezoneHandler.getCurrentDateInServerTimezone();
         
         // Update the active cards (this updates state.cards and state.totalCards)
         this.updateActiveCards();

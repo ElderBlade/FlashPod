@@ -18,7 +18,7 @@ export class FullSpaced {
         // Initialize sessionStats if not present (first time initialization)
         if (!modeData.sessionStats) {
             modeData.sessionStats = {
-                sessionStartTime: new Date(),
+                sessionStartTime: timezoneHandler.getCurrentDateInServerTimezone(),
                 cardsReviewed: 0,
                 newCardsLearned: 0,
                 ratingsSum: 0,
@@ -58,7 +58,6 @@ export class FullSpaced {
         const reviewData = await this._fetchReviewData();
         
         // Categorize cards based on review history
-        const now = new Date();
         modeData.dueCards = [];
         modeData.newCards = [];
         modeData.learningCards = [];
@@ -101,7 +100,7 @@ export class FullSpaced {
             newCardsLearned: 0,
             timeSpent: 0,
             ratingsSum: 0,
-            sessionStartTime: new Date()
+            sessionStartTime: timezoneHandler.getCurrentDateInServerTimezone()
         };
     }
 
@@ -203,7 +202,7 @@ export class FullSpaced {
         let repetitions = existingReview?.repetitions || 0;
         let intervalDays = existingReview?.interval_days || 1;
         
-        const now = new Date();
+        const now = timezoneHandler.getCurrentDateInServerTimezone();
         
         if (rating < 3) {
             // Failed review - reset to learning
@@ -321,7 +320,7 @@ export class FullSpaced {
     }
 
     _formatNextReview(date) {
-        const now = new Date();
+        const now = timezoneHandler.getCurrentDateInServerTimezone();
         const diffTime = date - now;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
@@ -400,7 +399,7 @@ export class FullSpaced {
         const stats = modeData.sessionStats;
         
         // Calculate final session summary
-        stats.timeSpent = Math.round((new Date() - stats.sessionStartTime) / 1000 / 60);
+        stats.timeSpent = Math.round((timezoneHandler.getCurrentDateInServerTimezone() - stats.sessionStartTime) / 1000 / 60);
         stats.averageRating = stats.cardsReviewed > 0 ? 
             (stats.ratingsSum / stats.cardsReviewed).toFixed(1) : 0;
         
@@ -411,7 +410,7 @@ export class FullSpaced {
     }
 
     _showSessionComplete(stats) {
-        const totalTime = Math.round((new Date() - stats.sessionStartTime) / 1000 / 60);
+        const totalTime = Math.round((timezoneHandler.getCurrentDateInServerTimezone() - stats.sessionStartTime) / 1000 / 60);
         
         const modalHTML = `
             <div id="sm2CompletionModal" class="modal-backdrop fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
@@ -461,7 +460,7 @@ export class FullSpaced {
         
         // Reset session stats
         modeData.sessionStats = {
-            sessionStartTime: new Date(),
+            sessionStartTime: timezoneHandler.getCurrentDateInServerTimezone(),
             cardsReviewed: 0,
             newCardsLearned: 0,
             ratingsSum: 0,
@@ -605,7 +604,7 @@ export class FullSpaced {
     }
 
     _getTimeFromNow(futureDate) {
-        const now = new Date();
+        const now = timezoneHandler.getCurrentDateInServerTimezone();
         const diff = futureDate - now;
         
         const minutes = Math.floor(diff / (1000 * 60));
@@ -680,7 +679,7 @@ export class FullSpaced {
         if (this.manager.state.cards.length > 0) {
             // Reset session state but keep progress
             const modeData = this.manager.state.modeData['full-spaced'];
-            modeData.sessionStats.sessionStartTime = new Date();
+            modeData.sessionStats.sessionStartTime = timezoneHandler.getCurrentDateInServerTimezone();
             this.manager.state.currentIndex = 0;
             this.manager.state.isFlipped = false;
             

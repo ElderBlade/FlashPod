@@ -198,7 +198,7 @@ class FlashPodApp {
             
             // Create a clean filename
             const safeName = deck.name.replace(/[^\w\-_.]/g, '_');
-            const timestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            const timestamp = timezoneHandler.getCurrentDateInServerTimezone().toISOString().split('T')[0]; // YYYY-MM-DD
             link.download = `${safeName}_${timestamp}.csv`;
             
             // Trigger download
