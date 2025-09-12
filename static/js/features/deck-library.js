@@ -88,22 +88,33 @@ export class DeckLibrary {
         const statsHTML = this.getSessionStatsHTML(deck.session_stats);
         
         return `
-            <div class="deck-card-mobile bg-gray-50 dark:bg-gray-700 rounded-lg p-3 md:p-4 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer border border-transparent dark:border-gray-600">
-                <div class="deck-content">
-                    <div class="deck-header">
-                        <h4 class="font-medium text-gray-900 dark:text-white mb-1">${deck.name}</h4>
-                        <p class="text-sm text-gray-500 dark:text-gray-300 mb-2">${deck.description || 'No description'}</p>
-                    </div>
-                    
-                    <div class="deck-footer">
-                        <div class="deck-info">
-                            <span class="text-sm text-gray-500 dark:text-gray-400">${deck.card_count} cards</span>
-                            ${statsHTML}
-                        </div>
-                        <button onclick="window.app.studyDeck(${deck.id})" 
-                                class="bg-blue-600 dark:bg-blue-500 text-white px-3 py-1.5 rounded text-xs md:text-sm hover:bg-blue-700 dark:hover:bg-blue-600 cursor-pointer transition-colors flex-shrink-0">
-                            Study
-                        </button>
+            <div class="deck-card-mobile bg-gray-50 dark:bg-gray-700 rounded-lg p-3 md:p-4 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer border border-transparent dark:border-gray-600 relative group" 
+                onclick="window.app.studyDeck(${deck.id})">
+                
+                <!-- Action buttons in top-right -->
+                <div class="absolute top-3 right-3 flex gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                    <button onclick="event.stopPropagation(); window.app.editDeck(${deck.id})" 
+                            class="p-2 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 cursor-pointer rounded-full transition-colors"
+                            title="Edit deck">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                    </button>
+                    <button onclick="event.stopPropagation(); window.app.exportDeck(${deck.id})" 
+                            class="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 cursor-pointer rounded-full transition-colors"
+                            title="Export deck">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-4-4m4 4l4-4m5-2V7a2 2 0 00-2-2H7a2 2 0 00-2-2v3"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2 pr-16">${deck.name}</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-3 text-sm md:text-base">${deck.description || 'No description'}</p>
+                <div class="deck-footer">
+                    <div class="deck-info">
+                        <span class="text-sm text-gray-500 dark:text-gray-400">${deck.card_count} cards</span>
+                        ${statsHTML}
                     </div>
                 </div>
             </div>
@@ -114,27 +125,33 @@ export class DeckLibrary {
         const statsHTML = this.getSessionStatsHTML(deck.session_stats);
         
         return `
-            <div class="deck-card-mobile bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 md:p-6 hover:shadow-md dark:hover:shadow-gray-900/20 transition-all duration-300">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">${deck.name}</h3>
+            <div class="deck-card-mobile bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 md:p-6 hover:shadow-md dark:hover:bg-gray-700 transition-all duration-300 cursor-pointer relative group" 
+                onclick="window.app.studyDeck(${deck.id})">
+                
+                <!-- Action buttons in top-right -->
+                <div class="absolute top-3 right-3 flex gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                    <button onclick="event.stopPropagation(); window.app.editDeck(${deck.id})" 
+                            class="p-2 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 cursor-pointer rounded-full transition-colors"
+                            title="Edit deck">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                    </button>
+                    <button onclick="event.stopPropagation(); window.app.exportDeck(${deck.id})" 
+                            class="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 cursor-pointer rounded-full transition-colors"
+                            title="Export deck">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-4-4m4 4l4-4m5-2V7a2 2 0 00-2-2H7a2 2 0 00-2-2v3"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2 pr-16">${deck.name}</h3>
                 <p class="text-gray-600 dark:text-gray-300 mb-3 text-sm md:text-base">${deck.description || 'No description'}</p>
                 <div class="deck-footer">
                     <div class="deck-info">
                         <span class="text-sm text-gray-500 dark:text-gray-400">${deck.card_count} cards</span>
                         ${statsHTML}
-                    </div>
-                    <div class="deck-actions">
-                        <button onclick="window.app.studyDeck(${deck.id})" 
-                                class="bg-blue-600 dark:bg-blue-500 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700 dark:hover:bg-blue-600 cursor-pointer transition-colors">
-                            Study
-                        </button>
-                        <button onclick="window.app.editDeck(${deck.id})" 
-                                class="bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 px-3 py-1.5 rounded text-sm hover:bg-yellow-200 dark:hover:bg-yellow-800 cursor-pointer transition-colors">
-                            Edit
-                        </button>
-                        <button onclick="window.app.exportDeck(${deck.id})" 
-                                class="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-3 py-1.5 rounded text-sm hover:bg-green-200 dark:hover:bg-green-800 cursor-pointer transition-colors">
-                            Export
-                        </button>
                     </div>
                 </div>
             </div>

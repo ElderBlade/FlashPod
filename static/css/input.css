@@ -420,6 +420,24 @@ input:checked + .dark-toggle .star--6 {
     transition: none !important;
 }
 
+/* Deck card hover effects */
+.deck-card-mobile:hover {
+    transform: translateY(-1px);
+}
+
+.deck-card-mobile .group:hover .opacity-60 {
+    opacity: 1;
+}
+
+/* Action button improvements */
+.deck-card-mobile button[title] {
+    transition: all 0.2s ease;
+}
+
+.deck-card-mobile button[title]:hover {
+    transform: scale(1.2);
+}
+
 
 /* Windows-specific optimizations */
 @media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
