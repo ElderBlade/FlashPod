@@ -125,7 +125,7 @@ export class DeckLibrary {
         const statsHTML = this.getSessionStatsHTML(deck.session_stats);
         
         return `
-            <div class="deck-card-mobile bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 md:p-6 hover:shadow-md dark:hover:bg-gray-700 transition-all duration-300 cursor-pointer relative group" 
+            <div class="deck-card-mobile bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 md:p-6 hover:shadow-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 cursor-pointer relative group" 
                 onclick="window.app.studyDeck(${deck.id})">
                 
                 <!-- Action buttons in top-right -->
