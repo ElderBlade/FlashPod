@@ -4,6 +4,7 @@ export class DarkModeToggle {
         this.toggle = document.getElementById('dark-mode-toggle');
         this.mobileToggle = document.getElementById('mobile-dark-mode-toggle');
         this.storageKey = 'flashpod_dark_mode';
+        this.sidebarLogo = document.getElementById('sidebar-logo'); 
         
         this.init();
     }
@@ -71,6 +72,8 @@ export class DarkModeToggle {
             if (this.mobileToggle) this.mobileToggle.checked = false;
             localStorage.setItem(this.storageKey, 'light');
         }
+
+        this.switchLogo(isDark);
         
         // Dispatch custom event
         window.dispatchEvent(new CustomEvent('themeChanged', {
@@ -88,11 +91,29 @@ export class DarkModeToggle {
         } else {
             // Always start in light mode by default
             this.setDarkMode(false);
-            console.log('No saved theme, defaulting to light mode'); // Debug log
+            console.log('No saved theme, defaulting to light mode');
         }
     }
     
     isDarkMode() {
         return document.documentElement.classList.contains('dark');
+    }
+
+    switchLogo(isDark) {
+        if (this.sidebarLogo) {
+            const currentSrc = this.sidebarLogo.getAttribute('src');
+            
+            if (isDark) {
+                // Switch to dark mode logo
+                if (currentSrc.includes('flashpod-logo-main.png')) {
+                    this.sidebarLogo.setAttribute('src', '/static/img/flashpod-logo-main-dark.png');
+                }
+            } else {
+                // Switch to light mode logo
+                if (currentSrc.includes('flashpod-logo-main-dark.png')) {
+                    this.sidebarLogo.setAttribute('src', '/static/img/flashpod-logo-main.png');
+                }
+            }
+        }
     }
 }

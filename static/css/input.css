@@ -438,6 +438,15 @@ input:checked + .dark-toggle .star--6 {
     transform: scale(1.2);
 }
 
+#sidebar-logo {
+    transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+/* Optional: Add a subtle fade effect during logo switching */
+#sidebar-logo.switching {
+    opacity: 0.7;
+}
+
 
 /* Windows-specific optimizations */
 @media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
