@@ -356,7 +356,7 @@ async def get_my_decks_with_stats(request):
                             'cards_due': cards_due,
                             'duration_minutes': duration_minutes,
                             'retention_rate': calculate_sm2_retention(session, user_id, deck.id),
-                            'is_overdue': next_review.date() <= datetime.now(timezone.utc).date() if next_review else False
+                            'is_overdue': tz_config.utc_to_local(next_review).date() <= tz_config.now().date() if next_review else False
                         }
                     else:
                         # Simple spaced mode
