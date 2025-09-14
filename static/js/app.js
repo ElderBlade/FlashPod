@@ -1,14 +1,17 @@
 // static/js/app.js - Main Application Entry Point
 import { Config } from './core/config.js';
-import { UserService } from './services/user-service.js';
-import { Navigation } from './ui/navigation.js';
-import { MobileNavigation } from './ui/mobile-navigation.js';
-import { MessageUI } from './ui/message.js';
+import { DarkModeToggle } from './ui/dark-mode-toggle.js';
+import { DashboardStats } from './features/dashboard-stats.js';
+import { DeckEditor } from './features/deck-editor.js';
 import { DeckLibrary } from './features/deck-library.js';
 import { DeckManager } from './features/deck-manager.js';
-import { DeckEditor } from './features/deck-editor.js';
 import { ImportManager } from './features/import-manager.js';
-import { DarkModeToggle } from './ui/dark-mode-toggle.js';
+import { MessageUI } from './ui/message.js';
+import { MobileNavigation } from './ui/mobile-navigation.js';
+import { Navigation } from './ui/navigation.js';
+import { timezoneHandler } from './utils/timezone.js'; 
+import { UserService } from './services/user-service.js';
+
 
 class FlashPodApp {
     constructor() {
@@ -23,6 +26,7 @@ class FlashPodApp {
         this.deckEditor = new DeckEditor(this.navigation);
         this.importManager = new ImportManager(this.navigation);
         this.darkModeToggle = new DarkModeToggle();
+        this.dashboardStats = new DashboardStats();
         
         // Expose global methods for onclick handlers
         window.app = this;
@@ -30,8 +34,10 @@ class FlashPodApp {
         this.init();
     }
 
-    init() {
-        // Load user info
+    async init() {
+        
+        await timezoneHandler.initialize();
+
         const user = UserService.loadUserInfo();
         if (!user) return;
         
@@ -47,6 +53,11 @@ class FlashPodApp {
             
             if (navId === 'library') {
                 this.library.loadAllDecks();
+            }
+
+            if (navId === 'home') {
+                this.dashboardStats.init();
+                this.library.loadRecentDecks();
             }
         };
         
@@ -72,6 +83,8 @@ class FlashPodApp {
         
         // Load initial data
         this.library.loadRecentDecks();
+
+        this.dashboardStats.init();
         
         // Setup logout button
         const logoutBtn = document.getElementById('logoutBtn');
@@ -185,7 +198,7 @@ class FlashPodApp {
             
             // Create a clean filename
             const safeName = deck.name.replace(/[^\w\-_.]/g, '_');
-            const timestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            const timestamp = timezoneHandler.getCurrentDateInServerTimezone().toISOString().split('T')[0]; // YYYY-MM-DD
             link.download = `${safeName}_${timestamp}.csv`;
             
             // Trigger download
@@ -215,6 +228,6 @@ class FlashPodApp {
 }
 
 // Initialize app when DOM is ready
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
     new FlashPodApp();
 });

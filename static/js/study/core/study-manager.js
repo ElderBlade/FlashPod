@@ -5,7 +5,7 @@ import { StudyInterface } from '../ui/study-interface.js';
 import { KeyboardHandler } from '../utils/keyboard-handler.js';
 import { BasicReview } from '../modes/basic-review.js';
 import { SimpleSpaced } from '../modes/simple-spaced.js';
-// import { FullSpaced } from '../modes/full-spaced.js';
+import { FullSpaced } from '../modes/full-spaced.js';
 
 export class StudyManager {
     constructor() {
@@ -18,7 +18,7 @@ export class StudyManager {
         this.modes = {
             'basic': new BasicReview(this),
             'simple-spaced': new SimpleSpaced(this),
-            // 'full-spaced': new FullSpaced(this)
+            'full-spaced': new FullSpaced(this),
         };
         
         this.currentMode = null;

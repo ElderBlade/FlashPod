@@ -3,6 +3,7 @@
  * Integrates with existing architecture
  */
 import { CardAbsorptionAnimator } from '../ui/card-absorption-animator.js';
+import { timezoneHandler } from '../../utils/timezone.js';
 
 export class SimpleSpaced {
     constructor(studyManager) {
@@ -19,8 +20,8 @@ export class SimpleSpaced {
             modeData.stillLearning = state.cards.map(card => card.id);
             modeData.known = [];
             modeData.currentRound = 1;
-            modeData.sessionStartTime = new Date();
-            modeData.roundStartTime = new Date();
+            modeData.sessionStartTime = timezoneHandler.getCurrentDateInServerTimezone();
+            modeData.roundStartTime = timezoneHandler.getCurrentDateInServerTimezone();
         }
 
         this.updateActiveCards();
@@ -70,10 +71,8 @@ export class SimpleSpaced {
         const currentCard = state.cards[state.currentIndex];
         if (!currentCard) return;
 
-        // Record response
-        if (this.manager.session) {
-            await this.manager.session.recordSimpleSpacedResponse(currentCard.id, response);
-        }
+        // Save review to backend
+        await this._saveReview(currentCard.id, response);
         
         // Track in mode data
         if (!modeData.responses.has(currentCard.id)) {
@@ -81,7 +80,7 @@ export class SimpleSpaced {
         }
         modeData.responses.get(currentCard.id).push({
             response,
-            timestamp: new Date(),
+            timestamp: timezoneHandler.getCurrentDateInServerTimezone(),
             round: modeData.currentRound
         });
 
@@ -147,13 +146,13 @@ export class SimpleSpaced {
         // Record completed round
         modeData.completedRounds.push({
             round: modeData.currentRound,
-            endTime: new Date(),
+            endTime: timezoneHandler.getCurrentDateInServerTimezone(),
             cardsLearned: modeData.known.length
         });
         
         // Start new round
         modeData.currentRound++;
-        modeData.roundStartTime = new Date();
+        modeData.roundStartTime = timezoneHandler.getCurrentDateInServerTimezone();
         
         // Update active cards and interface
         this.updateActiveCards();
@@ -170,11 +169,11 @@ export class SimpleSpaced {
 
     handleSessionCompletion() {
         const modeData = this.manager.state.modeData['simple-spaced'];
-        const totalTime = Math.round((new Date() - new Date(modeData.sessionStartTime)) / 1000 / 60);
+        const totalTime = Math.round((timezoneHandler.getCurrentDateInServerTimezone() - new Date(modeData.sessionStartTime)) / 1000 / 60);
         
         // Create completion modal
         const modalHTML = `
-            <div id="completionModal" class="modal-backdrop fixed inset-0 bg-opacity-50 flex items-center justify-center z-50"">
+            <div id="completionModal" class="modal-backdrop fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
                 <div class="bg-white rounded-lg p-8 max-w-md mx-4 text-center shadow-xl">
                     <div class="text-6xl mb-4">🎉</div>
                     <h3 class="text-xl font-semibold text-gray-900 mb-4">Session Complete!</h3>
@@ -222,7 +221,7 @@ export class SimpleSpaced {
         modeData.known = [];
         modeData.currentRound = 1;
         modeData.responses.clear();
-        modeData.sessionStartTime = new Date();
+        modeData.sessionStartTime = timezoneHandler.getCurrentDateInServerTimezone();
         
         // Update the active cards (this updates state.cards and state.totalCards)
         this.updateActiveCards();
@@ -300,5 +299,43 @@ export class SimpleSpaced {
         }
 
         this.absorptionAnimator.cleanup();
+    }
+
+    async _saveReview(cardId, userResponse) {
+        try {
+            const responseQuality = userResponse === 'remember' ? 4 : 1;
+            
+            const reviewData = {
+                card_id: cardId,
+                session_id: this.manager.session.sessionId,
+                response_quality: responseQuality,
+                response_time: null,
+                // Required SM-2 fields with defaults for Simple mode
+                ease_factor: 2.5,
+                interval_days: 1,
+                repetitions: 0
+            };
+            
+            const apiResponse = await fetch('/api/cards/reviews', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(reviewData)
+            });
+            
+            if (!apiResponse.ok) {
+                const errorText = await apiResponse.text();
+                throw new Error(`Failed to save review: ${apiResponse.status} ${errorText}`);
+            } else {
+                console.log('Recorded card review!');
+            }
+            
+            return await apiResponse.json();
+        } catch (error) {
+            console.error('Error saving review:', error);
+            // Continue anyway - we have local state
+        }
     }
 }

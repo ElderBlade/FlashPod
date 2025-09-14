@@ -29,7 +29,7 @@
         })();
     </script>
     
-    <title>FlashPod - Dashboard</title>
+    <title>FlashPod</title>
     <link href="/static/css/style.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="/static/img/flashpod-logo-icon.png">
 </head>
@@ -41,13 +41,15 @@
         <!-- Sidebar Navigation -->
         <div id="sidebar" class="sidebar bg-white dark:bg-gray-800 w-64 shadow-lg flex flex-col transition-colors duration-300">
             <!-- App Header -->
-            <div class="px-6 py-6">
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">FlashPod</h1>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Smart Flashcard Learning</p>
+            <div class="px-6 py-3">
+                <img id="sidebar-logo" 
+                    src="/static/img/flashpod-logo-main.png" 
+                    class="mx-auto max-h-24 w-auto block transition-all duration-300" 
+                    alt="FlashPod">
             </div>
 
             <!-- User Info -->
-            <div class="px-6 py-4 bg-white dark:bg-gray-800 transition-colors duration-300">
+            <div class="px-6 py-4 border-gray-200 bg-gray-50 dark:border-gray-400 dark:bg-gray-700 transition-colors duration-300">
                 <div class="flex items-center">
                     <div class="w-10 h-10 bg-blue-600 dark:bg-blue-500 rounded-full flex items-center justify-center">
                         <span id="userInitials" class="text-white font-semibold text-sm"></span>
@@ -120,7 +122,7 @@
 
             <!-- Logout Button -->
             <div class="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
-                <button id="logoutBtn" class="w-full flex items-center px-4 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors">
+                <button id="logoutBtn" class="w-full flex items-center px-4 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors cursor-pointer">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                     </svg>
@@ -218,7 +220,7 @@
                                 </div>
                                 <div class="stats-text ml-3 md:ml-4">
                                     <p class="stats-label text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400">Learned</p>
-                                    <p id="cards-learned" class="stats-value text-lg md:text-2xl font-bold text-gray-900 dark:text-white">127</p>
+                                    <p id="cards-learned" class="stats-value text-lg md:text-2xl font-bold text-gray-900 dark:text-white">--</p>
                                 </div>
                             </div>
                         </div>
@@ -233,7 +235,7 @@
                                 </div>
                                 <div class="stats-text ml-3 md:ml-4">
                                     <p class="stats-label text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400">Retention</p>
-                                    <p id="retention-rate" class="stats-value text-lg md:text-2xl font-bold text-gray-900 dark:text-white">84%</p>
+                                    <p id="retention-rate" class="stats-value text-lg md:text-2xl font-bold text-gray-900 dark:text-white">--</p>
                                 </div>
                             </div>
                         </div>
@@ -248,7 +250,7 @@
                                 </div>
                                 <div class="stats-text ml-3 md:ml-4">
                                     <p class="stats-label text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400">Reviews</p>
-                                    <p id="total-reviews" class="stats-value text-lg md:text-2xl font-bold text-gray-900 dark:text-white">1.2k</p>
+                                    <p id="total-reviews" class="stats-value text-lg md:text-2xl font-bold text-gray-900 dark:text-white">--</p>
                                 </div>
                             </div>
                         </div>
@@ -263,7 +265,7 @@
                                 </div>
                                 <div class="stats-text ml-3 md:ml-4">
                                     <p class="stats-label text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400">Time</p>
-                                    <p id="study-time" class="stats-value text-lg md:text-2xl font-bold text-gray-900 dark:text-white">2.3h</p>
+                                    <p id="study-time" class="stats-value text-lg md:text-2xl font-bold text-gray-900 dark:text-white">--</p>
                                 </div>
                             </div>
                         </div>
@@ -301,7 +303,7 @@
                 </div>
 
                 <div id="flashcards-view" class="page-view hidden p-4 md:p-6 dark:text-white">
-                    <p>Flash card study interface coming soon...</p>
+                    <p>Flash card study interface</p>
                 </div>
 
                 <div id="new-deck-view" class="page-view hidden p-4 md:p-6">
@@ -340,7 +342,7 @@
                                 </div>
 
                                 <!-- Add Card Button -->
-                                <button type="button" id="addCardBtn" class="w-full border-2 border-dashed border-gray-300 rounded-lg px-4 py-3 text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors flex items-center justify-center dark:border-gray-600 dark:text-gray-400 dark:hover:border-gray-500 dark:hover:text-gray-300">
+                                <button type="button" id="addCardBtn" class="w-full border-2 border-dashed border-gray-300 rounded-lg px-4 py-3 text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors flex items-center justify-center dark:border-gray-600 dark:text-gray-400 dark:hover:border-gray-500 dark:hover:text-gray-300 cursor-pointer">
                                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                                     </svg>
@@ -506,7 +508,7 @@
                                 </div>
 
                                 <!-- Add Card Button -->
-                                <button type="button" id="addCardToEdit" class="w-full border-2 border-dashed border-gray-300 rounded-lg px-4 py-3 text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors flex items-center justify-center dark:border-gray-600 dark:text-gray-400 dark:hover:border-gray-500 dark:hover:text-gray-300">
+                                <button type="button" id="addCardToEdit" class="w-full border-2 border-dashed border-gray-300 rounded-lg px-4 py-3 text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors flex items-center justify-center dark:border-gray-600 dark:text-gray-400 dark:hover:border-gray-500 dark:hover:text-gray-300 cursor-pointer">
                                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                                     </svg>

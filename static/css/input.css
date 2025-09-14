@@ -420,6 +420,33 @@ input:checked + .dark-toggle .star--6 {
     transition: none !important;
 }
 
+/* Deck card hover effects */
+.deck-card-mobile:hover {
+    transform: translateY(-1px);
+}
+
+.deck-card-mobile .group:hover .opacity-60 {
+    opacity: 1;
+}
+
+/* Action button improvements */
+.deck-card-mobile button[title] {
+    transition: all 0.2s ease;
+}
+
+.deck-card-mobile button[title]:hover {
+    transform: scale(1.2);
+}
+
+#sidebar-logo {
+    transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+/* Optional: Add a subtle fade effect during logo switching */
+#sidebar-logo.switching {
+    opacity: 0.7;
+}
+
 
 /* Windows-specific optimizations */
 @media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
@@ -494,6 +521,62 @@ input:checked + .dark-toggle .star--6 {
     .modal-content {
         max-height: calc(100vh - 2rem);
         overflow-y: auto;
+    }
+
+    /* Make stats smaller and more compact on mobile */
+    .deck-stats-mobile {
+        font-size: 0.6875rem; /* 11px */
+        line-height: 1.2;
+    }
+    
+    /* Mobile-only deck card layout */
+    .deck-card-mobile .deck-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+    }
+    
+    .deck-card-mobile .deck-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        flex: 1;
+        min-width: 0; /* Allow text truncation */
+    }
+    
+    /* Make buttons smaller on mobile */
+    .deck-card-mobile .deck-actions {
+        display: flex;
+        gap: 0.25rem;
+        flex-shrink: 0;
+    }
+    
+    .deck-card-mobile .deck-actions button {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+    }
+
+    /* SM-2 Buttons */
+    #sm2Buttons {
+        gap: 0.5rem !important; /* Reduce spacing between buttons */
+    }
+    
+    #sm2Buttons button {
+        padding: 0.75rem 0.5rem !important; /* Smaller padding */
+        font-size: 0.75rem !important; /* Smaller text */
+        min-width: auto !important;
+        flex: 1; /* Equal width distribution */
+    }
+    
+    #sm2Buttons button span {
+        font-size: 0.875rem !important; /* Slightly smaller icons */
+        margin-right: 0.25rem !important; /* Less icon spacing */
+    }
+    
+    #sm2Buttons kbd {
+        display: none !important; /* Hide keyboard shortcuts on mobile */
     }
 }
 
@@ -724,6 +807,18 @@ input:checked + .dark-toggle .star--6 {
         flex: 1;
         margin-left: 0;
     }
+
+    .deck-card-mobile .deck-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .deck-card-mobile .deck-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
 }
 
 /* Enhanced responsive breakpoints */
@@ -761,6 +856,20 @@ input:checked + .dark-toggle .star--6 {
     
     .mobile-page-title {
         font-size: 1.125rem;
+    }
+
+    #sm2Buttons {
+        gap: 0.25rem !important; /* Even tighter spacing */
+    }
+    
+    #sm2Buttons button {
+        padding: 0.625rem 0.375rem !important; /* Extra small padding */
+        font-size: 0.6875rem !important; /* 11px text */
+    }
+    
+    #sm2Buttons button span {
+        font-size: 0.75rem !important; /* Smaller icons */
+        margin-right: 0.125rem !important; /* Minimal icon spacing */
     }
 }
 

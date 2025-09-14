@@ -1,4 +1,5 @@
 # app/models/deck.py
+from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -12,8 +13,8 @@ class Deck(Base):
     name = Column(String(255), nullable=False)
     description = Column(Text)
     is_public = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=func.current_timestamp())
-    updated_at = Column(DateTime, default=func.current_timestamp(), onupdate=func.current_timestamp())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     card_count = Column(Integer, default=0)
     study_settings = Column(JSON, default=lambda: {})
     

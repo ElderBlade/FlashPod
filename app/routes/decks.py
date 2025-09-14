@@ -2,11 +2,17 @@
 from datetime import datetime
 from sanic import Blueprint
 from sanic.response import json, HTTPResponse
+from sqlalchemy import desc, func, and_
+from datetime import datetime, timedelta, timezone
 from models.database import get_db_session
+from models.study_session import StudySession
+from models.card_review import CardReview
 from models.user import User
 from models.deck import Deck
 from models.card import Card
+from utils.statistics import calculate_sm2_retention, calculate_simple_retention
 from middleware.auth import require_auth
+from config.timezone import tz_config
 import re
 
 decks_bp = Blueprint("decks", url_prefix="/api/decks")
@@ -292,3 +298,191 @@ async def get_user_decks(request, user_id):
         return json({"error": str(e)}, status=500)
     finally:
         session.close()
+
+
+@decks_bp.route('/my-decks-with-stats', methods=['GET'])
+@require_auth
+async def get_my_decks_with_stats(request):
+    """Get user's decks with last session statistics"""
+    session = get_db_session()
+    try:
+        user_id = request.ctx.user['id']
+        
+        # Get user's decks
+        decks = session.query(Deck).filter_by(user_id=user_id).all()
+        
+        deck_data = []
+        for deck in decks:
+            
+            # Get latest session that has card reviews for this deck
+            latest_session = session.query(StudySession).filter(
+                StudySession.user_id == user_id,
+                StudySession.deck_id == deck.id
+            ).filter(
+                StudySession.id.in_(
+                    session.query(CardReview.session_id).join(Card).filter(
+                        Card.deck_id == deck.id,
+                        CardReview.user_id == user_id,
+                        CardReview.session_id.isnot(None)
+                    ).distinct()
+                )
+            ).order_by(desc(StudySession.started_at)).first()
+            
+            # Get session stats
+            session_stats = None
+            if latest_session:
+                # Calculate duration
+                duration_minutes = 0
+                if latest_session.ended_at and latest_session.started_at:
+                    delta = latest_session.ended_at - latest_session.started_at
+                    duration_minutes = round(delta.total_seconds() / 60)
+                
+                # Get card reviews from this session to determine mode
+                session_reviews = session.query(CardReview).filter_by(
+                    session_id=latest_session.id
+                ).all()
+                
+                if session_reviews:                    
+                    # Check if reviews have SM-2 data (ease_factor, next_review_date)
+                    has_sm2_data = any(review.ease_factor != 2.5 or review.next_review_date 
+                                     for review in session_reviews)
+                                        
+                    if has_sm2_data:
+                        # SM-2 mode
+                        next_review, cards_due = get_sm2_due_info(session, deck.id, user_id)
+                        session_stats = {
+                            'mode': 'full-spaced',
+                            'next_review': next_review.isoformat() if next_review else None,
+                            'cards_due': cards_due,
+                            'duration_minutes': duration_minutes,
+                            'retention_rate': calculate_sm2_retention(session, user_id, deck.id),
+                            'is_overdue': tz_config.utc_to_local(next_review).date() <= tz_config.now().date() if next_review else False
+                        }
+                    else:
+                        # Simple spaced mode
+                        session_stats = {
+                            'mode': 'simple-spaced',
+                            'last_reviewed': latest_session.started_at.isoformat(),
+                            'duration_minutes': duration_minutes,
+                            'retention_rate': calculate_simple_retention(session, deck.id, user_id),
+                            'total_cards': latest_session.cards_studied or 0
+                        }
+                        
+            deck_data.append({
+                'id': deck.id,
+                'name': deck.name,
+                'description': deck.description,
+                'card_count': deck.card_count,
+                'created_at': deck.created_at.isoformat(),
+                'session_stats': session_stats  # Will be None if no valid sessions
+            })
+        
+        return json({'decks': deck_data})
+        
+    except Exception as e:
+        print(f"Error getting decks with stats: {e}")
+        import traceback
+        traceback.print_exc()
+        return json({'error': str(e)}, status=500)
+    finally:
+        session.close()
+
+
+def get_sm2_due_info(db_session, deck_id, user_id):
+    """Get next review date and cards due for SM-2 mode"""
+    
+    try:
+        # Get cards from this deck
+        deck_cards = db_session.query(Card).filter_by(deck_id=deck_id).all()
+        if not deck_cards:
+            return None, 0
+        
+        card_ids = [card.id for card in deck_cards]
+        total_cards = len(card_ids)
+        
+        # Get the latest review for each card
+        latest_reviews_subquery = db_session.query(
+            CardReview.card_id,
+            func.max(CardReview.reviewed_at).label('latest_reviewed_at')
+        ).filter(
+            CardReview.card_id.in_(card_ids),
+            CardReview.user_id == user_id
+        ).group_by(CardReview.card_id).subquery()
+        
+        latest_reviews = db_session.query(CardReview).join(
+            latest_reviews_subquery,
+            and_(
+                CardReview.card_id == latest_reviews_subquery.c.card_id,
+                CardReview.reviewed_at == latest_reviews_subquery.c.latest_reviewed_at
+            )
+        ).filter(CardReview.user_id == user_id).all()
+        
+        # Build review schedule using configured timezone
+        now = tz_config.now()  # Now using configured timezone
+        reviewed_card_ids = set()
+        review_dates = []
+        cards_due_now = 0
+        
+        for review in latest_reviews:
+            reviewed_card_ids.add(review.card_id)
+            if review.next_review_date:
+                review_date = review.next_review_date
+                if review_date.tzinfo is None:
+                    review_date = review_date.replace(tzinfo=timezone.utc)
+                
+                # Convert to local timezone for date comparison
+                local_review_date = tz_config.utc_to_local(review_date)
+                
+                if local_review_date.date() <= now.date():
+                    cards_due_now += 1
+                else:
+                    review_dates.append(review_date)
+        
+        # Cards never reviewed are also available now
+        never_reviewed_count = total_cards - len(reviewed_card_ids)
+        cards_due_now += never_reviewed_count
+        
+        # Find the next review session
+        if cards_due_now > 0:
+            # Cards are due now - find the earliest overdue date to show as "overdue since"
+            overdue_dates = []
+            for review in latest_reviews:
+                if review.next_review_date:
+                    review_date = review.next_review_date
+                    if review_date.tzinfo is None:
+                        review_date = review_date.replace(tzinfo=timezone.utc)
+                    
+                    # Convert to local timezone for comparison
+                    local_review_date = tz_config.utc_to_local(review_date)
+                    if local_review_date <= now:  # Use converted date
+                        overdue_dates.append(local_review_date)  # Store converted date
+            
+            if overdue_dates:
+                # Return the earliest overdue date
+                earliest_overdue = min(overdue_dates)
+                return earliest_overdue, cards_due_now
+            else:
+                # No specific overdue date available, return current time
+                return now, cards_due_now
+        elif review_dates:
+            # Find the earliest future review date (next session)
+            next_session_date = min(review_dates)
+            
+            # Count cards due at that next session date
+            # Convert to local timezone for date comparison
+            next_local_date = tz_config.utc_to_local(next_session_date)
+            cards_due_next_session = sum(
+                1 for date in review_dates 
+                if tz_config.utc_to_local(date).date() == next_local_date.date()
+            )
+            
+            return next_session_date, cards_due_next_session
+        else:
+            # No future reviews scheduled
+            return None, 0
+        
+    except Exception as e:
+        print(f"Error getting SM-2 due info: {e}")
+        import traceback
+        traceback.print_exc()
+        return None, 0

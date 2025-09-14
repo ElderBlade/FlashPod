@@ -3,7 +3,7 @@ from sanic import redirect
 from sanic.response import json
 import jwt
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from models.database import get_db_session
 from models.user import User
 
@@ -38,8 +38,8 @@ def create_jwt_token(user_id: int, username: str) -> str:
     payload = {
         'user_id': user_id,
         'username': username,
-        'exp': datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS),
-        'iat': datetime.utcnow()
+        'exp': datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS),
+        'iat': datetime.now(timezone.utc)
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 

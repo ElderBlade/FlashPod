@@ -1,6 +1,7 @@
 // static/js/study/modes/basic-review.js
 import { StudyState } from '../core/study-state.js';
 import { TextUtils } from '../utils/text-utils.js';
+import { timezoneHandler } from '../../utils/timezone.js';
 
 /**
  * Mode 1: Basic Review
@@ -22,7 +23,7 @@ export class BasicReview {
         // Initialize mode-specific data
         StudyState.updateModeData(state, {
             cardsStudied: 0,
-            startTime: new Date()
+            startTime: timezoneHandler.getCurrentDateInServerTimezone()
         }, 'basic');
         
         // Update interface for basic mode
@@ -115,7 +116,7 @@ export class BasicReview {
     getStats() {
         const state = this.manager.state;
         const modeData = StudyState.getModeData(state, 'basic');
-        const currentTime = new Date();
+        const currentTime = timezoneHandler.getCurrentDateInServerTimezone();
         const startTime = new Date(modeData.startTime);
         const durationMinutes = Math.round((currentTime - startTime) / (1000 * 60));
         
@@ -184,7 +185,7 @@ export class BasicReview {
             mode: 'basic',
             cardsStudied: modeData.cardsStudied,
             currentIndex: this.manager.state.currentIndex,
-            lastStudied: new Date().toISOString()
+            lastStudied: timezoneHandler.getCurrentDateInServerTimezone().toISOString()
         };
         
         const storageKey = this.manager.state.lastDeckId ? 

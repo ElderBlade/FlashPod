@@ -1,4 +1,5 @@
 # app/models/user.py
+from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -11,8 +12,8 @@ class User(Base):
     username = Column(String(50), unique=True, nullable=False)
     email = Column(String(255), unique=True, nullable=False)  
     password_hash = Column(String(255), nullable=False)
-    created_at = Column(DateTime, default=func.current_timestamp())
-    updated_at = Column(DateTime, default=func.current_timestamp(), onupdate=func.current_timestamp())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     is_active = Column(Boolean, default=True)
     preferences = Column(JSON, default=lambda: {})
     
