@@ -506,9 +506,10 @@ export class FullSpaced {
         let nextReviewCardCount = 0;
         
         if (modeData.nextReviewDates && modeData.nextReviewDates.size > 0) {
-            const now = new Date(); // Use browser's current time
+            // Use server timezone for current time comparison
+            const now = timezoneHandler.getCurrentDateInServerTimezone();
             
-            // Since backend now returns timezone-converted dates, we can work directly with them
+            // Backend now returns timezone-converted dates, so we can work with them directly
             const allDates = Array.from(modeData.nextReviewDates.values())
                 .filter(date => {
                     if (!date) return false;
@@ -532,15 +533,18 @@ export class FullSpaced {
             }
         }
         
-        // Format the date - no timezone conversion needed!
+        // Format the date using timezoneHandler for consistency
         let nextReviewText = '';
         if (nextReviewDate) {
-            // Direct formatting since dates are already in correct timezone
-            const formattedDate = nextReviewDate.toLocaleDateString('en-US', {
-                weekday: 'short', 
-                month: 'short', 
-                day: 'numeric'
-            });
+            // Since backend already converted to server timezone, we can pass the ISO string directly
+            const formattedDate = timezoneHandler.formatDateInServerTimezone(
+                nextReviewDate.toISOString(),
+                { 
+                    weekday: 'short', 
+                    month: 'short', 
+                    day: 'numeric' 
+                }
+            );
             
             const timeFromNow = this._getTimeFromNow(nextReviewDate);
             
@@ -552,7 +556,6 @@ export class FullSpaced {
             `;
         }
 
-        // Rest of modal HTML unchanged...
         const modalHTML = `
             <div id="sm2NoCardsModal" class="modal-backdrop fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
                 <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
