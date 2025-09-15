@@ -9,6 +9,7 @@ from models.deck import Deck
 from models.database import get_db_session
 from middleware.auth import require_auth
 import traceback
+from config.timezone import tz_config
 
 card_reviews = Blueprint('card_reviews', url_prefix='/api/cards/reviews')
 
@@ -35,7 +36,6 @@ async def get_deck_reviews(request, deck_id):
             return json([])
         
         # Get the latest review for each card (most recent review per card)
-        # We use a subquery to get the max reviewed_at for each card_id
         from sqlalchemy import func
         
         # Subquery to get the latest review date for each card
@@ -55,10 +55,26 @@ async def get_deck_reviews(request, deck_id):
             (CardReview.user_id == user_id)
         ).all()
         
-        # Convert to list of dictionaries
+        # Convert to list of dictionaries with timezone conversion
         reviews_data = []
         for review in latest_reviews:
             review_dict = review.to_dict()
+            
+            # FIX: Apply same timezone conversion logic as get_sm2_due_info
+            if review.next_review_date:
+                # Ensure timezone info is present
+                review_date = review.next_review_date
+                if review_date.tzinfo is None:
+                    review_date = review_date.replace(tzinfo=timezone.utc)
+                
+                # Convert to server timezone (same logic as get_sm2_due_info)
+                local_review_date = tz_config.utc_to_local(review_date)
+                
+                # Return the timezone-converted date
+                review_dict['next_review_date'] = local_review_date.isoformat()
+                
+                print(f"🔧 Timezone conversion: {review.next_review_date} UTC → {local_review_date} local")
+            
             reviews_data.append(review_dict)
         
         print(f"✅ Found {len(reviews_data)} review records for deck {deck_id}")
@@ -70,6 +86,7 @@ async def get_deck_reviews(request, deck_id):
         return json({"error": str(e)}, status=500)
     finally:
         session.close()
+
 
 @card_reviews.route('', methods=['POST'])
 @require_auth
