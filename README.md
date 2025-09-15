@@ -74,6 +74,7 @@ FlashPod can be deployed using Docker or Podman containers for easy setup and is
          - SECRET_KEY=change-this-secure-secret-key
          - DEBUG=false
          - JWT_EXPIRATION_HOURS=24
+         - TZ=American/Los_Angeles
        volumes:
          - flashpod:/data
        user: "1001:1001"
@@ -111,6 +112,7 @@ FlashPod can be deployed using Docker or Podman containers for easy setup and is
      -e SECRET_KEY=change-this-secure-secret-key \
      -e DEBUG=false \
      -e JWT_EXPIRATION_HOURS=24 \
+     -e TZ=America/Los_Angeles \
      -v flashpod:/data \
      --user 1001:1001 \
      --read-only \
@@ -140,6 +142,7 @@ FlashPod can be deployed using Docker or Podman containers for easy setup and is
    Environment=SECRET_KEY=change-this-secure-secret-key
    Environment=DEBUG=false
    Environment=JWT_EXPIRATION_HOURS=24
+   Environment=TZ=America/Los_Angeles
 
    # Data persistence
    Volume=flashpod:/data:Z
@@ -177,7 +180,7 @@ For development or if you prefer running without containers:
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/flashpod.git
+   git clone https://github.com/ElderBlade/flashpod.git
    cd flashpod
    ```
 
@@ -333,6 +336,7 @@ DATABASE_URL=sqlite:///./data/flashpod.db
 SECRET_KEY=your-super-secret-key
 DEBUG=True
 JWT_EXPIRATION_HOURS=24
+TZ=America/Los_Angeles
 ```
 
 ### Production Deployment
