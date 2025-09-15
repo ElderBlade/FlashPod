@@ -501,33 +501,27 @@ export class FullSpaced {
 
     _showNoCardsMessage() {
         const modeData = this.manager.state.modeData['full-spaced'];
-    
-        // Debug logging
-        console.log('Debug - nextReviewDates Map:', modeData.nextReviewDates);
-        
+
         let nextReviewDate = null;
         let nextReviewCardCount = 0;
         
         if (modeData.nextReviewDates && modeData.nextReviewDates.size > 0) {
-            const now = timezoneHandler.getCurrentDateInServerTimezone();
+            const now = new Date(); // Use browser's current time
             
-            // Convert Map values to array and filter
+            // Since backend now returns timezone-converted dates, we can work directly with them
             const allDates = Array.from(modeData.nextReviewDates.values())
                 .filter(date => {
                     if (!date) return false;
-                    // Ensure date is a Date object
                     const dateObj = date instanceof Date ? date : new Date(date);
                     return !isNaN(dateObj) && dateObj > now;
                 })
                 .map(date => date instanceof Date ? date : new Date(date))
                 .sort((a, b) => a - b);
             
-            console.log('Debug - filtered future dates:', allDates);
-            
             if (allDates.length > 0) {
                 nextReviewDate = allDates[0];
                 
-                // Simplified date comparison for counting
+                // Count cards due on same date
                 const nextReviewDateString = nextReviewDate.toDateString();
                 nextReviewCardCount = Array.from(modeData.nextReviewDates.values())
                     .filter(date => {
@@ -538,17 +532,16 @@ export class FullSpaced {
             }
         }
         
-        // Format the date and time
+        // Format the date - no timezone conversion needed!
         let nextReviewText = '';
         if (nextReviewDate) {
-            const formattedDate = timezoneHandler.formatDateInServerTimezone(
-                nextReviewDate.toISOString(), 
-                { 
-                    weekday: 'short', 
-                    month: 'short', 
-                    day: 'numeric' 
-                }
-            );
+            // Direct formatting since dates are already in correct timezone
+            const formattedDate = nextReviewDate.toLocaleDateString('en-US', {
+                weekday: 'short', 
+                month: 'short', 
+                day: 'numeric'
+            });
+            
             const timeFromNow = this._getTimeFromNow(nextReviewDate);
             
             nextReviewText = `
@@ -557,12 +550,9 @@ export class FullSpaced {
                 <br>
                 📝 ${nextReviewCardCount} card${nextReviewCardCount !== 1 ? 's' : ''} due
             `;
-            
-            console.log('Debug - nextReviewText generated:', nextReviewText);
-        } else {
-            console.log('Debug - No next review date found');
         }
 
+        // Rest of modal HTML unchanged...
         const modalHTML = `
             <div id="sm2NoCardsModal" class="modal-backdrop fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
                 <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
