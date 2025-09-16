@@ -1,5 +1,5 @@
 # FlashPod Production Dockerfile - Using PostCSS (matches your existing setup)
-FROM node:18-alpine AS css-builder
+FROM node:20-alpine AS css-builder
 
 # Build CSS assets
 WORKDIR /app
@@ -80,6 +80,9 @@ COPY --chown=flashpod:flashpod static/ ./static/
 
 # Copy built CSS from node stage
 COPY --from=css-builder --chown=flashpod:flashpod /app/static/css/style.css ./static/css/
+
+RUN mkdir -p ./static/vendor/marked
+COPY --from=css-builder --chown=flashpod:flashpod /app/node_modules/marked ./static/vendor/marked
 
 # Final verification in Python container
 RUN echo "=== Final Container CSS Verification ===" && \

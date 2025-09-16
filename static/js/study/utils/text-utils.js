@@ -107,6 +107,9 @@ export class TextUtils {
      */
     static preserveLineBreaks(element) {
         const text = element.textContent;
+        if (element.innerHTML !== element.textContent) {
+            return; // Element has HTML, don't override it
+        }
         if (text.includes('\n')) {
             // Replace \n with <br> and set as innerHTML
             element.innerHTML = text.replace(/\n/g, '<br>');

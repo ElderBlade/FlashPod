@@ -1,6 +1,14 @@
 // static/js/study/ui/flashcard.js
 import { StudyState } from '../core/study-state.js';
 import { TextUtils } from '../utils/text-utils.js';
+import { marked } from 'marked';
+
+marked.setOptions({
+  sanitize: false,  // Remove potentially dangerous HTML
+  breaks: false,    // Convert line breaks to <br>
+  gfm: true,
+  smartypants: false
+});
 
 /**
  * Flashcard UI component
@@ -33,8 +41,10 @@ export class Flashcard {
         this._resetFlipState();
         
         // Update content
-        frontContent.textContent = displayContent.frontText;
-        backContent.textContent = displayContent.backText;
+        frontContent.innerHTML = marked(displayContent.frontText);
+        backContent.innerHTML = marked(displayContent.backText);
+
+        console.log('Marked options:', marked.getDefaults());
 
         // Dynamically adjust text size
         TextUtils.adjustCardTextSizes();

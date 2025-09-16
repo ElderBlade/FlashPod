@@ -122,6 +122,7 @@
     max-width: 100%;
     /* Add these new properties for dynamic sizing */
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     height: 100%;
@@ -445,6 +446,54 @@ input:checked + .dark-toggle .star--6 {
 /* Optional: Add a subtle fade effect during logo switching */
 #sidebar-logo.switching {
     opacity: 0.7;
+}
+
+/* Add spacing between paragraphs in flashcard content */
+.card-content p {
+    margin-bottom: 0.5rem;
+    width: 100%;
+}
+
+.card-content p:last-child {
+    margin-bottom: 0;
+}
+
+.card-content ol {
+    list-style-type: decimal;
+    list-style-position: outside;  /* Keeps numbers visible */
+    margin-bottom: 1rem;
+    padding-left: 1rem;
+}
+
+.card-content ul {
+    align-self: flex-start; 
+    list-style-type: disc;
+    list-style-position: inside;
+    margin-bottom: 1rem;
+    padding-left: 1rem;
+}
+
+.card-content li {
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+}
+
+.card-content li:last-child {
+    margin-bottom: 0;
+}
+
+/* Nested lists */
+.card-content ol ol,
+.card-content ul ul,
+.card-content ol ul,
+.card-content ul ol {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    padding-left: 1.5rem;
+}
+
+.card-content ul li {
+    margin-bottom: 0.125rem;  /* Reduced from 0.5rem */
 }
 
 
