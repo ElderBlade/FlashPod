@@ -167,23 +167,33 @@ async def import_file(request):
         
         # Parse CSV with proper handling
         cards_data = []
-        csv_reader = csv.reader(io.StringIO(file_content))
-        
+
+        # Filter out comment lines and empty lines before CSV parsing
+        filtered_lines = []
+        for line in lines:
+            stripped = line.strip()
+            if stripped and not stripped.startswith('#'):
+                filtered_lines.append(line)
+
+        # Join the filtered lines back into CSV content
+        filtered_content = '\n'.join(filtered_lines)
+        csv_reader = csv.reader(io.StringIO(filtered_content))
+
         # Skip header if present
         first_row = next(csv_reader, None)
-        if first_row and (first_row[0].lower() == 'term' or first_row[0].lower() == 'front'):
+        if first_row and first_row[0].lower().strip() == 'term':
             pass  # Skip header
         else:
-            # Process first row as data if it's not a comment or header
-            if first_row and len(first_row) >= 2 and not first_row[0].startswith('#'):
+            # Process first row as data if it's not a header
+            if first_row and len(first_row) >= 2 and first_row[0].strip():
                 cards_data.append({
                     'term': first_row[0].strip(),
                     'definition': first_row[1].strip()
                 })
-        
+
         # Process remaining rows
         for row in csv_reader:
-            if len(row) >= 2 and row[0].strip() and not row[0].startswith('#'):
+            if len(row) >= 2 and row[0].strip():
                 cards_data.append({
                     'term': row[0].strip(),
                     'definition': row[1].strip()

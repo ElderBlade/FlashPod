@@ -128,12 +128,32 @@ export class ImportManager {
     }
 
     parseImportData(text) {
-        const lines = text.split('\n').filter(line => line.trim() !== '');
+        const lines = text.split('\n');
         const cards = [];
         
-        lines.forEach((line) => {
+        // Filter out comment lines and empty lines
+        const filteredLines = lines.filter(line => {
+            const trimmed = line.trim();
+            return trimmed && !trimmed.startsWith('#');
+        });
+        
+        // Skip header if present
+        let startIndex = 0;
+        if (filteredLines.length > 0) {
+            const firstLine = filteredLines[0].trim();
+            if (firstLine.toLowerCase().startsWith('term,') || 
+                firstLine.toLowerCase().startsWith('term\t') ||
+                firstLine.toLowerCase() === 'term') {
+                startIndex = 1;
+            }
+        }
+        
+        // Process data lines
+        for (let i = startIndex; i < filteredLines.length; i++) {
+            const line = filteredLines[i];
             const trimmedLine = line.trim();
-            if (!trimmedLine) return;
+            
+            if (!trimmedLine) continue;
             
             let term, definition;
             
@@ -146,6 +166,18 @@ export class ImportManager {
                 const commaIndex = trimmedLine.indexOf(',');
                 term = trimmedLine.substring(0, commaIndex).trim();
                 definition = trimmedLine.substring(commaIndex + 1).trim();
+                
+                // Remove quotes if present (basic CSV unquoting)
+                if (term.startsWith('"') && term.endsWith('"')) {
+                    term = term.slice(1, -1).replace('""', '"');
+                }
+                if (definition.includes('","')) {
+                    // Handle the case where definition has multiple comma-separated parts
+                    definition = definition.split(',')[0];
+                }
+                if (definition.startsWith('"') && definition.endsWith('"')) {
+                    definition = definition.slice(1, -1).replace('""', '"');
+                }
             } else {
                 term = trimmedLine;
                 definition = '';
@@ -154,11 +186,11 @@ export class ImportManager {
             if (term) {
                 cards.push({ term, definition });
             }
-        });
+        }
         
         return cards;
     }
-
+    
     displayParsedCards(cards) {
         const container = document.getElementById('importCardsContainer');
         if (!container) return;
