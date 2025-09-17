@@ -190,7 +190,7 @@ export class ImportManager {
         
         return cards;
     }
-    
+
     displayParsedCards(cards) {
         const container = document.getElementById('importCardsContainer');
         if (!container) return;
@@ -207,7 +207,7 @@ export class ImportManager {
 
     createImportCardRow(term, definition, index) {
         const cardRow = document.createElement('div');
-        cardRow.className = 'import-card-row flex items-start gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200';
+        cardRow.className = 'import-card-row flex items-start gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200 dark:bg-gray-700 dark:border-gray-600';
         cardRow.dataset.cardIndex = index;
         
         cardRow.innerHTML = `
@@ -216,18 +216,18 @@ export class ImportManager {
             </div>
             <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Term</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">Term</label>
                     <input type="text" name="import-term" value="${term}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:placeholder-gray-400">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Definition</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">Definition</label>
                     <textarea name="import-definition" 
-                              class="auto-resize w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden" 
+                              class="auto-resize w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden dark:bg-gray-600 dark:border-gray-500 dark:text-white dark:placeholder-gray-400" 
                               rows="1">${definition}</textarea>
                 </div>
             </div>
-            <button type="button" class="remove-import-card text-red-500 hover:text-red-700 p-1 mt-8">
+            <button type="button" class="remove-import-card text-red-500 hover:text-red-700 p-1 mt-8 dark:text-red-400 dark:hover:text-red-300">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                           d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
