@@ -1,4 +1,6 @@
 # app/middleware/auth.py - Secure server-side authentication with environment config
+import secrets
+from pathlib import Path
 from sanic import redirect
 from sanic.response import json
 import jwt
@@ -6,15 +8,6 @@ import os
 from datetime import datetime, timedelta, timezone
 from models.database import get_db_session
 from models.user import User
-
-# JWT Configuration from environment variables
-JWT_SECRET = os.getenv("JWT_SECRET", "change-this-secure-jwt-secret-key")
-JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
-JWT_EXPIRATION_HOURS = int(os.getenv("JWT_EXPIRATION_HOURS", "24"))
-
-# Warn if default secrets are being used
-if JWT_SECRET == "change-this-secure-jwt-secret-key":
-    print("⚠️  WARNING: Using default JWT_SECRET! Set JWT_SECRET environment variable in production!")
 
 # Routes that don't require authentication
 PUBLIC_ROUTES = {
@@ -142,3 +135,44 @@ def require_auth(f):
     
     wrapper.__name__ = f.__name__
     return wrapper
+
+
+def ensure_secure_secrets():
+    """Ensure JWT_SECRET is secure, generate if needed"""
+    global JWT_SECRET
+    
+    # If using default secret, try to load or generate a secure one
+    if JWT_SECRET == "change-this-secure-jwt-secret-key":
+        secret_file = Path("data/.jwt_secret")
+        
+        # Try to load existing secret
+        if secret_file.exists():
+            try:
+                JWT_SECRET = secret_file.read_text().strip()
+                print("✅ Loaded JWT secret from data/.jwt_secret")
+                return
+            except Exception:
+                pass
+        
+        # Generate new secure secret
+        JWT_SECRET = secrets.token_urlsafe(32)
+        
+        # Try to save it for persistence
+        try:
+            secret_file.parent.mkdir(exist_ok=True)
+            secret_file.write_text(JWT_SECRET)
+            secret_file.chmod(0o600)  # Secure permissions
+            print("✅ Generated and saved new JWT secret to data/.jwt_secret")
+        except Exception:
+            print("⚠️  Generated JWT secret for this session only (couldn't save to file)")
+
+
+# JWT Configuration from environment variables
+JWT_SECRET = os.getenv("JWT_SECRET", "change-this-secure-jwt-secret-key")
+JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+JWT_EXPIRATION_HOURS = int(os.getenv("JWT_EXPIRATION_HOURS", "24"))
+ensure_secure_secrets()
+
+# Warn if default secrets are being used
+if JWT_SECRET == "change-this-secure-jwt-secret-key":
+    print("⚠️  WARNING: Using default JWT_SECRET! Set JWT_SECRET environment variable in production!")
