@@ -74,7 +74,7 @@ FlashPod can be deployed using Docker or Podman containers for easy setup and is
          - SECRET_KEY=change-this-secure-secret-key
          - DEBUG=false
          - JWT_EXPIRATION_HOURS=24
-         - TZ=American/Los_Angeles
+         - TZ=America/Los_Angeles
        volumes:
          - flashpod:/data
        user: "1001:1001"
