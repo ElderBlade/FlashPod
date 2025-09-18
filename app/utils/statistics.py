@@ -74,6 +74,7 @@ def get_total_reviews_count(db_session, user_id):
 def get_total_study_time(db_session, user_id):
     """
     Get total study time in hours from completed study sessions.
+    Uses integer arithmetic to avoid floating-point precision issues.
     """
     try:
         # Get all completed study sessions
@@ -85,14 +86,17 @@ def get_total_study_time(db_session, user_id):
             )
         ).all()
         
-        total_minutes = 0
+        total_seconds = 0
         for session in completed_sessions:
             duration = session.ended_at - session.started_at
-            total_minutes += duration.total_seconds() / 60
+            total_seconds += int(duration.total_seconds())
         
-        # Convert to hours and round to 1 decimal place
-        total_hours = round(total_minutes / 60, 1)
-        return total_hours
+        # Convert to hours using integer arithmetic
+        total_minutes = total_seconds // 60
+        total_hours = total_minutes / 60
+        
+        # Round to 1 decimal place
+        return round(total_hours, 1)
         
     except Exception as e:
         print(f"Error calculating total study time: {e}")
