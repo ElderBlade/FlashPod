@@ -46,14 +46,7 @@ export class PodService {
 
     static async createPod(name, description = '') {
         try {
-            // Get user_id from localStorage (following existing pattern)
-            const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
-            const userId = userInfo.id;
-
-            if (!userId) {
-                throw new Error('User not authenticated');
-            }
-
+            // Don't send user_id - backend will get it from authenticated context
             const response = await fetch(`${Config.API_BASE}/pods`, {
                 method: 'POST',
                 credentials: 'include',
@@ -61,14 +54,14 @@ export class PodService {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    user_id: userId,
                     name,
                     description
                 })
             });
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
             }
 
             return await response.json();

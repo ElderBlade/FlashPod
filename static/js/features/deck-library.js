@@ -88,6 +88,16 @@ export class DeckLibrary {
         document.getElementById('bulk-actions-bar')?.classList.remove('hidden');
         document.getElementById('bulk-select-mode')?.classList.add('hidden');
         
+        // Add visual indication that we're in bulk select mode
+        const deckCards = document.querySelectorAll('#all-decks-grid .deck-card');
+        deckCards.forEach(card => {
+            card.classList.add('bulk-select-mode');
+            // Temporarily disable the onclick for study mode
+            const originalOnClick = card.getAttribute('onclick');
+            card.setAttribute('data-original-onclick', originalOnClick);
+            card.removeAttribute('onclick');
+        });
+        
         // Add selection checkboxes to deck cards
         this.addSelectionCheckboxes();
         this.updateSelectedCount();
@@ -99,6 +109,18 @@ export class DeckLibrary {
         
         document.getElementById('bulk-actions-bar')?.classList.add('hidden');
         document.getElementById('bulk-select-mode')?.classList.remove('hidden');
+        
+        // Remove visual indication and restore onclick handlers
+        const deckCards = document.querySelectorAll('#all-decks-grid .deck-card');
+        deckCards.forEach(card => {
+            card.classList.remove('bulk-select-mode');
+            // Restore the original onclick for study mode
+            const originalOnClick = card.getAttribute('data-original-onclick');
+            if (originalOnClick) {
+                card.setAttribute('onclick', originalOnClick);
+                card.removeAttribute('data-original-onclick');
+            }
+        });
         
         // Remove selection checkboxes
         this.removeSelectionCheckboxes();
@@ -160,8 +182,9 @@ export class DeckLibrary {
             return;
         }
 
-        console.log('Add decks to pod:', Array.from(this.selectedDecks));
-        MessageUI.show('Bulk add to pod feature coming soon!', 'info');
+        // Use the pod manager for bulk add
+        const deckIds = Array.from(this.selectedDecks).map(id => parseInt(id));
+        window.app.podManager.showAddToPodModal(deckIds);
     }
 
     addDeckToPod(deckId) {

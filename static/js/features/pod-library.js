@@ -16,11 +16,11 @@ export class PodLibrary {
         const createFirstPodBtn = document.getElementById('create-first-pod-btn');
         
         if (createPodBtn) {
-            createPodBtn.addEventListener('click', () => this.showCreatePodModal());
+            createPodBtn.addEventListener('click', () => window.app.createPod());
         }
         
         if (createFirstPodBtn) {
-            createFirstPodBtn.addEventListener('click', () => this.showCreatePodModal());
+            createFirstPodBtn.addEventListener('click', () => window.app.createPod());
         }
 
         // Sort dropdown
@@ -145,8 +145,7 @@ export class PodLibrary {
     }
 
     showCreatePodModal() {
-        // Placeholder for modal - will implement in next step
-        MessageUI.show('Create pod modal coming soon!', 'info');
+        window.app.podManager.showCreatePodModal();
     }
 
     escapeHtml(text) {

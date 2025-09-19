@@ -518,20 +518,44 @@ input:checked + .dark-toggle .star--6 {
 }
 
 .deck-card.bulk-select-mode {
-    cursor: pointer;
+    cursor: default !important;
+    border: 2px solid #e5e7eb;
 }
 
 .deck-card.bulk-select-mode:hover {
-    background-color: rgb(239 246 255);
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.dark .deck-card.bulk-select-mode {
+    border-color: #4b5563;
 }
 
 .dark .deck-card.bulk-select-mode:hover {
-    background-color: rgb(30 58 138 / 0.2);
+    background-color: #374151;
+    border-color: #6b7280;
 }
 
-.deck-select-checkbox:checked + .deck-card {
-    ring: 2px solid #3b82f6;
-    ring-offset: 2px;
+/* Make checkboxes more prominent */
+.deck-select-checkbox {
+    cursor: pointer;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.deck-select-checkbox:checked {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+}
+
+/* Visual feedback for selected cards */
+.deck-card:has(.deck-select-checkbox:checked) {
+    border-color: #3b82f6 !important;
+    background-color: #eff6ff;
+}
+
+.dark .deck-card:has(.deck-select-checkbox:checked) {
+    border-color: #60a5fa !important;
+    background-color: rgba(59, 130, 246, 0.1);
 }
 
 /* Windows-specific optimizations */

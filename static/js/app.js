@@ -11,6 +11,7 @@ import { MobileNavigation } from './ui/mobile-navigation.js';
 import { Navigation } from './ui/navigation.js';
 import { timezoneHandler } from './utils/timezone.js'; 
 import { UserService } from './services/user-service.js';
+import { PodManager } from './features/pod-manager.js';
 
 
 class FlashPodApp {
@@ -27,6 +28,7 @@ class FlashPodApp {
         this.importManager = new ImportManager(this.navigation);
         this.darkModeToggle = new DarkModeToggle();
         this.dashboardStats = new DashboardStats();
+        this.podManager = new PodManager(this.library, this.library.podLibrary);
         
         // Expose global methods for onclick handlers
         window.app = this;
@@ -231,9 +233,6 @@ class FlashPodApp {
         MessageUI.show(`Study pod ${podId} - Coming soon!`, 'info');
     }
 
-    editPod(podId) {
-        MessageUI.show(`Edit pod ${podId} - Coming soon!`, 'info');
-    }
 
     showPodMenu(podId, event) {
         event.stopPropagation();
@@ -241,7 +240,16 @@ class FlashPodApp {
     }
 
     addDeckToPod(deckId) {
-        this.library.addDeckToPod(deckId);
+        this.podManager.showAddToPodModal([deckId]);
+    }
+
+    // Add new pod-related methods
+    createPod() {
+        this.podManager.showCreatePodModal();
+    }
+
+    editPod(podId) {
+        this.podManager.showEditPodModal(podId);
     }
 }
 

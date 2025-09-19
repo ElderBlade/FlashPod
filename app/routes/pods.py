@@ -11,22 +11,19 @@ from middleware.auth import require_auth
 pods_bp = Blueprint("pods", url_prefix="/api/pods")
 
 @pods_bp.route("", methods=["POST"])
+@require_auth  # Add this decorator
 async def create_pod(request):
     """Create a new pod"""
     session = get_db_session()
     try:
         data = request.json
-        user_id = data.get("user_id")
+        # Get user_id from authenticated user instead of request body
+        user_id = request.ctx.user['id']  # Change this line
         name = data.get("name")
         description = data.get("description", "")
         
-        if not all([user_id, name]):
-            return json({"error": "Missing required fields: user_id, name"}, status=400)
-        
-        # Verify user exists
-        user = session.query(User).filter_by(id=user_id).first()
-        if not user:
-            return json({"error": "User not found"}, status=404)
+        if not name:  # Change this line - only check for name
+            return json({"error": "Missing required field: name"}, status=400)
         
         # Create new pod
         new_pod = Pod(
@@ -49,21 +46,6 @@ async def create_pod(request):
     finally:
         session.close()
 
-# @pods_bp.route("/users/<user_id:int>", methods=["GET"])
-# async def get_user_pods(request, user_id):
-#     """Get all pods for a user"""
-#     session = get_db_session()
-#     try:
-#         pods = session.query(Pod).filter_by(user_id=user_id).order_by(Pod.created_at.desc()).all()
-        
-#         pods_data = [pod.to_dict() for pod in pods]
-        
-#         return json({"pods": pods_data})
-    
-#     except Exception as e:
-#         return json({"error": str(e)}, status=500)
-#     finally:
-#         session.close()
 
 @pods_bp.route("/my-pods", methods=["GET"])
 @require_auth
@@ -82,7 +64,9 @@ async def get_user_pods(request):
     finally:
         session.close()
 
+
 @pods_bp.route("/<pod_id:int>", methods=["GET"])
+@require_auth 
 async def get_pod(request, pod_id):
     """Get a specific pod with its decks"""
     session = get_db_session()
@@ -105,7 +89,9 @@ async def get_pod(request, pod_id):
     finally:
         session.close()
 
+
 @pods_bp.route("/<pod_id:int>/decks", methods=["POST"])
+@require_auth 
 async def add_deck_to_pod(request, pod_id):
     """Add a deck to a pod"""
     session = get_db_session()
@@ -158,7 +144,9 @@ async def add_deck_to_pod(request, pod_id):
     finally:
         session.close()
 
+
 @pods_bp.route("/<pod_id:int>/decks/<deck_id:int>", methods=["DELETE"])
+@require_auth 
 async def remove_deck_from_pod(request, pod_id, deck_id):
     """Remove a deck from a pod"""
     session = get_db_session()
@@ -193,7 +181,9 @@ async def remove_deck_from_pod(request, pod_id, deck_id):
     finally:
         session.close()
 
+
 @pods_bp.route("/<pod_id:int>", methods=["PUT"])
+@require_auth 
 async def update_pod(request, pod_id):
     """Update a pod"""
     session = get_db_session()
@@ -227,7 +217,9 @@ async def update_pod(request, pod_id):
     finally:
         session.close()
 
+
 @pods_bp.route("/<pod_id:int>", methods=["DELETE"])
+@require_auth 
 async def delete_pod(request, pod_id):
     """Delete a pod"""
     session = get_db_session()
@@ -251,7 +243,9 @@ async def delete_pod(request, pod_id):
     finally:
         session.close()
 
+
 @pods_bp.route("/<pod_id:int>/decks/reorder", methods=["PUT"])
+@require_auth 
 async def reorder_pod_decks(request, pod_id):
     """Reorder decks within a pod"""
     session = get_db_session()
@@ -293,7 +287,9 @@ async def reorder_pod_decks(request, pod_id):
     finally:
         session.close()
 
+
 @pods_bp.route("/<pod_id:int>/cards", methods=["GET"])
+@require_auth 
 async def get_pod_cards(request, pod_id):
     """Get all cards from all decks in a pod"""
     session = get_db_session()
