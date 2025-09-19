@@ -52,7 +52,8 @@ class FlashPodApp {
             }
             
             if (navId === 'library') {
-                this.library.loadAllDecks();
+                // this.library.loadAllDecks();
+                this.library.init();
             }
 
             if (navId === 'home') {
@@ -224,6 +225,23 @@ class FlashPodApp {
 
     closeMobileNavigation() {
         this.mobileNavigation.forceClose();
+    }
+
+    studyPod(podId) {
+        MessageUI.show(`Study pod ${podId} - Coming soon!`, 'info');
+    }
+
+    editPod(podId) {
+        MessageUI.show(`Edit pod ${podId} - Coming soon!`, 'info');
+    }
+
+    showPodMenu(podId, event) {
+        event.stopPropagation();
+        MessageUI.show(`Pod menu for ${podId} - Coming soon!`, 'info');
+    }
+
+    addDeckToPod(deckId) {
+        this.library.addDeckToPod(deckId);
     }
 }
 
