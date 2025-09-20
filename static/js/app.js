@@ -234,11 +234,6 @@ class FlashPodApp {
     }
 
 
-    showPodMenu(podId, event) {
-        event.stopPropagation();
-        MessageUI.show(`Pod menu for ${podId} - Coming soon!`, 'info');
-    }
-
     addDeckToPod(deckId) {
         this.podManager.showAddToPodModal([deckId]);
     }
@@ -250,6 +245,76 @@ class FlashPodApp {
 
     editPod(podId) {
         this.podManager.showEditPodModal(podId);
+    }
+
+    // Add these methods to the FlashPodApp class
+
+    showPodMenu(podId, event) {
+        event.stopPropagation();
+        
+        // Remove any existing menu
+        const existingMenu = document.getElementById('pod-menu');
+        if (existingMenu) {
+            existingMenu.remove();
+        }
+        
+        // Create context menu
+        const menu = document.createElement('div');
+        menu.id = 'pod-menu';
+        menu.className = 'absolute bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-2 z-50';
+        
+        menu.innerHTML = `
+            <button onclick="window.app.editPod(${podId}); window.app.closePodMenu();" 
+                    class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+                Edit Pod
+            </button>
+            <button onclick="window.app.deletePod(${podId}); window.app.closePodMenu();" 
+                    class="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
+                <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+                Delete Pod
+            </button>
+        `;
+        
+        // Position menu near the button
+        const rect = event.target.getBoundingClientRect();
+        menu.style.position = 'fixed';
+        menu.style.top = `${rect.bottom + 5}px`;
+        menu.style.left = `${rect.left - 100}px`;
+        
+        document.body.appendChild(menu);
+        
+        // Close menu when clicking outside
+        setTimeout(() => {
+            document.addEventListener('click', this.closePodMenu, { once: true });
+        }, 10);
+    }
+
+    closePodMenu() {
+        const menu = document.getElementById('pod-menu');
+        if (menu) {
+            menu.remove();
+        }
+    }
+
+    async deletePod(podId) {
+        const confirmed = confirm('Are you sure you want to delete this pod? This will not delete the decks themselves.');
+        if (!confirmed) return;
+        
+        try {
+            await PodService.deletePod(podId);
+            MessageUI.show('Pod deleted successfully', 'success');
+            
+            // Refresh the pod library
+            await this.library.podLibrary.refresh();
+        } catch (error) {
+            console.error('Error deleting pod:', error);
+            MessageUI.show('Failed to delete pod', 'error');
+        }
     }
 }
 

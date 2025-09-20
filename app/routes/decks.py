@@ -377,15 +377,9 @@ async def get_my_decks_with_stats(request):
                             'retention_rate': calculate_simple_retention(session, deck.id, user_id),
                             'total_cards': latest_session.cards_studied or 0
                         }
-                        
-            deck_data.append({
-                'id': deck.id,
-                'name': deck.name,
-                'description': deck.description,
-                'card_count': deck.card_count,
-                'created_at': deck.created_at.isoformat(),
-                'session_stats': session_stats  # Will be None if no valid sessions
-            })
+            deck_dict = deck.to_dict(include_pods=True)
+            deck_dict['session_stats'] = session_stats
+            deck_data.append(deck_dict)
         
         return json({'decks': deck_data})
         
