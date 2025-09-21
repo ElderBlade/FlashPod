@@ -187,10 +187,6 @@ export class DeckLibrary {
         window.app.podManager.showAddToPodModal(deckIds);
     }
 
-    addDeckToPod(deckId) {
-        console.log('Add deck to pod:', deckId);
-        MessageUI.show('Add to pod feature coming soon!', 'info');
-    }
 
     init() {
         this.switchTab('decks');

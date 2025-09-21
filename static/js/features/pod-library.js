@@ -79,58 +79,55 @@ export class PodLibrary {
         
         return `
             <div class="pod-card bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 cursor-pointer relative group" 
-                data-pod-id="${pod.id}">
+                data-pod-id="${pod.id}"
+                onclick="window.app.studyPod(${pod.id})">
                 
-                <!-- Pod Header -->
+                <!-- Top section with title and action buttons -->
                 <div class="flex items-start justify-between mb-4">
-                    <div class="flex-1">
+                    <!-- Title and description on the left -->
+                    <div class="flex-1 min-w-0 mr-3">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white truncate">${this.escapeHtml(pod.name)}</h3>
                         ${pod.description ? `<p class="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">${this.escapeHtml(pod.description)}</p>` : ''}
                     </div>
-                    <div class="ml-2 flex-shrink-0">
-                        <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1" onclick="window.app.showPodMenu(${pod.id}, event)">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    
+                    <!-- Action buttons on the right -->
+                    <div class="flex gap-1 opacity-60 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                        <button onclick="event.stopPropagation(); window.app.editPod(${pod.id})" 
+                                class="p-2 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 cursor-pointer rounded-full transition-colors"
+                                title="Edit pod">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                            </svg>
+                        </button>
+                        <button onclick="event.stopPropagation(); window.app.showPodMenu && window.app.showPodMenu(${pod.id}, event)" 
+                                class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer rounded-full transition-colors"
+                                title="More options">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
                             </svg>
                         </button>
                     </div>
                 </div>
 
-                <!-- Pod Stats -->
-                <div class="flex items-center space-x-4 mb-4 text-sm text-gray-500 dark:text-gray-400">
-                    <div class="flex items-center">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                        </svg>
-                        <span>${deckCount} deck${deckCount !== 1 ? 's' : ''}</span>
+                <!-- Pod Stats at the bottom -->
+                <div class="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                            </svg>
+                            <span>${deckCount} deck${deckCount !== 1 ? 's' : ''}</span>
+                        </div>
+                        <div class="flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 010 2h-1v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6H3a1 1 0 010-2h4z"></path>
+                            </svg>
+                            <span>${cardCount} card${cardCount !== 1 ? 's' : ''}</span>
+                        </div>
                     </div>
-                    <div class="flex items-center">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 010 2h-1v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6H3a1 1 0 010-2h4z"></path>
-                        </svg>
-                        <span>${cardCount} card${cardCount !== 1 ? 's' : ''}</span>
-                    </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="flex space-x-2">
-                    <button 
-                        onclick="window.app.studyPod(${pod.id})"
-                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-3 rounded-md transition-colors ${cardCount === 0 ? 'opacity-50 cursor-not-allowed' : ''}"
-                        ${cardCount === 0 ? 'disabled' : ''}>
-                        <svg class="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8"></path>
-                        </svg>
-                        Study Pod
-                    </button>
-                    <button 
-                        onclick="window.app.editPod(${pod.id})"
-                        class="flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium py-2 px-3 rounded-md transition-colors">
-                        <svg class="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                        </svg>
-                        Edit
-                    </button>
+                    
+                    <!-- Study indicator when disabled -->
+                    ${cardCount === 0 ? '<span class="text-xs text-gray-400">No cards to study</span>' : ''}
                 </div>
             </div>
         `;
