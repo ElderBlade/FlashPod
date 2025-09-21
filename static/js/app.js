@@ -302,18 +302,32 @@ class FlashPodApp {
     }
 
     async deletePod(podId) {
-        const confirmed = confirm('Are you sure you want to delete this pod? This will not delete the decks themselves.');
-        if (!confirmed) return;
-        
         try {
-            await PodService.deletePod(podId);
-            MessageUI.show('Pod deleted successfully', 'success');
+            const response = await fetch(`${Config.API_BASE}/pods/${podId}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
             
-            // Refresh the pod library
-            await this.library.podLibrary.refresh();
+            if (response.ok) {
+                MessageUI.show('Pod deleted successfully', 'success');
+                // Refresh the pods display
+                if (this.library.podLibrary && this.library.podLibrary.refresh) {
+                    await this.library.podLibrary.refresh();
+                }
+            } else {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to delete pod');
+            }
         } catch (error) {
             console.error('Error deleting pod:', error);
-            MessageUI.show('Failed to delete pod', 'error');
+            MessageUI.show('Error deleting pod: ' + error.message, 'error');
+        }
+    }
+
+    showDeletePodModal(podId, podName, deckCount, cardCount) {
+        // Delegate to the pod library instance
+        if (this.library.podLibrary && this.library.podLibrary.showDeletePodModal) {
+            this.library.podLibrary.showDeletePodModal(podId, podName, deckCount, cardCount);
         }
     }
 }
