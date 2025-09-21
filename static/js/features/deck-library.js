@@ -271,36 +271,56 @@ export class DeckLibrary {
 
     getRecentDeckCardHTML(deck) {
         const statsHTML = this.getSessionStatsHTML(deck.session_stats);
+        const podBadges = this.getPodBadgesHTML(deck.pods || []);
         
         return `
             <div class="deck-card-mobile bg-gray-50 dark:bg-gray-700 rounded-lg p-3 md:p-4 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer border border-transparent dark:border-gray-600 relative group" 
+                data-deck-id="${deck.id}"
                 onclick="window.app.studyDeck(${deck.id})">
                 
-                <!-- Action buttons in top-right -->
-                <div class="absolute top-3 right-3 flex gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                    <button onclick="event.stopPropagation(); window.app.editDeck(${deck.id})" 
-                            class="p-2 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 cursor-pointer rounded-full transition-colors"
-                            title="Edit deck">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                <!-- Top section with title, badges, and action buttons -->
+                <div class="flex items-start justify-between mb-2">
+                    <!-- Title on the left -->
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex-1 min-w-0 mr-3">${deck.name}</h3>
+                    
+                    <!-- Badges in the middle -->
+                    <div class="flex-shrink-0 mr-2 mt-1">
+                        ${podBadges}
+                    </div>
+                    
+                    <!-- Action buttons on the right -->
+                    <div class="flex gap-1 opacity-60 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                        <button onclick="event.stopPropagation(); window.app.addDeckToPod(${deck.id})" 
+                                class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer rounded-full transition-colors"
+                                title="Add to Pod">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                        </button>
+                        <button onclick="event.stopPropagation(); window.app.editDeck(${deck.id})" 
+                                class="p-2 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 cursor-pointer rounded-full transition-colors"
+                                title="Edit deck">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                         </svg>
-                    </button>
-                    <button onclick="event.stopPropagation(); window.app.exportDeck(${deck.id})" 
-                            class="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 cursor-pointer rounded-full transition-colors"
-                            title="Export deck">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-4-4m4 4l4-4m5-2V7a2 2 0 00-2-2H7a2 2 0 00-2-2v3"/>
-                        </svg>
-                    </button>
+                        </button>
+                        <button onclick="event.stopPropagation(); window.app.exportDeck(${deck.id})" 
+                                class="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 cursor-pointer rounded-full transition-colors"
+                                title="Export deck">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-4-4m4 4l4-4m5-2V7a2 2 0 00-2-2H7a2 2 0 00-2-2v3"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2 pr-16">${deck.name}</h3>
+                <!-- Description -->
                 <p class="text-gray-600 dark:text-gray-300 mb-3 text-sm md:text-base">${deck.description || 'No description'}</p>
-                <div class="deck-footer">
-                    <div class="deck-info">
-                        <span class="text-sm text-gray-500 dark:text-gray-400">${deck.card_count} cards</span>
-                        ${statsHTML}
-                    </div>
+                
+                <!-- Stats at the bottom -->
+                <div class="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+                    <span>${deck.card_count} cards</span>
+                    ${statsHTML}
                 </div>
             </div>
         `;
@@ -308,7 +328,6 @@ export class DeckLibrary {
 
     getDeckCardHTML(deck) {
         const statsHTML = this.getSessionStatsHTML(deck.session_stats);
-        console.log(`PODS ${deck.pods}`)
         
         // Show pod membership (if any)
         const podBadges = this.getPodBadgesHTML(deck.pods || []);
