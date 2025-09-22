@@ -87,9 +87,15 @@ export class PodLibrary {
                 
                 <!-- Saiyan Pod Visual -->
                 <div class="pod-container">
-                    <div class="saiyan-pod ${isActive ? 'active' : ''}">
+                    <div class="saiyan-pod ${isActive ? 'has-cards' : ''}">
                         <!-- Main Viewport -->
-                        <div class="saiyan-viewport"></div>
+                        <div class="saiyan-viewport">
+                            <div class="saiyan-viewport">
+                                <svg class="bolt-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                    <path d="M13 2L3 14h7v8l11-14h-7V2z" fill="#facc15"/>
+                                </svg>
+                            </div>
+                        </div>
                         
                         <!-- Status Lights -->
                         <div class="saiyan-status-lights">
