@@ -1272,6 +1272,11 @@ input:checked + .dark-toggle .star--6 {
     .hidden.md\\:flex {
         display: none;
     }
+
+    .saiyan-pod::before {
+        width: 80px;   /* slightly bigger than your viewport (80px) */
+        height: 120px;  /* taller for card-like proportions */
+    }
 }
 
 /* Animation Performance */
