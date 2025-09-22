@@ -18,7 +18,11 @@ export class DeckLibrary {
     setupTabSwitching() {
         const tabButtons = document.querySelectorAll('.library-tab');
         tabButtons.forEach(tab => {
-            tab.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab));
+            tab.addEventListener('click', (e) => {
+                // Find the actual tab button, even if clicking on nested elements
+                const tabButton = e.currentTarget; // This always refers to the button element
+                this.switchTab(tabButton.dataset.tab);
+            });
         });
     }
 
