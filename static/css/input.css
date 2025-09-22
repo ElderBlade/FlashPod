@@ -557,6 +557,263 @@ input:checked + .dark-toggle .star--6 {
     background-color: rgba(59, 130, 246, 0.1);
 }
 
+
+/* Saiyan Pod Styles */
+.pod-container {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    margin: 0 auto 1rem;
+}
+
+.saiyan-pod {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 25%, #cbd5e1 50%, #94a3b8 75%, #64748b 100%);
+    border-radius: 50%;
+    box-shadow: 
+        0 12px 40px rgba(0, 0, 0, 0.15),
+        inset 0 4px 12px rgba(255, 255, 255, 0.8),
+        inset 0 -4px 12px rgba(0, 0, 0, 0.2),
+        inset 4px 0 12px rgba(0, 0, 0, 0.1),
+        inset -4px 0 12px rgba(255, 255, 255, 0.6);
+    position: relative;
+    transition: all 0.3s ease;
+    overflow: visible;
+}
+
+.saiyan-pod:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 
+        0 16px 50px rgba(0, 0, 0, 0.2),
+        inset 0 4px 12px rgba(255, 255, 255, 0.9),
+        inset 0 -4px 12px rgba(0, 0, 0, 0.2),
+        inset 4px 0 12px rgba(0, 0, 0, 0.15),
+        inset -4px 0 12px rgba(255, 255, 255, 0.7);
+}
+
+/* Dark mode Saiyan pod */
+.dark .saiyan-pod {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 25%, #475569 50%, #64748b 75%, #94a3b8 100%);
+    box-shadow: 
+        0 12px 40px rgba(0, 0, 0, 0.4),
+        inset 0 4px 12px rgba(255, 255, 255, 0.1),
+        inset 0 -4px 12px rgba(0, 0, 0, 0.5),
+        inset 4px 0 12px rgba(0, 0, 0, 0.3),
+        inset -4px 0 12px rgba(255, 255, 255, 0.05);
+}
+
+.dark .saiyan-pod:hover {
+    box-shadow: 
+        0 16px 50px rgba(0, 0, 0, 0.5),
+        inset 0 4px 12px rgba(255, 255, 255, 0.15),
+        inset 0 -4px 12px rgba(0, 0, 0, 0.5),
+        inset 4px 0 12px rgba(0, 0, 0, 0.4),
+        inset -4px 0 12px rgba(255, 255, 255, 0.1);
+}
+
+/* Saiyan Pod Viewport Window */
+.saiyan-viewport {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    background: radial-gradient(circle at 30% 30%, #1e40af 0%, #1e3a8a 30%, #1e1b4b 60%, #0f0f23 100%);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 4px solid #334155;
+    box-shadow: 
+        inset 0 0 20px rgba(0, 0, 0, 0.8),
+        inset 0 4px 8px rgba(0, 0, 0, 0.6),
+        0 0 16px rgba(30, 64, 175, 0.3);
+    transition: all 0.3s ease;
+}
+
+.saiyan-viewport::before {
+    content: '';
+    position: absolute;
+    top: 20%;
+    left: 20%;
+    width: 30%;
+    height: 30%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.1) 70%, transparent 100%);
+    border-radius: 50%;
+    filter: blur(1px);
+}
+
+.saiyan-viewport::after {
+    content: '';
+    position: absolute;
+    top: 60%;
+    right: 25%;
+    width: 15%;
+    height: 15%;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    filter: blur(2px);
+}
+
+/* Panel lines around viewport */
+.saiyan-pod::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 110px;   /* slightly bigger than your viewport (80px) */
+  height: 140px;  /* taller for card-like proportions */
+  border: 2px solid rgba(0,0,0,0.25);
+  border-radius: 16px; /* rounded corners like a card */
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+
+/* Status Indicators */
+.saiyan-status-lights {
+    position: absolute;
+    top: 20%;
+    right: 20%;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.saiyan-status-light {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 8px currentColor;
+}
+
+.saiyan-status-light.power {
+    background-color: #10b981;
+    color: #10b981;
+}
+
+.saiyan-status-light.systems {
+    background-color: #3b82f6;
+    color: #3b82f6;
+}
+
+.saiyan-status-light.inactive {
+    background-color: #6b7280;
+    color: #6b7280;
+    box-shadow: none;
+}
+
+.saiyan-status-light.warning {
+    background-color: #f59e0b;
+    color: #f59e0b;
+    animation: pulse-warning 2s infinite;
+}
+
+@keyframes pulse-warning {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+/* Landing Thrusters/Stabilizers */
+.saiyan-thrusters {
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 30px;
+}
+
+.saiyan-thruster {
+    width: 8px;
+    height: 16px;
+    background: linear-gradient(180deg, #64748b 0%, #475569 50%, #334155 100%);
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.saiyan-thruster::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 12px;
+    height: 4px;
+    background: #1e293b;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* Dark mode thrusters */
+.dark .saiyan-thruster {
+    background: linear-gradient(180deg, #475569 0%, #334155 50%, #1e293b 100%);
+}
+
+.dark .saiyan-thruster::after {
+    background: #0f172a;
+}
+
+/* Power Glow Effect (active pods) */
+.saiyan-pod.active {
+    animation: power-glow 3s ease-in-out infinite;
+}
+
+@keyframes power-glow {
+    0%, 100% {
+        box-shadow: 
+            0 12px 40px rgba(0, 0, 0, 0.15),
+            inset 0 4px 12px rgba(255, 255, 255, 0.8),
+            inset 0 -4px 12px rgba(0, 0, 0, 0.2),
+            inset 4px 0 12px rgba(0, 0, 0, 0.1),
+            inset -4px 0 12px rgba(255, 255, 255, 0.6);
+    }
+    50% {
+        box-shadow: 
+            0 12px 40px rgba(59, 130, 246, 0.2),
+            inset 0 4px 12px rgba(255, 255, 255, 0.9),
+            inset 0 -4px 12px rgba(0, 0, 0, 0.2),
+            inset 4px 0 12px rgba(0, 0, 0, 0.1),
+            inset -4px 0 12px rgba(255, 255, 255, 0.7),
+            0 0 30px rgba(59, 130, 246, 0.3);
+    }
+}
+
+/* Pod Card Integration */
+.pod-card-with-visual {
+    position: relative;
+    padding-top: 1rem;
+}
+
+.pod-card-content {
+    margin-top: 1.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .pod-container {
+        width: 140px;
+        height: 140px;
+    }
+    
+    .saiyan-viewport {
+        width: 60px;
+        height: 60px;
+        border-width: 3px;
+    }
+    
+    .saiyan-thrusters {
+        gap: 20px;
+    }
+    
+    .saiyan-thruster {
+        width: 6px;
+        height: 12px;
+    }
+}
+
 /* Windows-specific optimizations */
 @media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
     .flashcard-inner {

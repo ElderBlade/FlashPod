@@ -72,46 +72,62 @@ export class PodLibrary {
         }
     }
 
-    // Update the createPodCard method to ensure proper styling and functionality
     createPodCard(pod) {
         const cardCount = pod.total_card_count || 0;
         const deckCount = pod.deck_count || 0;
         
+        // Determine pod status
+        const isActive = cardCount > 0;
+        const hasWarning = deckCount === 0;
+        
         return `
-            <div class="pod-card bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 cursor-pointer relative group" 
+            <div class="pod-card pod-card-with-visual bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 cursor-pointer relative group" 
                 data-pod-id="${pod.id}"
                 onclick="window.app.studyPod(${pod.id})">
                 
-                <!-- Top section with title and action buttons -->
-                <div class="flex items-start justify-between mb-4">
-                    <!-- Title and description on the left -->
-                    <div class="flex-1 min-w-0 mr-3">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white truncate">${this.escapeHtml(pod.name)}</h3>
-                        ${pod.description ? `<p class="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">${this.escapeHtml(pod.description)}</p>` : ''}
-                    </div>
-                    
-                    <!-- Action buttons on the right -->
-                    <div class="flex gap-1 opacity-60 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                        <button onclick="event.stopPropagation(); window.app.editPod(${pod.id})" 
-                                class="p-2 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 cursor-pointer rounded-full transition-colors"
-                                title="Edit pod">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                            </svg>
-                        </button>
-                        <button onclick="event.stopPropagation(); window.app.showDeletePodModal(${pod.id}, '${this.escapeHtml(pod.name).replace(/'/g, "\\'")}', ${deckCount}, ${cardCount})" 
-                                class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer rounded-full transition-colors"
-                                title="Delete pod">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                            </svg>
-                        </button>
+                <!-- Saiyan Pod Visual -->
+                <div class="pod-container">
+                    <div class="saiyan-pod ${isActive ? 'active' : ''}">
+                        <!-- Main Viewport -->
+                        <div class="saiyan-viewport"></div>
+                        
+                        <!-- Status Lights -->
+                        <div class="saiyan-status-lights">
+                            <div class="saiyan-status-light ${isActive ? 'power' : 'inactive'}"></div>
+                            <div class="saiyan-status-light ${deckCount > 0 ? 'systems' : (hasWarning ? 'warning' : 'inactive')}"></div>
+                        </div>
+
                     </div>
                 </div>
-
-                <!-- Pod Stats at the bottom -->
-                <div class="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-                    <div class="flex items-center space-x-4">
+                
+                <!-- Action buttons positioned over the pod -->
+                <div class="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 z-10">
+                    <button onclick="event.stopPropagation(); window.app.editPod(${pod.id})" 
+                            class="p-2 bg-white dark:bg-gray-800 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 cursor-pointer rounded-full transition-colors shadow-md border border-gray-200 dark:border-gray-600"
+                            title="Edit pod">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                    </button>
+                    <button onclick="event.stopPropagation(); window.app.showDeletePodModal(${pod.id}, '${this.escapeHtml(pod.name).replace(/'/g, "\\'")}', ${deckCount}, ${cardCount})" 
+                            class="p-2 bg-white dark:bg-gray-800 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer rounded-full transition-colors shadow-md border border-gray-200 dark:border-gray-600"
+                            title="Delete pod">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Pod Content -->
+                <div class="pod-card-content text-center">
+                    <!-- Title -->
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">${this.escapeHtml(pod.name)}</h3>
+                    
+                    <!-- Description -->
+                    ${pod.description ? `<p class="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">${this.escapeHtml(pod.description)}</p>` : ''}
+                    
+                    <!-- Stats -->
+                    <div class="flex items-center justify-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
                         <div class="flex items-center">
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
@@ -127,7 +143,7 @@ export class PodLibrary {
                     </div>
                     
                     <!-- Study indicator when disabled -->
-                    ${cardCount === 0 ? '<span class="text-xs text-gray-400">No cards to study</span>' : ''}
+                    ${cardCount === 0 ? '<p class="text-xs text-gray-400 mt-2">Pod offline - No cards to study</p>' : ''}
                 </div>
             </div>
         `;
