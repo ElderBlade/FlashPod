@@ -54,8 +54,13 @@ export class FullSpaced {
         const state = this.manager.state;
         const modeData = state.modeData['full-spaced'];
         
+        // Determine if this is a pod or deck study
+        const isPodStudy = !!state.pod;
+        
         // Fetch existing review data from backend
-        const reviewData = await this._fetchReviewData();
+        const reviewData = isPodStudy ? 
+            await this._fetchPodReviewData(state.pod.id, state.selectedDeckIds) :
+            await this._fetchReviewData();
         
         // Categorize cards based on review history
         modeData.dueCards = [];
@@ -102,6 +107,43 @@ export class FullSpaced {
             ratingsSum: 0,
             sessionStartTime: timezoneHandler.getCurrentDateInServerTimezone()
         };
+    }
+
+    /**
+     * Fetch review data for pod study across selected decks
+     */
+    async _fetchPodReviewData(podId, selectedDeckIds) {
+        try {
+            // Get all card IDs from the pod cards
+            const allCardIds = this.manager.state.originalCards.map(card => card.id);
+            
+            if (allCardIds.length === 0) {
+                return new Map();
+            }
+            
+            // Use the same approach as the deck review data fetch
+            const response = await fetch(`/api/cards/reviews/pod/${podId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({ card_ids: allCardIds })
+            });
+            
+            if (response.ok) {
+                const reviews = await response.json();
+                const reviewMap = new Map();
+                reviews.forEach(review => {
+                    reviewMap.set(review.card_id, review);
+                });
+                return reviewMap;
+            }
+        } catch (error) {
+            console.warn('Failed to fetch pod review data:', error);
+        }
+        
+        return new Map();
     }
 
     async _fetchReviewData() {

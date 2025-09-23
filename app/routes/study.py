@@ -154,3 +154,62 @@ async def update_card_during_study(request, card_id):
         return json({"error": str(e)}, status=500)
     finally:
         session.close()
+
+
+@study_bp.route("/pod/<pod_id:int>/session", methods=["GET", "POST"])
+@require_auth
+async def get_or_create_pod_study_session(request, pod_id):
+    """Get existing study session or create a new one for a pod"""
+    session = get_db_session()
+    try:
+        user_id = request.ctx.user['id']
+        
+        # Import Pod model
+        from models.pod import Pod
+        
+        # Verify pod exists and user has access
+        pod = session.query(Pod).filter_by(id=pod_id, user_id=user_id).first()
+        if not pod:
+            return json({"error": "Pod not found"}, status=404)
+        
+        # Get all active cards from all decks in the pod
+        cards = []
+        for pod_deck in pod.pod_decks:
+            deck_cards = session.query(Card).filter_by(
+                deck_id=pod_deck.deck_id, 
+                is_active=True
+            ).order_by(Card.created_at).all()
+            
+            # Add source deck information to each card
+            for card in deck_cards:
+                card_dict = card.to_dict()
+                card_dict['source_deck_id'] = pod_deck.deck_id
+                card_dict['source_deck_name'] = pod_deck.deck.name
+                cards.append(card_dict)
+        
+        if not cards:
+            return json({"error": "No cards found in this pod"}, status=404)
+        
+        # Create a new study session for the pod
+        study_session = StudySession(
+            user_id=user_id,
+            pod_id=pod_id,
+            session_type='review'
+        )
+        
+        session.add(study_session)
+        session.commit()
+        
+        return json({
+            "session": study_session.to_dict(),
+            "pod": pod.to_dict(),
+            "cards": cards,
+            "total_cards": len(cards),
+            "current_index": 0
+        })
+        
+    except Exception as e:
+        session.rollback()
+        return json({"error": str(e)}, status=500)
+    finally:
+        session.close()

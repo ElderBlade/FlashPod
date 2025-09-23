@@ -671,4 +671,67 @@ export class StudyInterface {
             this.manager._showMessage('Failed to update card: ' + error.message, 'error');
         }
     }
+
+    /**
+     * Update card display
+     */
+    async updateCard() {
+        const currentCard = this.manager.currentCard;
+        if (!currentCard) return;
+        
+        // Update card content
+        this._updateCardContent(currentCard);
+        
+        // Update progress
+        this._updateProgress();
+        
+        // Update pod-specific UI if in pod mode
+        if (this.manager.state.pod) {
+            this._updatePodInterface(currentCard);
+        }
+        
+        // Update mode-specific UI
+        if (this.manager.currentMode && this.manager.currentMode.updateInterface) {
+            await this.manager.currentMode.updateInterface();
+        }
+    }
+
+    /**
+     * Update interface for pod study mode
+     */
+    _updatePodInterface(currentCard) {
+        const podInfo = this.manager.state.pod;
+        
+        // Update header to show pod name
+        const headerEl = document.querySelector('.study-header-title');
+        if (headerEl) {
+            headerEl.innerHTML = `
+                <div class="pod-study-title">
+                    <h2 class="text-xl font-semibold">${podInfo.name}</h2>
+                    <span class="text-sm text-gray-600">Pod Study Mode</span>
+                </div>
+            `;
+        }
+        
+        // Add deck indicator to card
+        this._addDeckIndicator(currentCard);
+    }
+
+    /**
+     * Add deck indicator to show which deck the current card is from
+     */
+    _addDeckIndicator(currentCard) {
+        const cardContainer = document.querySelector('.study-card-container');
+        if (!cardContainer) return;
+        
+        let deckIndicator = cardContainer.querySelector('.deck-indicator');
+        if (!deckIndicator) {
+            deckIndicator = document.createElement('div');
+            deckIndicator.className = 'deck-indicator absolute top-2 right-2 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium';
+            cardContainer.style.position = 'relative';
+            cardContainer.appendChild(deckIndicator);
+        }
+        
+        deckIndicator.textContent = currentCard.source_deck_name || 'Unknown Deck';
+    }
 }

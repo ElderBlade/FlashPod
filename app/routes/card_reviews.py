@@ -7,6 +7,7 @@ from models.card_review import CardReview
 from models.card import Card
 from models.deck import Deck
 from models.database import get_db_session
+from models.pod import Pod
 from middleware.auth import require_auth
 import traceback
 from config.timezone import tz_config
@@ -149,7 +150,6 @@ async def get_card_history(request, card_id):
     
     try:
         user_id = request.ctx.user['id']
-        
         # Verify user owns the card
         card = session.query(Card)\
             .join(Deck)\
@@ -171,3 +171,40 @@ async def get_card_history(request, card_id):
     except Exception as e:
         print(f"Error fetching card history: {e}")
         return json({"error": "Internal server error"}, status=500)
+
+
+@card_reviews.route('/pod/<pod_id:int>', methods=['POST'])
+@require_auth
+async def get_pod_card_reviews(request, pod_id):
+    """Get card reviews for cards in a pod"""
+    session = get_db_session()
+    try:
+        user_id = request.ctx.user['id']
+        data = request.json
+        card_ids = data.get('card_ids', [])
+        
+        if not card_ids:
+            return json([])
+        
+        # Verify pod belongs to user
+        
+        pod = session.query(Pod).filter_by(id=pod_id, user_id=user_id).first()
+        if not pod:
+            return json({"error": "Pod not found"}, status=404)
+        
+        # Get reviews for the specified cards
+        reviews = session.query(CardReview).filter(
+            CardReview.card_id.in_(card_ids),
+            CardReview.user_id == user_id
+        ).all()
+        
+        reviews_data = [review.to_dict() for review in reviews]
+        
+        print(f"📊 Found {len(reviews_data)} review records for pod {pod_id}")
+        return json(reviews_data)
+        
+    except Exception as e:
+        print(f"❌ Error in get_pod_card_reviews: {e}")
+        return json({"error": str(e)}, status=500)
+    finally:
+        session.close()

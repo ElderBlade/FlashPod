@@ -68,27 +68,61 @@ async def get_user_pods(request):
 @pods_bp.route("/<pod_id:int>", methods=["GET"])
 @require_auth 
 async def get_pod(request, pod_id):
-    """Get a specific pod with its decks"""
+    """Get a single pod"""
     session = get_db_session()
     try:
-        pod = session.query(Pod).filter_by(id=pod_id).first()
+        include_stats = request.args.get('include_stats', 'false').lower() == 'true'
         
+        pod = session.query(Pod).filter_by(id=pod_id).first()
         if not pod:
             return json({"error": "Pod not found"}, status=404)
         
-        # Get pod decks with deck information
-        pod_decks = session.query(PodDeck).filter_by(pod_id=pod_id).order_by(PodDeck.display_order).all()
+        pod_dict = pod.to_dict()
         
-        pod_data = pod.to_dict()
-        pod_data["decks"] = [pd.to_dict() for pd in pod_decks]
+        if include_stats:
+            # Add study statistics
+            stats = calculate_pod_study_stats(session, pod_id)
+            pod_dict['study_stats'] = stats
+            
+        return json({"pod": pod_dict})
         
-        return json({"pod": pod_data})
-    
     except Exception as e:
         return json({"error": str(e)}, status=500)
     finally:
         session.close()
 
+def calculate_pod_study_stats(session, pod_id):
+    """Calculate study statistics for a pod"""
+    from sqlalchemy import func
+    from ..models.study_session import StudySession
+    from ..models.card_review import CardReview
+    
+    # Get recent sessions (last 30 days)
+    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    
+    sessions = session.query(StudySession).filter(
+        StudySession.pod_id == pod_id,
+        StudySession.started_at >= thirty_days_ago
+    ).all()
+    
+    total_sessions = len(sessions)
+    total_cards_studied = sum(s.cards_studied for s in sessions)
+    total_cards_correct = sum(s.cards_correct for s in sessions)
+    
+    # Calculate average accuracy
+    accuracy = (total_cards_correct / total_cards_studied * 100) if total_cards_studied > 0 else 0
+    
+    # Get total study time
+    completed_sessions = [s for s in sessions if s.ended_at]
+    total_minutes = sum(s.duration_minutes or 0 for s in completed_sessions)
+    
+    return {
+        'total_sessions': total_sessions,
+        'total_cards_studied': total_cards_studied,
+        'average_accuracy': round(accuracy, 1),
+        'total_study_time_minutes': total_minutes,
+        'last_studied': sessions[0].started_at.isoformat() if sessions else None
+    }
 
 @pods_bp.route("/<pod_id:int>/decks", methods=["POST"])
 @require_auth 
@@ -288,33 +322,68 @@ async def reorder_pod_decks(request, pod_id):
         session.close()
 
 
+# @pods_bp.route("/<pod_id:int>/cards", methods=["GET"])
+# @require_auth 
+# async def get_pod_cards(request, pod_id):
+#     """Get all cards from all decks in a pod"""
+#     session = get_db_session()
+#     try:
+#         # Verify pod exists
+#         pod = session.query(Pod).filter_by(id=pod_id).first()
+#         if not pod:
+#             return json({"error": "Pod not found"}, status=404)
+        
+#         # Get all cards from decks in this pod
+#         from models.card import Card
+        
+#         cards = session.query(Card).join(Deck).join(PodDeck).filter(
+#             PodDeck.pod_id == pod_id,
+#             Card.is_active == True
+#         ).order_by(PodDeck.display_order, Card.created_at).all()
+        
+#         cards_data = [card.to_dict() for card in cards]
+        
+#         return json({
+#             "cards": cards_data,
+#             "pod": pod.to_dict(),
+#             "total_cards": len(cards_data)
+#         })
+    
+#     except Exception as e:
+#         return json({"error": str(e)}, status=500)
+#     finally:
+#         session.close()
+
+
 @pods_bp.route("/<pod_id:int>/cards", methods=["GET"])
 @require_auth 
 async def get_pod_cards(request, pod_id):
     """Get all cards from all decks in a pod"""
     session = get_db_session()
     try:
-        # Verify pod exists
-        pod = session.query(Pod).filter_by(id=pod_id).first()
+        user_id = request.ctx.user['id']
+        
+        # Verify pod exists and belongs to user
+        pod = session.query(Pod).filter_by(id=pod_id, user_id=user_id).first()
         if not pod:
             return json({"error": "Pod not found"}, status=404)
         
-        # Get all cards from decks in this pod
-        from models.card import Card
-        
-        cards = session.query(Card).join(Deck).join(PodDeck).filter(
-            PodDeck.pod_id == pod_id,
-            Card.is_active == True
-        ).order_by(PodDeck.display_order, Card.created_at).all()
-        
-        cards_data = [card.to_dict() for card in cards]
+        # Get all cards from all decks in this pod
+        cards = []
+        for pod_deck in pod.pod_decks:
+            from models.card import Card
+            deck_cards = session.query(Card).filter_by(deck_id=pod_deck.deck_id).all()
+            for card in deck_cards:
+                card_dict = card.to_dict()
+                card_dict['source_deck_id'] = pod_deck.deck_id
+                card_dict['source_deck_name'] = pod_deck.deck.name
+                cards.append(card_dict)
         
         return json({
-            "cards": cards_data,
             "pod": pod.to_dict(),
-            "total_cards": len(cards_data)
+            "cards": cards
         })
-    
+        
     except Exception as e:
         return json({"error": str(e)}, status=500)
     finally:

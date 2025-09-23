@@ -230,7 +230,17 @@ class FlashPodApp {
     }
 
     studyPod(podId) {
-        MessageUI.show(`Study pod ${podId} - Coming soon!`, 'info');
+        // Close mobile nav if open before studying
+        if (this.mobileNavigation.isNavigationOpen()) {
+            this.mobileNavigation.forceClose();
+        }
+        
+        // Call the global studyPod function if available
+        if (window.studyPod) {
+            window.studyPod(podId);
+        } else {
+            MessageUI.show(`Pod study system not loaded`, 'error');
+        }
     }
 
 

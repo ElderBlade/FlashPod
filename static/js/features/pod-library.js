@@ -80,6 +80,10 @@ export class PodLibrary {
         const isActive = cardCount > 0;
         const hasWarning = deckCount === 0;
         
+        // Study statistics (if available)
+        const studyStats = pod.study_stats;
+        const hasStats = studyStats && studyStats.total_sessions > 0;
+        
         return `
             <div class="pod-card pod-card-with-visual bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 cursor-pointer relative group" 
                 data-pod-id="${pod.id}"
@@ -133,7 +137,7 @@ export class PodLibrary {
                     ${pod.description ? `<p class="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">${this.escapeHtml(pod.description)}</p>` : ''}
                     
                     <!-- Stats -->
-                    <div class="flex items-center justify-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+                    <div class="flex items-center justify-center space-x-4 text-sm text-gray-500 dark:text-gray-400 mb-3">
                         <div class="flex items-center">
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
@@ -147,6 +151,31 @@ export class PodLibrary {
                             <span>${cardCount} card${cardCount !== 1 ? 's' : ''}</span>
                         </div>
                     </div>
+                    
+                    <!-- Study Statistics (if available) -->
+                    ${hasStats ? `
+                        <div class="study-stats border-t border-gray-200 dark:border-gray-600 pt-3 mt-2">
+                            <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-600 dark:text-gray-400">
+                                <div class="flex justify-between">
+                                    <span>Sessions:</span>
+                                    <span class="font-medium">${studyStats.total_sessions}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Accuracy:</span>
+                                    <span class="font-medium ${studyStats.average_accuracy >= 80 ? 'text-green-600 dark:text-green-400' : studyStats.average_accuracy >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}">${studyStats.average_accuracy}%</span>
+                                </div>
+                                <div class="flex justify-between col-span-2">
+                                    <span>Cards Studied:</span>
+                                    <span class="font-medium">${studyStats.total_cards_studied}</span>
+                                </div>
+                                ${studyStats.last_studied ? `
+                                    <div class="col-span-2 text-center text-gray-500 dark:text-gray-500 mt-1 pt-1 border-t border-gray-100 dark:border-gray-700">
+                                        Last: ${new Date(studyStats.last_studied).toLocaleDateString()}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    ` : ''}
                     
                     <!-- Study indicator when disabled -->
                     ${cardCount === 0 ? '<p class="text-xs text-gray-400 mt-2">Pod offline - No cards to study</p>' : ''}
