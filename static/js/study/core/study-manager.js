@@ -33,6 +33,14 @@ export class StudyManager {
         try {
             // Initialize session data
             await this.session.initializeDeck(deckId);
+
+            // Store resume flag in state for the entire session
+            this.wasSessionResumed = this.session.wasResumed;
+            
+            // Show resume message if applicable
+            if (this.wasSessionResumed) {
+                this._showMessage(`📚 Resumed ${this.session.deckData.name} study session`, 'success');
+            }
             
             // Set up state
             this.state.deck = this.session.deckData;
@@ -61,6 +69,18 @@ export class StudyManager {
         try {
             // Initialize session data
             await this.session.initializePod(podId);
+
+            // Store resume flag in state for the entire session
+            this.wasSessionResumed = this.session.wasResumed;
+
+            console.log('🔍 After initialization, session.wasResumed:', this.session.wasResumed);
+
+            // Show resume message if applicable
+            if (this.wasSessionResumed) {
+                console.log('🔍 About to show resume message');
+                this._showMessage(`📂 Resumed ${this.session.podData.name} pod study session`, 'success');
+                console.log('🔍 Resume message sent');
+            }
             
             // Set up state
             this.state.pod = this.session.podData;

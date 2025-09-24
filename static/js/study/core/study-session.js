@@ -25,6 +25,7 @@ export class StudySession {
             this.sessionData = sessionResponse.session;
             this.deckData = sessionResponse.deck;
             this.cardsData = sessionResponse.cards || [];
+            this.wasResumed = sessionResponse.resumed; 
             
             // Validate we have cards
             if (this.cardsData.length === 0) {
@@ -54,6 +55,7 @@ export class StudySession {
             this.sessionData = sessionResponse.session;
             this.podData = sessionResponse.pod;
             this.cardsData = sessionResponse.cards || [];
+            this.wasResumed = sessionResponse.resumed; 
             
             // Validate we have cards
             if (this.cardsData.length === 0) {
