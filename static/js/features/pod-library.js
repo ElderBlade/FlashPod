@@ -82,6 +82,7 @@ export class PodLibrary {
         
         // Study statistics (if available)
         const studyStats = pod.study_stats;
+        console.log(`POD STATS ${studyStats}`);
         const hasStats = studyStats && studyStats.total_sessions > 0;
         
         return `

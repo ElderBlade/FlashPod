@@ -1,4 +1,5 @@
 # app/routes/pods.py
+from datetime import datetime, timedelta
 from sanic import Blueprint
 from sanic.response import json
 from models.database import get_db_session
@@ -7,6 +8,9 @@ from models.pod import Pod
 from models.deck import Deck
 from models.pod_deck import PodDeck
 from middleware.auth import require_auth
+from models.study_session import StudySession
+from models.card_review import CardReview
+from sqlalchemy import func
 
 pods_bp = Blueprint("pods", url_prefix="/api/pods")
 
@@ -93,12 +97,10 @@ async def get_pod(request, pod_id):
 
 def calculate_pod_study_stats(session, pod_id):
     """Calculate study statistics for a pod"""
-    from sqlalchemy import func
-    from ..models.study_session import StudySession
-    from ..models.card_review import CardReview
+    
     
     # Get recent sessions (last 30 days)
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    thirty_days_ago = datetime.now() - timedelta(days=30)
     
     sessions = session.query(StudySession).filter(
         StudySession.pod_id == pod_id,
@@ -320,39 +322,6 @@ async def reorder_pod_decks(request, pod_id):
         return json({"error": str(e)}, status=500)
     finally:
         session.close()
-
-
-# @pods_bp.route("/<pod_id:int>/cards", methods=["GET"])
-# @require_auth 
-# async def get_pod_cards(request, pod_id):
-#     """Get all cards from all decks in a pod"""
-#     session = get_db_session()
-#     try:
-#         # Verify pod exists
-#         pod = session.query(Pod).filter_by(id=pod_id).first()
-#         if not pod:
-#             return json({"error": "Pod not found"}, status=404)
-        
-#         # Get all cards from decks in this pod
-#         from models.card import Card
-        
-#         cards = session.query(Card).join(Deck).join(PodDeck).filter(
-#             PodDeck.pod_id == pod_id,
-#             Card.is_active == True
-#         ).order_by(PodDeck.display_order, Card.created_at).all()
-        
-#         cards_data = [card.to_dict() for card in cards]
-        
-#         return json({
-#             "cards": cards_data,
-#             "pod": pod.to_dict(),
-#             "total_cards": len(cards_data)
-#         })
-    
-#     except Exception as e:
-#         return json({"error": str(e)}, status=500)
-#     finally:
-#         session.close()
 
 
 @pods_bp.route("/<pod_id:int>/cards", methods=["GET"])

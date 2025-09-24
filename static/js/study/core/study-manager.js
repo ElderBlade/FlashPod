@@ -414,14 +414,14 @@ export class StudyManager {
     }
 
     // Private methods
-    _activateStudy() {
-        this.interface.show();
-        this.keyboard.activate();
-        this.isActive = true;
-        this.isPaused = false;
+    // _activateStudy() {
+    //     this.interface.show();
+    //     this.keyboard.activate();
+    //     this.isActive = true;
+    //     this.isPaused = false;
         
-        console.log(`Study activated - Mode: ${this.state.mode}`);
-    }
+    //     console.log(`Study activated - Mode: ${this.state.mode}`);
+    // }
 
     _shuffleArray(array) {
         const shuffled = [...array];
@@ -454,8 +454,31 @@ export class StudyManager {
         if (this.currentMode) {
             this.currentMode.renderCard();
         }
+
+        this._setupAutoPause();
         
         console.log(`Study activated - Mode: ${this.state.mode}`);
+    }
+
+    _setupAutoPause() {
+        // Handle page refresh, close, or navigation away
+        this.beforeUnloadHandler = async (event) => {
+            if (this.session && this.session.isActive) {
+                // Use sendBeacon for reliable delivery during page unload
+                navigator.sendBeacon('/api/study/session/' + this.session.sessionId + '/pause', '{}');
+            }
+        };
+        
+        window.addEventListener('beforeunload', this.beforeUnloadHandler);
+        
+        // Also handle when user navigates within the app
+        this.visibilityHandler = async () => {
+            if (document.visibilityState === 'hidden' && this.session && this.session.isActive) {
+                await this.session.pauseSession();
+            }
+        };
+        
+        document.addEventListener('visibilitychange', this.visibilityHandler);
     }
 
     // Getters for external access

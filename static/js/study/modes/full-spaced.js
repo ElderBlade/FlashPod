@@ -20,6 +20,7 @@ export class FullSpaced {
             modeData.sessionStats = {
                 sessionStartTime: timezoneHandler.getCurrentDateInServerTimezone(),
                 cardsReviewed: 0,
+                cardsCorrect: 0,
                 newCardsLearned: 0,
                 ratingsSum: 0,
                 timeSpent: 0,
@@ -213,6 +214,26 @@ export class FullSpaced {
         // Update session stats
         modeData.sessionStats.cardsReviewed++;
         modeData.sessionStats.ratingsSum += rating;
+
+        // Track correct responses (ratings 3-4 are considered "correct")
+        if (!modeData.sessionStats.cardsCorrect) {
+            modeData.sessionStats.cardsCorrect = 0;
+        }
+        if (rating >= 3) {
+            modeData.sessionStats.cardsCorrect++;
+        }
+
+        if (this.manager.session.isActive) {
+            try {
+                await this.manager.session.updateProgress(
+                    modeData.sessionStats.cardsReviewed,
+                    modeData.sessionStats.cardsCorrect
+                );
+                console.log(`Updated backend progress: ${modeData.sessionStats.cardsReviewed} cards reviewed`);
+            } catch (error) {
+                console.warn('Failed to update session progress:', error);
+            }
+        }
         
         // Calculate SM-2 parameters
         const reviewResult = this._calculateSM2(currentCardId, rating);
@@ -541,6 +562,17 @@ export class FullSpaced {
         this.manager._showMessage('Session restarted!', 'info');
     }
 
+    /**
+     * Check if session is complete
+     */
+    isSessionComplete() {
+        const state = this.manager.state;
+        const modeData = state.modeData['full-spaced'];
+        
+        // Session is complete when there are no more cards to study
+        return state.cards.length === 0;
+    }
+
     _showNoCardsMessage() {
         const modeData = this.manager.state.modeData['full-spaced'];
 
@@ -763,6 +795,14 @@ export class FullSpaced {
      * Cleanup method called when switching modes or ending study
      */
     async cleanup() {
+
+        if (this.beforeUnloadHandler) {
+            window.removeEventListener('beforeunload', this.beforeUnloadHandler);
+        }
+        if (this.visibilityHandler) {
+            document.removeEventListener('visibilitychange', this.visibilityHandler);
+        }
+        
         const modeData = this.manager.state.modeData['full-spaced'];
         
         // Reset response collection state

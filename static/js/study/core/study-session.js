@@ -111,7 +111,7 @@ export class StudySession {
             if (cardsCorrect !== null) {
                 progressData.cards_correct = cardsCorrect;
             }
-
+            console.log("UPDATING POD progress!");
             await this.api.updateSessionProgress(this.sessionData.id, progressData);
             
         } catch (error) {
@@ -195,6 +195,22 @@ export class StudySession {
         } catch (error) {
             console.error('Failed to save simple spaced progress:', error);
             return false;
+        }
+    }
+
+    /**
+     * Pause the current session
+     */
+    async pauseSession() {
+        if (!this.sessionData || this.sessionData.id.toString().startsWith('local_')) {
+            return;
+        }
+        
+        try {
+            await this.api.pauseSession(this.sessionData.id);
+            console.log(`Paused session: ${this.sessionData.id}`);
+        } catch (error) {
+            console.warn('Failed to pause session:', error);
         }
     }
 

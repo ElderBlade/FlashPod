@@ -290,6 +290,14 @@ export class SimpleSpaced {
     }
 
     async cleanup() {
+
+        if (this.beforeUnloadHandler) {
+            window.removeEventListener('beforeunload', this.beforeUnloadHandler);
+        }
+        if (this.visibilityHandler) {
+            document.removeEventListener('visibilitychange', this.visibilityHandler);
+        }
+        
         const modeData = this.manager.state.modeData['simple-spaced'];
         modeData.isCollectingResponse = false;
         this.manager.interface.hideResponseButtons();

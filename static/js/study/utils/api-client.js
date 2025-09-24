@@ -137,6 +137,16 @@ export class APIClient {
         });
     }
 
+    /**
+     * Pause study session
+     */
+    async pauseSession(sessionId) {
+        return await this.request(`/study/session/${sessionId}/pause`, {
+            method: 'POST',
+            body: JSON.stringify({})
+        });
+    }
+
     // Statistics and Analytics
     /**
      * Get study statistics for user

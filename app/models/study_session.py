@@ -17,6 +17,8 @@ class StudySession(Base):
     cards_studied = Column(Integer, default=0)
     cards_correct = Column(Integer, default=0)
     session_type = Column(String(20), default='review')  # 'review', 'learn', 'cram'
+    paused_at = Column(DateTime, nullable=True)
+    total_paused_minutes = Column(Integer, default=0)
     
     # Ensure exactly one of deck_id or pod_id is set
     __table_args__ = (
@@ -58,8 +60,15 @@ class StudySession(Base):
     
     @property
     def duration_minutes(self):
-        """Get session duration in minutes"""
+        """Get active study duration excluding paused time"""
         if not self.ended_at:
-            return None
-        delta = self.ended_at - self.started_at
-        return round(delta.total_seconds() / 60, 2)
+            return 0
+        
+        total_elapsed = (self.ended_at - self.started_at).total_seconds() / 60
+        active_time = total_elapsed - (self.total_paused_minutes or 0)
+        return max(0, round(active_time, 2))
+    
+    @property
+    def is_paused(self):
+        """Check if session is currently paused"""
+        return self.paused_at is not None and self.ended_at is None
