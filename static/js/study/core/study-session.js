@@ -20,23 +20,23 @@ export class StudySession {
      */
     async initializeDeck(deckId) {
         try {
-            // Load deck information
-            const deckResponse = await this.api.getDeck(deckId);
-            this.deckData = deckResponse.deck;
-            
-            // Load cards for the deck
-            const cardsResponse = await this.api.getDeckCards(deckId);
-            this.cardsData = cardsResponse.cards || [];
+            // Create/resume session (this also loads deck and card data)
+            const sessionResponse = await this.api.createStudySession({deck_id: deckId});
+            this.sessionData = sessionResponse.session;
+            this.deckData = sessionResponse.deck;
+            this.cardsData = sessionResponse.cards || [];
             
             // Validate we have cards
             if (this.cardsData.length === 0) {
                 throw new Error('This deck has no cards yet!');
             }
             
-            // Create backend study session
-            await this._createBackendSession('deck', deckId);
-            
             console.log(`Initialized deck study: ${this.deckData.name} (${this.cardsData.length} cards)`);
+            
+            // Log if this was a resumed session
+            if (sessionResponse.resumed) {
+                console.log('Resumed existing paused session');
+            }
             
         } catch (error) {
             console.error('Failed to initialize deck study:', error);
@@ -49,21 +49,23 @@ export class StudySession {
      */
     async initializePod(podId) {
         try {
-            // Load pod information and its cards
-            const podResponse = await this.api.getPodCards(podId);
-            this.podData = podResponse.pod;
-            this.cardsData = podResponse.cards || [];
+            // Create/resume session (this also loads pod and card data)
+            const sessionResponse = await this.api.createStudySession({pod_id: podId});
+            this.sessionData = sessionResponse.session;
+            this.podData = sessionResponse.pod;
+            this.cardsData = sessionResponse.cards || [];
             
             // Validate we have cards
             if (this.cardsData.length === 0) {
                 throw new Error('This pod has no cards yet!');
             }
             
-            // Create backend study session
-            await this._createBackendSession('pod', podId);
-            
             console.log(`Initialized pod study: ${this.podData.name} (${this.cardsData.length} cards)`);
             
+            // Log if this was a resumed session
+            if (sessionResponse.resumed) {
+                console.log('Resumed existing paused session');
+            }
         } catch (error) {
             console.error('Failed to initialize pod study:', error);
             throw error;
@@ -73,27 +75,27 @@ export class StudySession {
     /**
      * Create a backend study session
      */
-    async _createBackendSession(type, id) {
-        try {
-            const sessionData = type === 'deck' ? 
-                { deck_id: id } : 
-                { pod_id: id };
+    // async _createBackendSession(type, id) {
+    //     try {
+    //         const sessionData = type === 'deck' ? 
+    //             { deck_id: id } : 
+    //             { pod_id: id };
                 
-            const response = await this.api.createStudySession(sessionData);
-            this.sessionData = response.session;
+    //         const response = await this.api.createStudySession(sessionData);
+    //         this.sessionData = response.session;
             
-            console.log(`Created backend session: ${this.sessionData.id}`);
+    //         console.log(`Created backend session: ${this.sessionData.id}`);
             
-        } catch (error) {
-            // Don't fail session creation if backend fails
-            console.warn('Failed to create backend session, continuing with local session:', error);
-            this.sessionData = {
-                id: 'local_' + Date.now(),
-                type: type,
-                started_at: timezoneHandler.getCurrentDateInServerTimezone().toISOString()
-            };
-        }
-    }
+    //     } catch (error) {
+    //         // Don't fail session creation if backend fails
+    //         console.warn('Failed to create backend session, continuing with local session:', error);
+    //         this.sessionData = {
+    //             id: 'local_' + Date.now(),
+    //             type: type,
+    //             started_at: timezoneHandler.getCurrentDateInServerTimezone().toISOString()
+    //         };
+    //     }
+    // }
 
     /**
      * Update session progress

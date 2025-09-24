@@ -8,6 +8,7 @@ from models.study_session import StudySession
 from models.card_review import CardReview
 from middleware.auth import require_auth
 from datetime import datetime, timezone
+from config.timezone import tz_config
 
 study_bp = Blueprint("study", url_prefix="/api/study")
 
@@ -35,14 +36,22 @@ async def get_or_create_study_session(request, deck_id):
             print(f"Found existing active session {existing_session.id} for deck {deck_id}")
             
             if existing_session.paused_at:
-                paused_duration = (datetime.now(timezone.utc) - existing_session.paused_at).total_seconds() / 60
-                existing_session.total_paused_minutes = (existing_session.total_paused_minutes or 0) + round(paused_duration)
-                
-                # Clear paused state - session is now resumed
-                existing_session.paused_at = None
-                
-                session.commit()
-                print(f"Resumed session after {round(paused_duration)} minutes of pause")
+                try:
+                    now_local = tz_config.now()
+                        
+                    # Convert paused_at from UTC to server timezone
+                    paused_at_local = tz_config.utc_to_local(existing_session.paused_at)
+                    
+                    # Now both times are in the same timezone
+                    paused_duration = (now_local - paused_at_local).total_seconds() / 60
+                    existing_session.total_paused_minutes = (existing_session.total_paused_minutes or 0) + round(paused_duration)
+                    existing_session.paused_at = None
+                    
+                    session.commit()
+                    print(f"Resumed session after {round(paused_duration)} minutes of pause")
+                except Exception as resume_error:
+                    print(f"Error updating pause state: {resume_error}")
+                    session.rollback()
                 
             # Get all active cards in the deck
             cards = session.query(Card).filter_by(
@@ -240,6 +249,24 @@ async def get_or_create_pod_study_session(request, pod_id):
         
         if existing_session:
             print(f"Found existing active session {existing_session.id} for pod {pod_id}")
+            
+            # Handle paused session resumption
+            if existing_session.paused_at:
+                try:
+                    now_local = tz_config.now()
+                    
+                    # Convert paused_at from UTC to server timezone
+                    paused_at_local = tz_config.utc_to_local(existing_session.paused_at)
+                    
+                    # Now both times are in the same timezone
+                    paused_duration = (now_local - paused_at_local).total_seconds() / 60
+                    existing_session.total_paused_minutes = (existing_session.total_paused_minutes or 0) + round(paused_duration)
+                    existing_session.paused_at = None
+                    session.commit()  # Commit immediately after updating pause state
+                    print(f"Resumed session after {round(paused_duration)} minutes of pause")
+                except Exception as resume_error:
+                    print(f"Error updating pause state: {resume_error}")
+                    session.rollback()
             
             # Get all active cards from all decks in the pod
             cards = []

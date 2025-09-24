@@ -56,19 +56,7 @@ class StudyController {
      * Exit current study session
      */
     async exitStudy() {
-        //Pause existing session
-        if (this.session && this.session.isActive) {
-            // Check if session is actually complete
-            const isSessionComplete = this.currentMode?.isSessionComplete?.() || false;
-            
-            if (isSessionComplete) {
-                // Actually completed - mark as complete
-                await this.session.end();
-            } else {
-                // Exited early - just pause the session
-                await this.session.pauseSession();
-            }
-        }
+        await this.studyManager.exitStudy();
     }
 
     /**

@@ -275,13 +275,26 @@ export class StudyManager {
      * Exit study session completely
      */
     async exitStudy() {
+        // Check if session should be paused vs completed before cleanup
+        if (this.session && this.session.isActive) {
+            const isSessionComplete = this.currentMode?.isSessionComplete?.() || false;
+            
+            if (isSessionComplete) {
+                // Actually completed - mark as complete
+                await this.session.end();
+            } else {
+                // Exited early - pause the session instead of ending it
+                await this.session.pauseSession();
+            }
+        } else {
+            // Cleanup session normally (for cases where session is already ended)
+            await this.session.end();
+        }
+
         // Cleanup current mode
         if (this.currentMode) {
             await this.currentMode.cleanup();
         }
-        
-        // Cleanup session
-        await this.session.end();
         
         // Reset state
         this.state = StudyState.create();
