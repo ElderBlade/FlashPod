@@ -35,9 +35,9 @@ export class FullSpaced {
 
         this._updateActiveCards();
 
-        // Store original session size for progress tracking (before cards are filtered)
+        // Store original session size for progress tracking (only due/new cards)
         if (!modeData.originalSessionSize) {
-            modeData.originalSessionSize = state.cards.length;
+            modeData.originalSessionSize = modeData.dueCards.length + modeData.newCards.length;
         }
 
         // Check if there are no cards to study
