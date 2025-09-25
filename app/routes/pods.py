@@ -58,9 +58,20 @@ async def get_user_pods(request):
     session = get_db_session()
     try:
         user_id = request.ctx.user['id']
+        include_stats = request.args.get('include_stats', 'false').lower() == 'true'
 
         pods = session.query(Pod).filter_by(user_id=user_id).order_by(Pod.created_at.desc()).all()
-        pods_data = [pod.to_dict() for pod in pods]
+        pods_data = []
+        
+        for pod in pods:
+            pod_dict = pod.to_dict()
+            
+            if include_stats:
+                # Add study statistics
+                stats = calculate_pod_study_stats(session, pod.id)
+                pod_dict['study_stats'] = stats
+                
+            pods_data.append(pod_dict)
 
         return json({"pods": pods_data})
     except Exception as e:

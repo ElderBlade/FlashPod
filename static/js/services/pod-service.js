@@ -2,9 +2,13 @@
 import { Config } from '../core/config.js';
 
 export class PodService {
-    static async getAllPods() {
+    static async getAllPods(includeStats = false) {
         try {
-            const response = await fetch(`${Config.API_BASE}/pods/my-pods`, {
+            const url = includeStats 
+                ? `${Config.API_BASE}/pods/my-pods?include_stats=true`
+                : `${Config.API_BASE}/pods/my-pods`;
+                
+            const response = await fetch(url, {
                 method: 'GET',
                 credentials: 'include',
                 headers: {

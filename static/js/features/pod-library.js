@@ -35,7 +35,7 @@ export class PodLibrary {
 
     async loadAllPods() {
         try {
-            const response = await PodService.getAllPods();
+            const response = await PodService.getAllPods(true);
             this.pods = response.pods || [];
             this.renderPods();
             this.updateEmptyState();
@@ -156,25 +156,25 @@ export class PodLibrary {
                     <!-- Study Statistics (if available) -->
                     ${hasStats ? `
                         <div class="study-stats border-t border-gray-200 dark:border-gray-600 pt-3 mt-2">
-                            <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-600 dark:text-gray-400">
-                                <div class="flex justify-between">
+                            <div class="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-gray-600 dark:text-gray-400">
+                                <div class="flex items-center gap-1">
                                     <span>Sessions:</span>
                                     <span class="font-medium">${studyStats.total_sessions}</span>
                                 </div>
-                                <div class="flex justify-between">
-                                    <span>Accuracy:</span>
+                                <div class="flex items-center gap-1">
+                                    <span>Retention:</span>
                                     <span class="font-medium ${studyStats.average_accuracy >= 80 ? 'text-green-600 dark:text-green-400' : studyStats.average_accuracy >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}">${studyStats.average_accuracy}%</span>
                                 </div>
-                                <div class="flex justify-between col-span-2">
+                                <div class="flex items-center gap-1">
                                     <span>Cards Studied:</span>
                                     <span class="font-medium">${studyStats.total_cards_studied}</span>
                                 </div>
-                                ${studyStats.last_studied ? `
-                                    <div class="col-span-2 text-center text-gray-500 dark:text-gray-500 mt-1 pt-1 border-t border-gray-100 dark:border-gray-700">
-                                        Last: ${new Date(studyStats.last_studied).toLocaleDateString()}
-                                    </div>
-                                ` : ''}
                             </div>
+                            ${studyStats.last_studied ? `
+                                <div class="text-center text-gray-500 dark:text-gray-500 mt-2 pt-1 border-t border-gray-100 dark:border-gray-700 text-xs">
+                                    Last: ${new Date(studyStats.last_studied).toLocaleDateString()}
+                                </div>
+                            ` : ''}
                         </div>
                     ` : ''}
                     
