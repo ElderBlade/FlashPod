@@ -1,16 +1,18 @@
 # app/routes/pods.py
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sanic import Blueprint
 from sanic.response import json
 from models.database import get_db_session
 from models.user import User
 from models.pod import Pod
 from models.deck import Deck
+from models.card import Card
 from models.pod_deck import PodDeck
 from middleware.auth import require_auth
 from models.study_session import StudySession
 from models.card_review import CardReview
-from sqlalchemy import func
+from config.timezone import tz_config
+from sqlalchemy import func, and_
 
 pods_bp = Blueprint("pods", url_prefix="/api/pods")
 
@@ -128,9 +130,13 @@ def calculate_pod_study_stats(session, pod_id):
     # Get total study time
     completed_sessions = [s for s in sessions if s.ended_at]
     total_minutes = sum(s.duration_minutes or 0 for s in completed_sessions)
+
+    # Calculate cards due for this pod
+    cards_due = calculate_pod_cards_due(session, pod_id)
     
     return {
         'total_sessions': total_sessions,
+        'cards_due': cards_due,
         'total_cards_studied': total_cards_studied,
         'average_accuracy': round(accuracy, 1),
         'total_study_time_minutes': total_minutes,
@@ -368,3 +374,63 @@ async def get_pod_cards(request, pod_id):
         return json({"error": str(e)}, status=500)
     finally:
         session.close()
+
+
+def calculate_pod_cards_due(session, pod_id):
+    """Calculate how many cards are due for review in a pod"""    
+    try:
+        
+        # Get all cards from all decks in this pod
+        pod_cards = session.query(Card).join(
+            PodDeck, Card.deck_id == PodDeck.deck_id
+        ).filter(PodDeck.pod_id == pod_id).all()
+        
+        if not pod_cards:
+            return 0
+        
+        card_ids = [card.id for card in pod_cards]
+        now = tz_config.now()  # Use timezone config's now() method
+        
+        # Get latest review for each card
+        latest_reviews_subquery = session.query(
+            CardReview.card_id,
+            func.max(CardReview.reviewed_at).label('latest_reviewed_at')
+        ).filter(
+            CardReview.card_id.in_(card_ids)
+        ).group_by(CardReview.card_id).subquery()
+        
+        latest_reviews = session.query(CardReview).join(
+            latest_reviews_subquery,
+            and_(
+                CardReview.card_id == latest_reviews_subquery.c.card_id,
+                CardReview.reviewed_at == latest_reviews_subquery.c.latest_reviewed_at
+            )
+        ).all()
+        
+        # Count cards due for review
+        reviewed_card_ids = set()
+        cards_due_now = 0
+        
+        for review in latest_reviews:
+            reviewed_card_ids.add(review.card_id)
+            if review.next_review_date:
+                review_date = review.next_review_date
+                if review_date.tzinfo is None:
+                    review_date = review_date.replace(tzinfo=timezone.utc)
+                
+                # Convert to local timezone for date comparison (same as decks.py)
+                local_review_date = tz_config.utc_to_local(review_date)
+                
+                # Card is due if next review date is today or before
+                if local_review_date.date() <= now.date():
+                    cards_due_now += 1
+        
+        # Cards never reviewed are also due now
+        never_reviewed_count = len(card_ids) - len(reviewed_card_ids)
+        cards_due_now += never_reviewed_count
+        
+        return cards_due_now
+        
+    except Exception as e:
+        print(f"Error calculating pod cards due: {e}")
+        return 0

@@ -166,8 +166,8 @@ export class PodLibrary {
                                     <span class="font-medium ${studyStats.average_accuracy >= 80 ? 'text-green-600 dark:text-green-400' : studyStats.average_accuracy >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}">${studyStats.average_accuracy}%</span>
                                 </div>
                                 <div class="flex items-center gap-1">
-                                    <span>Cards Studied:</span>
-                                    <span class="font-medium">${studyStats.total_cards_studied}</span>
+                                    <span>Cards Due:</span>
+                                    <span class="font-medium ${studyStats.cards_due > 0 ? `text-red-600 dark:text-red-400`: ``}">${studyStats.cards_due}</span>
                                 </div>
                             </div>
                             ${studyStats.last_studied ? `
