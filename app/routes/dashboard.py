@@ -59,7 +59,7 @@ async def get_detailed_statistics(request):
         from utils.statistics import (
             get_cards_learned_count, 
             get_retention_rate, 
-            get_total_reviews_count, 
+            get_total_sessions_count, 
             get_total_study_time
         )
         
@@ -67,7 +67,7 @@ async def get_detailed_statistics(request):
         stats = {
             'cards_learned': get_cards_learned_count(session, user_id),
             'retention_rate': get_retention_rate(session, user_id, days_back),
-            'total_reviews': get_total_reviews_count(session, user_id),
+            'total_sessions': get_total_sessions_count(session, user_id),
             'study_time_hours': get_total_study_time(session, user_id),
             'timeframe_days': days_back
         }

@@ -49,32 +49,29 @@ def get_retention_rate(db_session, user_id):
     return calculate_sm2_retention(db_session, user_id, deck_id=None)
 
 
-def get_total_reviews_count(db_session, user_id):
+def get_total_sessions_count(db_session, user_id):
     """
-    Get total number of card reviews for cards that still exist and are active.
+    Get total number of completed study sessions.
     """
     try:
-        total_reviews = db_session.query(CardReview).join(
-            Card, CardReview.card_id == Card.id
-        ).filter(
+        total_sessions = db_session.query(StudySession).filter(
             and_(
-                CardReview.user_id == user_id,
-                CardReview.response_quality.isnot(None),
-                Card.is_active == True
+                StudySession.user_id == user_id,
+                StudySession.ended_at.isnot(None)
             )
         ).count()
         
-        return total_reviews
+        return total_sessions
         
     except Exception as e:
-        print(f"Error calculating total reviews: {e}")
+        print(f"Error calculating total sessions: {e}")
         return 0
 
 
 def get_total_study_time(db_session, user_id):
     """
     Get total study time in hours from completed study sessions.
-    Uses integer arithmetic to avoid floating-point precision issues.
+    Uses the session's duration_minutes property which excludes pause time.
     """
     try:
         # Get all completed study sessions
@@ -86,13 +83,12 @@ def get_total_study_time(db_session, user_id):
             )
         ).all()
         
-        total_seconds = 0
+        total_minutes = 0
         for session in completed_sessions:
-            duration = session.ended_at - session.started_at
-            total_seconds += int(duration.total_seconds())
+            # Use the model's duration_minutes property which excludes pause time
+            total_minutes += session.duration_minutes or 0
         
-        # Convert to hours using integer arithmetic
-        total_minutes = total_seconds // 60
+        # Convert to hours
         total_hours = total_minutes / 60
         
         # Round to 1 decimal place
@@ -135,7 +131,7 @@ def get_dashboard_stats(db_session, user_id):
         stats = {
             'cards_learned': get_cards_learned_count(db_session, user_id),
             'retention_rate': get_retention_rate(db_session, user_id),
-            'total_reviews': get_total_reviews_count(db_session, user_id),
+            'total_sessions': get_total_sessions_count(db_session, user_id),
             'study_time_hours': get_total_study_time(db_session, user_id)
         }
         
@@ -143,7 +139,7 @@ def get_dashboard_stats(db_session, user_id):
         stats['formatted'] = {
             'cards_learned': str(stats['cards_learned']),
             'retention_rate': f"{stats['retention_rate']}%",
-            'total_reviews': format_large_number(stats['total_reviews']),
+            'total_sessions': format_large_number(stats['total_sessions']),
             'study_time': format_study_time(stats['study_time_hours'])
         }
         
@@ -154,12 +150,12 @@ def get_dashboard_stats(db_session, user_id):
         return {
             'cards_learned': 0,
             'retention_rate': 0,
-            'total_reviews': 0,
+            'total_sessions': 0,
             'study_time_hours': 0.0,
             'formatted': {
                 'cards_learned': '0',
                 'retention_rate': '0%',
-                'total_reviews': '0',
+                'total_sessions': '0',
                 'study_time': '0m'
             }
         }
