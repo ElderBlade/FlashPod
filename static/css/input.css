@@ -859,6 +859,85 @@ input:checked + .dark-toggle .star--6 {
     margin-top: 1.5rem;
 }
 
+/* Pod Create Button Gradient Styles */
+.orange-gradient {
+    background: linear-gradient(135deg, #fb9636 0%, #fbbc33 100%);
+    transition: all 0.3s ease;
+}
+
+.orange-gradient:hover {
+    background: linear-gradient(135deg, #ea7c1f 0%, #f0ad1c 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(251, 150, 54, 0.3);
+}
+
+.orange-gradient:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(251, 150, 54, 0.3);
+}
+
+/* Dark mode versions - more subtle */
+.dark .orange-gradient {
+    background: linear-gradient(135deg, #d17a28 0%, #d19b26 100%);
+    /* Darker, more muted version of the gradient */
+}
+
+.dark .orange-gradient:hover {
+    background: linear-gradient(135deg, #e08530 0%, #e0a730 100%);
+    /* Slightly brighter than base, but still muted */
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(209, 122, 40, 0.3);
+}
+
+.dark .orange-gradient:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(209, 122, 40, 0.3);
+}
+
+
+/* Blue Gradient Styles - Generic for buttons, backgrounds, etc. */
+.blue-gradient {
+    background: linear-gradient(135deg, #49abea 0%, #3b94d9 100%);
+    transition: all 0.3s ease;
+}
+
+.blue-gradient:hover {
+    background: linear-gradient(135deg, #5bb5ed 0%, #4da3e0 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(73, 171, 234, 0.3);
+}
+
+.blue-gradient:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(73, 171, 234, 0.3);
+}
+
+/* Dark mode versions */
+.dark .blue-gradient {
+    background: linear-gradient(135deg, #3a8bc7 0%, #2f7ab8 100%);
+    /* More muted blue for dark mode */
+}
+
+.dark .blue-gradient:hover {
+    background: linear-gradient(135deg, #4498d3 0%, #3988c4 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(58, 139, 199, 0.3);
+}
+
+.dark .blue-gradient:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(58, 139, 199, 0.3);
+}
+
+/* Variant for backgrounds (no hover/active effects) */
+.blue-gradient-bg {
+    background: linear-gradient(135deg, #49abea 0%, #3b94d9 100%);
+}
+
+.dark .blue-gradient-bg {
+    background: linear-gradient(135deg, #3a8bc7 0%, #2f7ab8 100%);
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .pod-container {

@@ -261,9 +261,26 @@ export class PodLibrary {
         if (this.pods.length === 0) {
             emptyState.classList.remove('hidden');
             podsGrid.classList.add('hidden');
+            this.hideCreatePodButton();
         } else {
             emptyState.classList.add('hidden');
             podsGrid.classList.remove('hidden');
+            this.showCreatePodButton();
+        }
+    }
+
+    // Add these two new methods to the PodLibrary class
+    hideCreatePodButton() {
+        const createPodBtn = document.getElementById('create-pod-btn');
+        if (createPodBtn) {
+            createPodBtn.style.display = 'none';
+        } 
+    }
+
+    showCreatePodButton() {
+        const createPodBtn = document.getElementById('create-pod-btn');
+        if (createPodBtn) {
+            createPodBtn.style.display = 'inline-flex';
         }
     }
 
