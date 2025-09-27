@@ -4,6 +4,7 @@ import { DarkModeToggle } from './ui/dark-mode-toggle.js';
 import { DashboardStats } from './features/dashboard-stats.js';
 import { DeckEditor } from './features/deck-editor.js';
 import { DeckLibrary } from './features/deck-library.js';
+import { PodLibrary } from './features/pod-library.js';
 import { DeckManager } from './features/deck-manager.js';
 import { ImportManager } from './features/import-manager.js';
 import { MessageUI } from './ui/message.js';
@@ -23,6 +24,7 @@ class FlashPodApp {
         this.navigation = new Navigation();
         this.mobileNavigation = new MobileNavigation();
         this.library = new DeckLibrary();
+        this.plibrary = new PodLibrary();
         this.deckManager = new DeckManager(this.navigation);
         this.deckEditor = new DeckEditor(this.navigation);
         this.importManager = new ImportManager(this.navigation);
@@ -61,6 +63,7 @@ class FlashPodApp {
             if (navId === 'home') {
                 this.dashboardStats.init();
                 this.library.loadRecentDecks();
+                this.plibrary.loadRecentPods();
             }
         };
         
@@ -86,6 +89,7 @@ class FlashPodApp {
         
         // Load initial data
         this.library.loadRecentDecks();
+        this.plibrary.loadRecentPods();
 
         this.dashboardStats.init();
         

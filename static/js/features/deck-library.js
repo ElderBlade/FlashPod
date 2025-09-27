@@ -439,6 +439,10 @@ export class DeckLibrary {
         return '';
     }
 
+    viewAllDecks() {
+        window.app.navigation.navigateTo('library');
+    }
+
     escapeHtml(text) {
         if (!text) return '';
         const div = document.createElement('div');
