@@ -447,15 +447,6 @@ export class StudyManager {
     }
 
     // Private methods
-    // _activateStudy() {
-    //     this.interface.show();
-    //     this.keyboard.activate();
-    //     this.isActive = true;
-    //     this.isPaused = false;
-        
-    //     console.log(`Study activated - Mode: ${this.state.mode}`);
-    // }
-
     _shuffleArray(array) {
         const shuffled = [...array];
         for (let i = shuffled.length - 1; i > 0; i--) {

@@ -14,6 +14,20 @@ export class PodManager {
     }
 
     setupEventListeners() {
+
+        // Create Pod button
+        const createPodBtn = document.getElementById('create-pod-btn');
+        const createFirstPodBtn = document.getElementById('create-first-pod-btn');
+        
+        if (createPodBtn) {
+            createPodBtn.addEventListener('click', () => window.app.createPod());
+        }
+        
+        if (createFirstPodBtn) {
+            createFirstPodBtn.addEventListener('click', () => window.app.createPod());
+        }
+
+        
         // Modal backdrop clicks
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal-backdrop')) {
@@ -91,6 +105,7 @@ export class PodManager {
     }
 
     createModal(title, data) {
+
         const modal = document.createElement('div');
         modal.id = 'pod-modal';
         modal.className = 'modal-backdrop fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
@@ -108,68 +123,67 @@ export class PodManager {
                 </div>
 
                 <!-- Content -->
-                <div class="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-                    <form id="pod-form">
-                        <!-- Pod Name -->
-                        <div class="mb-4">
+                <form id="pod-form" class="flex flex-col h-full">
+                    <div class="flex-1 p-6 space-y-6 overflow-y-auto">
+                        <!-- Name field -->
+                        <div>
                             <label for="pod-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Pod Name *
                             </label>
-                            <input 
-                                type="text" 
+                            <input type="text" 
                                 id="pod-name" 
                                 name="name"
-                                value="${this.escapeHtml(data.name)}"
+                                value="${this.escapeHtml(data.name)}" 
                                 required
-                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                placeholder="Enter pod name">
+                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         </div>
 
-                        <!-- Pod Description -->
-                        <div class="mb-6">
+                        <!-- Description field -->
+                        <div>
                             <label for="pod-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Description
                             </label>
-                            <textarea 
-                                id="pod-description" 
-                                name="description"
-                                rows="3"
-                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                placeholder="Optional description for your pod">${this.escapeHtml(data.description)}</textarea>
+                            <textarea id="pod-description" 
+                                    name="description"
+                                    rows="3"
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Optional description for this pod...">${this.escapeHtml(data.description)}</textarea>
                         </div>
 
-                        <!-- Deck Selection -->
-                        <div class="mb-6">
+                        <!-- Deck selection -->
+                        <div>
                             <label id="deck-selection-label" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                                 Select Decks (${this.selectedDecks.length} selected)
                             </label>
-                            <div id="deck-selection" class="space-y-2 max-h-60 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-md p-3">
+                            <div id="deck-list" class="space-y-2 max-h-64 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-md p-3 bg-gray-50 dark:bg-gray-700">
                                 ${this.renderDeckSelection(data.decks)}
                             </div>
                         </div>
-                    </form>
-                </div>
+                    </div>
 
-                <!-- Footer -->
-                <div class="flex items-center justify-end space-x-3 p-6 border-t border-gray-200 dark:border-gray-700">
-                    <button 
-                        id="cancel-pod" 
-                        type="button"
-                        class="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-md transition-colors">
-                        Cancel
-                    </button>
-                    <button 
-                        id="save-pod" 
-                        type="submit"
-                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors">
-                        ${this.editingPodId ? 'Update Pod' : 'Create Pod'}
-                    </button>
-                </div>
+                    <!-- Footer -->
+                    <div class="flex justify-end space-x-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                        <button type="button" 
+                                id="cancel-pod"
+                                class="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-md transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" 
+                                id="save-pod"
+                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors">
+                            ${this.editingPodId ? 'Update Pod' : 'Create Pod'}
+                        </button>
+                    </div>
+                </form>
             </div>
         `;
 
         document.body.appendChild(modal);
-        this.setupModalEventListeners();
+        
+        // Use setTimeout to ensure DOM is fully rendered before setting up listeners
+        setTimeout(() => {
+            this.setupModalEventListeners();
+        }, 0);
 
         // Focus on name input
         setTimeout(() => {
@@ -200,27 +214,23 @@ export class PodManager {
                         Select a pod to add ${deckIds.length} deck${deckIds.length !== 1 ? 's' : ''} to:
                     </p>
                     
-                    <div class="space-y-2 max-h-60 overflow-y-auto">
+                    <div class="space-y-3 mb-6">
                         ${pods.map(pod => `
-                            <button 
-                                class="add-to-existing-pod w-full text-left p-3 border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                                data-pod-id="${pod.id}"
-                                data-deck-ids="${JSON.stringify(deckIds)}">
+                            <button class="add-to-existing-pod w-full text-left p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                    data-pod-id="${pod.id}"
+                                    data-deck-ids='${JSON.stringify(deckIds)}'>
                                 <div class="font-medium text-gray-900 dark:text-white">${this.escapeHtml(pod.name)}</div>
-                                <div class="text-sm text-gray-500 dark:text-gray-400">
-                                    ${pod.deck_count || 0} decks • ${pod.total_card_count || 0} cards
-                                </div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">${pod.deck_count || 0} decks</div>
                             </button>
                         `).join('')}
                     </div>
                     
-                    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <button 
-                            id="create-new-pod-from-add"
-                            class="w-full flex items-center justify-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors"
-                            data-deck-ids="${JSON.stringify(deckIds)}">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    <div class="border-t border-gray-200 dark:border-gray-600 pt-4">
+                        <button id="create-new-pod-from-add" 
+                                class="w-full p-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                data-deck-ids='${JSON.stringify(deckIds)}'>
+                            <svg class="w-5 h-5 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                             </svg>
                             Create New Pod
                         </button>
@@ -230,7 +240,11 @@ export class PodManager {
         `;
 
         document.body.appendChild(modal);
-        this.setupAddToPodModalEventListeners();
+        
+        // Use setTimeout to ensure DOM is fully rendered before setting up listeners
+        setTimeout(() => {
+            this.setupAddToPodModalEventListeners();
+        }, 0);
     }
 
     renderDeckSelection(decks) {
@@ -253,14 +267,27 @@ export class PodManager {
     }
 
     setupModalEventListeners() {
+
         const modal = document.getElementById('pod-modal');
         const closeBtn = document.getElementById('close-pod-modal');
         const cancelBtn = document.getElementById('cancel-pod');
         const saveBtn = document.getElementById('save-pod');
         const form = document.getElementById('pod-form');
 
-        if (closeBtn) closeBtn.addEventListener('click', () => this.closeModal());
-        if (cancelBtn) cancelBtn.addEventListener('click', () => this.closeModal());
+        // if (closeBtn) closeBtn.addEventListener('click', () => this.closeModal());
+        // if (cancelBtn) cancelBtn.addEventListener('click', () => this.closeModal());
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                this.closeModal();
+            });
+        }
+        
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
+                this.closeModal();
+            });
+        }
         
         // Handle both form submission and save button click
         if (form) {

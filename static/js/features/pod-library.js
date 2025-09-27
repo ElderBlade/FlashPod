@@ -11,17 +11,6 @@ export class PodLibrary {
     }
 
     setupEventListeners() {
-        // Create Pod button
-        const createPodBtn = document.getElementById('create-pod-btn');
-        const createFirstPodBtn = document.getElementById('create-first-pod-btn');
-        
-        if (createPodBtn) {
-            createPodBtn.addEventListener('click', () => window.app.createPod());
-        }
-        
-        if (createFirstPodBtn) {
-            createFirstPodBtn.addEventListener('click', () => window.app.createPod());
-        }
 
         // Sort dropdown
         const sortSelect = document.getElementById('pod-sort');
@@ -455,9 +444,6 @@ export class PodLibrary {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
                 </svg>
                 <p class="text-sm">No recent pod activity</p>
-                <button onclick="window.app.plibrary.viewAllPods(); return false;" class="text-blue-600 dark:text-blue-400 text-sm hover:underline mt-2">
-                    View all pods
-                </button>
             </div>
         `;
     }
