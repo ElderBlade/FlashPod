@@ -132,6 +132,11 @@ export class SimpleSpaced {
     async handleRoundCompletion() {
         const modeData = this.manager.state.modeData['simple-spaced'];
         
+        // Save progress before checking completion
+        await this._saveProgress();
+        
+        // Check if all cards have been moved to known (session complete)
+        // or if there are still cards to review in future rounds
         if (modeData.stillLearning.length === 0) {
             this.handleSessionCompletion();
         } else {
@@ -156,6 +161,13 @@ export class SimpleSpaced {
         
         // Update active cards and interface
         this.updateActiveCards();
+        
+        // Double-check: if no cards remain after updating, complete session
+        if (state.cards.length === 0 || modeData.stillLearning.length === 0) {
+            this.handleSessionCompletion();
+            return;
+        }
+        
         this.manager.interface.updateModeSpecificUI('simple-spaced', modeData);
         
         this.manager._showMessage(
@@ -163,7 +175,7 @@ export class SimpleSpaced {
             'info'
         );
         
-        // FIX: Render the first card of the new round
+        // Render the first card of the new round
         this.renderCard();
     }
 
@@ -202,12 +214,12 @@ export class SimpleSpaced {
         
         // Use event delegation
         const modal = document.getElementById('completionModal');
-        modal.addEventListener('click', (e) => {
+        modal.addEventListener('click', async (e) => {
             const action = e.target.dataset.action;
             if (action === 'study-again') {
                 this.restartSession();
             } else if (action === 'finish') {
-                this.finishSession();
+                await this.finishSession(); // Make this await
             }
         });
     }
@@ -245,7 +257,16 @@ export class SimpleSpaced {
         this.renderCard();
     }
 
-    finishSession() {
+    async finishSession() {
+        // Ensure session is marked as completed before exiting
+        try {
+            if (this.manager.session && this.manager.session.isActive) {
+                await this.manager.session.end();
+            }
+        } catch (error) {
+            console.error('Failed to complete session:', error);
+        }
+        
         document.getElementById('completionModal')?.remove();
         this.manager.exitStudy();
     }
