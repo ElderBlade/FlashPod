@@ -10,6 +10,7 @@ from models.card_review import CardReview
 from models.user import User
 from models.deck import Deck
 from models.card import Card
+from models.pod_deck import PodDeck
 from utils.statistics import calculate_sm2_retention, calculate_simple_retention
 from middleware.auth import require_auth
 from config.timezone import tz_config
@@ -313,70 +314,70 @@ async def get_user_decks(request, user_id):
 @decks_bp.route('/my-decks-with-stats', methods=['GET'])
 @require_auth
 async def get_my_decks_with_stats(request):
-    """Get user's decks with last session statistics"""
+    """Get user's decks with last session statistics including pod sessions"""
     session = get_db_session()
     try:
         user_id = request.ctx.user['id']
         
         # Get user's decks
-        decks = session.query(Deck).filter_by(user_id=user_id).all()
-        
+        decks = session.query(Deck).filter_by(user_id=user_id).order_by(Deck.created_at.desc()).all()
         deck_data = []
+        
         for deck in decks:
-            
-            # Get latest session that has card reviews for this deck
-            latest_session = session.query(StudySession).filter(
-                StudySession.user_id == user_id,
-                StudySession.deck_id == deck.id
+            # Get latest session for this deck (direct deck sessions)
+            latest_deck_session = session.query(StudySession).filter_by(
+                deck_id=deck.id, 
+                user_id=user_id
             ).filter(
-                StudySession.id.in_(
-                    session.query(CardReview.session_id).join(Card).filter(
-                        Card.deck_id == deck.id,
-                        CardReview.user_id == user_id,
-                        CardReview.session_id.isnot(None)
-                    ).distinct()
-                )
-            ).order_by(desc(StudySession.started_at)).first()
+                StudySession.ended_at.isnot(None)
+            ).order_by(StudySession.ended_at.desc()).first()
             
-            # Get session stats
+            # Get latest pod session that included this deck
+            latest_pod_session = session.query(StudySession).join(
+                PodDeck, StudySession.pod_id == PodDeck.pod_id
+            ).filter(
+                PodDeck.deck_id == deck.id,
+                StudySession.user_id == user_id,
+                StudySession.ended_at.isnot(None)
+            ).order_by(StudySession.ended_at.desc()).first()
+            
+            # Determine which session is more recent
+            latest_session = None
+            if latest_deck_session and latest_pod_session:
+                latest_session = latest_deck_session if latest_deck_session.ended_at > latest_pod_session.ended_at else latest_pod_session
+            elif latest_deck_session:
+                latest_session = latest_deck_session
+            elif latest_pod_session:
+                latest_session = latest_pod_session
+            
             session_stats = None
             if latest_session:
-                # Calculate duration
-                duration_minutes = 0
-                if latest_session.ended_at and latest_session.started_at:
-                    delta = latest_session.ended_at - latest_session.started_at
-                    duration_minutes = round(delta.total_seconds() / 60)
+                duration_minutes = latest_session.duration_minutes or 0
                 
-                # Get card reviews from this session to determine mode
-                session_reviews = session.query(CardReview).filter_by(
-                    session_id=latest_session.id
-                ).all()
-                
-                if session_reviews:                    
-                    # Check if reviews have SM-2 data (ease_factor, next_review_date)
-                    has_sm2_data = any(review.ease_factor != 2.5 or review.next_review_date 
-                                     for review in session_reviews)
-                                        
-                    if has_sm2_data:
-                        # SM-2 mode
-                        next_review, cards_due = get_sm2_due_info(session, deck.id, user_id)
-                        session_stats = {
-                            'mode': 'full-spaced',
-                            'next_review': next_review.isoformat() if next_review else None,
-                            'cards_due': cards_due,
-                            'duration_minutes': duration_minutes,
-                            'retention_rate': calculate_sm2_retention(session, user_id, deck.id),
-                            'is_overdue': tz_config.utc_to_local(next_review).date() <= tz_config.now().date() if next_review else False
-                        }
-                    else:
-                        # Simple spaced mode
-                        session_stats = {
-                            'mode': 'simple-spaced',
-                            'last_reviewed': latest_session.started_at.isoformat(),
-                            'duration_minutes': duration_minutes,
-                            'retention_rate': calculate_simple_retention(session, deck.id, user_id),
-                            'total_cards': latest_session.cards_studied or 0
-                        }
+                if latest_session.mode == 'full-spaced':
+                    # SM-2 mode stats
+                    next_review, cards_due = get_sm2_due_info(session, deck.id, user_id)
+                    session_stats = {
+                        'mode': 'full-spaced',
+                        'next_review': next_review.isoformat() if next_review else None,
+                        'cards_due': cards_due,
+                        'duration_minutes': duration_minutes,
+                        'retention_rate': calculate_sm2_retention(session, user_id, deck.id),
+                        'is_overdue': tz_config.utc_to_local(next_review).date() <= tz_config.now().date() if next_review else False,
+                        'last_studied': latest_session.ended_at.isoformat(),
+                        'session_type': 'pod' if latest_session.pod_id else 'deck'
+                    }
+                else:
+                    # Simple spaced mode or basic mode
+                    session_stats = {
+                        'mode': latest_session.mode or 'basic',
+                        'last_reviewed': latest_session.ended_at.isoformat(),
+                        'duration_minutes': duration_minutes,
+                        'retention_rate': calculate_simple_retention_including_pods(session, deck.id, user_id),
+                        'total_cards': latest_session.cards_studied or 0,
+                        'session_type': 'pod' if latest_session.pod_id else 'deck'
+                    }
+            
             deck_dict = deck.to_dict(include_pods=True)
             deck_dict['session_stats'] = session_stats
             deck_data.append(deck_dict)
@@ -490,3 +491,64 @@ def get_sm2_due_info(db_session, deck_id, user_id):
         import traceback
         traceback.print_exc()
         return None, 0
+    
+
+def calculate_simple_retention_including_pods(db_session, deck_id, user_id):
+    """Calculate retention rate including both deck and pod sessions"""
+    try:
+        # Get direct deck sessions
+        deck_sessions = db_session.query(StudySession).filter_by(
+            deck_id=deck_id,
+            user_id=user_id
+        ).filter(
+            StudySession.ended_at.isnot(None),
+            StudySession.cards_studied > 0
+        ).all()
+        
+        # Get pod sessions that included this deck
+        pod_sessions = db_session.query(StudySession).join(
+            PodDeck, StudySession.pod_id == PodDeck.pod_id
+        ).filter(
+            PodDeck.deck_id == deck_id,
+            StudySession.user_id == user_id,
+            StudySession.ended_at.isnot(None),
+            StudySession.cards_studied > 0
+        ).all()
+        
+        # Combine all sessions
+        all_sessions = deck_sessions + pod_sessions
+        
+        if not all_sessions:
+            return 0
+        
+        # For pod sessions, we need to estimate the deck's contribution
+        # This is a simplified approach - you might want to make this more sophisticated
+        total_studied = 0
+        total_correct = 0
+        
+        for session in all_sessions:
+            if session.pod_id:
+                # For pod sessions, estimate this deck's contribution based on card ratio
+                pod_decks = db_session.query(PodDeck).filter_by(pod_id=session.pod_id).all()
+                deck_card_count = db_session.query(Card).filter_by(deck_id=deck_id).count()
+                total_pod_cards = sum(
+                    db_session.query(Card).filter_by(deck_id=pd.deck_id).count() 
+                    for pd in pod_decks
+                )
+                
+                if total_pod_cards > 0:
+                    deck_ratio = deck_card_count / total_pod_cards
+                    estimated_studied = int(session.cards_studied * deck_ratio)
+                    estimated_correct = int((session.cards_correct or 0) * deck_ratio)
+                    total_studied += estimated_studied
+                    total_correct += estimated_correct
+            else:
+                # Direct deck session
+                total_studied += session.cards_studied
+                total_correct += session.cards_correct or 0
+        
+        return round((total_correct / total_studied) * 100, 1) if total_studied > 0 else 0
+        
+    except Exception as e:
+        print(f"Error calculating retention with pods: {e}")
+        return 0

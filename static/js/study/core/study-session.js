@@ -75,34 +75,9 @@ export class StudySession {
     }
 
     /**
-     * Create a backend study session
+     * Update session progress with mode information
      */
-    // async _createBackendSession(type, id) {
-    //     try {
-    //         const sessionData = type === 'deck' ? 
-    //             { deck_id: id } : 
-    //             { pod_id: id };
-                
-    //         const response = await this.api.createStudySession(sessionData);
-    //         this.sessionData = response.session;
-            
-    //         console.log(`Created backend session: ${this.sessionData.id}`);
-            
-    //     } catch (error) {
-    //         // Don't fail session creation if backend fails
-    //         console.warn('Failed to create backend session, continuing with local session:', error);
-    //         this.sessionData = {
-    //             id: 'local_' + Date.now(),
-    //             type: type,
-    //             started_at: timezoneHandler.getCurrentDateInServerTimezone().toISOString()
-    //         };
-    //     }
-    // }
-
-    /**
-     * Update session progress
-     */
-    async updateProgress(cardsStudied, cardsCorrect = null) {
+    async updateProgress(cardsStudied, cardsCorrect = null, mode = null) {
         if (!this.sessionData || typeof this.sessionData.id === 'string' && this.sessionData.id.startsWith('local_')) {
             return; // Skip for local sessions
         }
@@ -115,7 +90,12 @@ export class StudySession {
             if (cardsCorrect !== null) {
                 progressData.cards_correct = cardsCorrect;
             }
-            console.log("UPDATING POD progress!");
+            
+            if (mode !== null) {
+                progressData.mode = mode;
+            }
+            
+            console.log("UPDATING progress with mode:", mode);
             await this.api.updateSessionProgress(this.sessionData.id, progressData);
             
         } catch (error) {

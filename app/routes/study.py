@@ -126,6 +126,7 @@ async def update_session_progress(request, session_id):
         print(f"🔍 DEBUG: Request data: {data}")
         cards_studied = data.get("cards_studied")
         cards_correct = data.get("cards_correct")  # Add this
+        mode = data.get("mode") 
 
         print(f"🔍 DEBUG: Extracted values - cards_studied: {cards_studied}, cards_correct: {cards_correct}")
         
@@ -143,6 +144,9 @@ async def update_session_progress(request, session_id):
         if cards_correct is not None:  # Add this
             study_session.cards_correct = cards_correct
             print(f"🔍 DEBUG: Updated cards_correct to {cards_correct}")
+        if mode is not None:  # Add this block
+            study_session.mode = mode
+            print(f"🔍 DEBUG: Updated mode to {mode}")
         
         session.commit()
         print(f"🔍 DEBUG: Committed changes to database")

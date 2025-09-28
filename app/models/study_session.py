@@ -17,6 +17,7 @@ class StudySession(Base):
     cards_studied = Column(Integer, default=0)
     cards_correct = Column(Integer, default=0)
     session_type = Column(String(20), default='review')  # 'review', 'learn', 'cram'
+    mode = Column(String(20), default='basic') 
     paused_at = Column(DateTime, nullable=True)
     total_paused_minutes = Column(Integer, default=0)
     

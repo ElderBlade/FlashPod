@@ -227,7 +227,8 @@ export class FullSpaced {
             try {
                 await this.manager.session.updateProgress(
                     modeData.sessionStats.cardsReviewed,
-                    modeData.sessionStats.cardsCorrect
+                    modeData.sessionStats.cardsCorrect,
+                    'full-spaced'
                 );
                 console.log(`Updated backend progress: ${modeData.sessionStats.cardsReviewed} cards reviewed`);
             } catch (error) {
@@ -243,8 +244,8 @@ export class FullSpaced {
         
         // Update local state
         modeData.reviews.set(currentCardId, reviewResult);
-        modeData.nextReviewDates.set(currentCardId, reviewResult.nextReviewDate);
-        modeData.difficulty.set(currentCardId, reviewResult.easeFactor);
+        modeData.nextReviewDates.set(currentCardId, reviewResult.next_review_date);
+        modeData.difficulty.set(currentCardId, reviewResult.ease_factor);
         
         // Update card categories
         this._updateCardCategories(currentCardId, reviewResult);

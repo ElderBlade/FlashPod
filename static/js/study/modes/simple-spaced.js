@@ -260,7 +260,9 @@ export class SimpleSpaced {
         modeData.isCollectingResponse = false;
         this.manager.interface.hideResponseButtons();
         
-        // FIX: Ensure the new card is rendered after navigation
+        // Save progress periodically during navigation
+        await this._saveProgress();
+        
         await this.renderCard();
     }
 
@@ -290,7 +292,6 @@ export class SimpleSpaced {
     }
 
     async cleanup() {
-
         if (this.beforeUnloadHandler) {
             window.removeEventListener('beforeunload', this.beforeUnloadHandler);
         }
@@ -302,9 +303,8 @@ export class SimpleSpaced {
         modeData.isCollectingResponse = false;
         this.manager.interface.hideResponseButtons();
         
-        if (this.manager.session) {
-            await this.manager.session.saveSimpleSpacedProgress(modeData);
-        }
+        // Save progress to backend and localStorage
+        await this._saveProgress();
 
         this.absorptionAnimator.cleanup();
     }
@@ -344,6 +344,35 @@ export class SimpleSpaced {
         } catch (error) {
             console.error('Error saving review:', error);
             // Continue anyway - we have local state
+        }
+    }
+
+    /**
+     * Save current progress to backend
+     */
+    async _saveProgress() {
+        const modeData = this.manager.state.modeData['simple-spaced'];
+        
+        // Calculate cards studied for simple spaced mode
+        const cardsStudied = modeData.known.length + 
+            (modeData.stillLearning.length > 0 ? Math.max(0, modeData.stillLearning.length - (this.manager.state.originalCards.length - modeData.currentRound)) : 0);
+        
+        // Update session progress if backend is available
+        if (this.manager.session.isActive) {
+            try {
+                await this.manager.session.updateProgress(
+                    Math.max(cardsStudied, modeData.known.length), // cards studied
+                    null, // cards correct (not tracked in simple mode)
+                    'simple-spaced' // mode
+                );
+            } catch (error) {
+                console.warn('Failed to save progress to backend:', error);
+            }
+        }
+        
+        // Save simple spaced specific progress to localStorage
+        if (this.manager.session) {
+            await this.manager.session.saveSimpleSpacedProgress(modeData);
         }
     }
 }

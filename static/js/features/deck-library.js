@@ -410,13 +410,16 @@ export class DeckLibrary {
     getSessionStatsHTML(stats) {
         if (!stats) return '';
         
-        if (stats.mode === 'simple-spaced') {
+        // Add session type indicator
+        const sessionTypeIcon = stats.session_type === 'pod' ? '🚀' : '📖';
+        
+        if (stats.mode === 'simple-spaced' || stats.mode === 'basic') {
             const formattedDate = timezoneHandler.formatDateInServerTimezone(
                 stats.last_reviewed,
                 { month: 'short', day: 'numeric' }
             );
             
-            return `<span class="text-xs text-gray-500 dark:text-gray-400">📅 ${formattedDate} • 📊 ${stats.retention_rate}% • ⏱️ ${stats.duration_minutes}m</span>`;
+            return `<span class="text-xs text-gray-500 dark:text-gray-400">${sessionTypeIcon} ${formattedDate} • 📊 ${stats.retention_rate}% • ⏱️ ${stats.duration_minutes}m</span>`;
             
         } else if (stats.mode === 'full-spaced') {
             const nextReviewDate = stats.next_review ? new Date(stats.next_review) : null;
@@ -433,7 +436,7 @@ export class DeckLibrary {
                 dateClass = isOverdue ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400';
             }
             
-            return `<span class="text-xs ${dateClass}">🔔 ${nextReviewText} • 📝 ${stats.cards_due} • 📊 ${stats.retention_rate}%</span>`;
+            return `<span class="text-xs ${dateClass}">${sessionTypeIcon} ${nextReviewText} • 📝 ${stats.cards_due} • 📊 ${stats.retention_rate}%</span>`;
         }
         
         return '';
