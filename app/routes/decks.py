@@ -1,5 +1,7 @@
 # app/routes/decks.py
 from datetime import datetime
+import csv
+import io
 from sanic import Blueprint
 from sanic.response import json, HTTPResponse
 from sqlalchemy import desc, func, and_
@@ -133,22 +135,16 @@ async def delete_deck(request, deck_id):
 
 
 @decks_bp.route("/import-file", methods=["POST"])
-@require_auth
 async def import_file(request):
-    """Import cards from uploaded file"""
-    import csv
-    import io
-    
+    """Parse uploaded CSV/TSV file and return card data"""
     session = get_db_session()
     try:
-        # Get uploaded file
         upload_file = request.files.get('file')
         if not upload_file:
             return json({"error": "No file uploaded"}, status=400)
         
         # Read file content
         file_content = upload_file.body.decode('utf-8')
-        lines = file_content.splitlines()
         
         # Extract metadata from FlashPod export format
         metadata = {
@@ -157,28 +153,30 @@ async def import_file(request):
             'is_flashpod_export': False
         }
         
-        # Check for FlashPod export metadata
-        for line in lines:
-            if line.startswith('# FlashPod Export'):
-                metadata['is_flashpod_export'] = True
-            elif line.startswith('# Deck Name: '):
-                metadata['deck_name'] = line[13:].strip()  # Remove "# Deck Name: "
-            elif line.startswith('# Description: '):
-                metadata['description'] = line[15:].strip()  # Remove "# Description: "
+        # Remove comment lines while preserving empty lines in CSV data
+        # This is important for multi-line CSV fields
+        lines = []
+        for line in file_content.split('\n'):
+            stripped = line.strip()
+            if stripped.startswith('#'):
+                # Process metadata from comments
+                if line.startswith('# FlashPod Export'):
+                    metadata['is_flashpod_export'] = True
+                elif line.startswith('# Deck Name: '):
+                    metadata['deck_name'] = line[13:].strip()
+                elif line.startswith('# Description: '):
+                    metadata['description'] = line[15:].strip()
+                # Skip adding comment lines to filtered content
+            else:
+                # Keep all non-comment lines, including empty lines
+                lines.append(line)
+        
+        # Join back and parse as CSV
+        filtered_content = '\n'.join(lines)
+        csv_reader = csv.reader(io.StringIO(filtered_content))
         
         # Parse CSV with proper handling
         cards_data = []
-
-        # Filter out comment lines and empty lines before CSV parsing
-        filtered_lines = []
-        for line in lines:
-            stripped = line.strip()
-            if stripped and not stripped.startswith('#'):
-                filtered_lines.append(line)
-
-        # Join the filtered lines back into CSV content
-        filtered_content = '\n'.join(filtered_lines)
-        csv_reader = csv.reader(io.StringIO(filtered_content))
 
         # Skip header if present
         first_row = next(csv_reader, None)
