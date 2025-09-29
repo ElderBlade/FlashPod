@@ -325,20 +325,24 @@ async def get_my_decks_with_stats(request):
         
         for deck in decks:
             # Get latest session for this deck (direct deck sessions)
+            # ONLY consider sessions with trackable modes (not 'basic')
             latest_deck_session = session.query(StudySession).filter_by(
                 deck_id=deck.id, 
                 user_id=user_id
             ).filter(
-                StudySession.ended_at.isnot(None)
+                StudySession.ended_at.isnot(None),
+                StudySession.mode.in_(['simple-spaced', 'full-spaced'])  # Only trackable modes
             ).order_by(StudySession.ended_at.desc()).first()
             
             # Get latest pod session that included this deck
+            # ONLY consider sessions with trackable modes (not 'basic')
             latest_pod_session = session.query(StudySession).join(
                 PodDeck, StudySession.pod_id == PodDeck.pod_id
             ).filter(
                 PodDeck.deck_id == deck.id,
                 StudySession.user_id == user_id,
-                StudySession.ended_at.isnot(None)
+                StudySession.ended_at.isnot(None),
+                StudySession.mode.in_(['simple-spaced', 'full-spaced'])  # Only trackable modes
             ).order_by(StudySession.ended_at.desc()).first()
             
             # Determine which session is more recent
@@ -353,6 +357,13 @@ async def get_my_decks_with_stats(request):
             session_stats = None
             if latest_session:
                 duration_minutes = latest_session.duration_minutes or 0
+
+                # DEBUG: Print the session details
+                print(f"DEBUG: Deck {deck.id} ({deck.name}):")
+                print(f"  Latest session ID: {latest_session.id}")
+                print(f"  Session mode: '{latest_session.mode}'")
+                print(f"  Session type: {'pod' if latest_session.pod_id else 'deck'}")
+                print(f"  Ended at: {latest_session.ended_at}")
                 
                 if latest_session.mode == 'full-spaced':
                     # SM-2 mode stats
@@ -367,10 +378,9 @@ async def get_my_decks_with_stats(request):
                         'last_studied': latest_session.ended_at.isoformat(),
                         'session_type': 'pod' if latest_session.pod_id else 'deck'
                     }
-                else:
-                    # Simple spaced mode or basic mode
+                elif latest_session.mode == 'simple-spaced':
                     session_stats = {
-                        'mode': latest_session.mode or 'basic',
+                        'mode': 'simple-spaced',
                         'last_reviewed': latest_session.ended_at.isoformat(),
                         'duration_minutes': duration_minutes,
                         'retention_rate': calculate_simple_retention_including_pods(session, deck.id, user_id),
