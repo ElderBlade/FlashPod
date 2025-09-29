@@ -399,6 +399,11 @@ export class PodManager {
             // Refresh both libraries
             await this.podLibrary.refresh();
             await this.deckLibrary.loadAllDecks();
+
+            // Exit bulk select mode if active (ADD THIS)
+            if (this.deckLibrary.bulkSelectMode) {
+                this.deckLibrary.exitBulkSelectMode();
+            }
             
         } catch (error) {
             console.error('Error saving pod:', error);
