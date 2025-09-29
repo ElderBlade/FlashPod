@@ -494,61 +494,40 @@ def get_sm2_due_info(db_session, deck_id, user_id):
     
 
 def calculate_simple_retention_including_pods(db_session, deck_id, user_id):
-    """Calculate retention rate including both deck and pod sessions"""
+    """Calculate retention rate including both deck and pod sessions by looking at card reviews"""
     try:
-        # Get direct deck sessions
-        deck_sessions = db_session.query(StudySession).filter_by(
-            deck_id=deck_id,
-            user_id=user_id
-        ).filter(
-            StudySession.ended_at.isnot(None),
-            StudySession.cards_studied > 0
-        ).all()
+        thirty_days_ago = datetime.now() - timedelta(days=30)
         
-        # Get pod sessions that included this deck
-        pod_sessions = db_session.query(StudySession).join(
-            PodDeck, StudySession.pod_id == PodDeck.pod_id
-        ).filter(
-            PodDeck.deck_id == deck_id,
-            StudySession.user_id == user_id,
-            StudySession.ended_at.isnot(None),
-            StudySession.cards_studied > 0
-        ).all()
+        # Get card IDs from this deck
+        deck_card_ids = [card.id for card in db_session.query(Card).filter_by(
+            deck_id=deck_id, 
+            is_active=True
+        ).all()]
         
-        # Combine all sessions
-        all_sessions = deck_sessions + pod_sessions
-        
-        if not all_sessions:
+        if not deck_card_ids:
             return 0
         
-        # For pod sessions, we need to estimate the deck's contribution
-        # This is a simplified approach - you might want to make this more sophisticated
-        total_studied = 0
-        total_correct = 0
+        # Get all reviews for these cards in the last 30 days
+        # This automatically includes both direct deck sessions and pod sessions
+        reviews = db_session.query(CardReview).filter(
+            and_(
+                CardReview.card_id.in_(deck_card_ids),
+                CardReview.user_id == user_id,
+                CardReview.reviewed_at >= thirty_days_ago,
+                CardReview.response_quality.isnot(None)
+            )
+        ).all()
         
-        for session in all_sessions:
-            if session.pod_id:
-                # For pod sessions, estimate this deck's contribution based on card ratio
-                pod_decks = db_session.query(PodDeck).filter_by(pod_id=session.pod_id).all()
-                deck_card_count = db_session.query(Card).filter_by(deck_id=deck_id).count()
-                total_pod_cards = sum(
-                    db_session.query(Card).filter_by(deck_id=pd.deck_id).count() 
-                    for pd in pod_decks
-                )
-                
-                if total_pod_cards > 0:
-                    deck_ratio = deck_card_count / total_pod_cards
-                    estimated_studied = int(session.cards_studied * deck_ratio)
-                    estimated_correct = int((session.cards_correct or 0) * deck_ratio)
-                    total_studied += estimated_studied
-                    total_correct += estimated_correct
-            else:
-                # Direct deck session
-                total_studied += session.cards_studied
-                total_correct += session.cards_correct or 0
+        if not reviews:
+            return 0
         
-        return round((total_correct / total_studied) * 100, 1) if total_studied > 0 else 0
+        # Count reviews where response_quality >= 3 (remembered)
+        remembered_reviews = sum(1 for review in reviews if review.response_quality >= 3)
+        
+        return round((remembered_reviews / len(reviews)) * 100, 1)
         
     except Exception as e:
         print(f"Error calculating retention with pods: {e}")
+        import traceback
+        traceback.print_exc()
         return 0

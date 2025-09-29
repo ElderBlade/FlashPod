@@ -111,7 +111,6 @@ async def get_pod(request, pod_id):
 def calculate_pod_study_stats(session, pod_id):
     """Calculate study statistics for a pod"""
     
-    
     # Get recent sessions (last 30 days)
     thirty_days_ago = datetime.now() - timedelta(days=30)
     
@@ -122,10 +121,6 @@ def calculate_pod_study_stats(session, pod_id):
     
     total_sessions = len(sessions)
     total_cards_studied = sum(s.cards_studied for s in sessions)
-    total_cards_correct = sum(s.cards_correct for s in sessions)
-    
-    # Calculate average accuracy
-    accuracy = (total_cards_correct / total_cards_studied * 100) if total_cards_studied > 0 else 0
     
     # Get total study time
     completed_sessions = [s for s in sessions if s.ended_at]
@@ -134,14 +129,74 @@ def calculate_pod_study_stats(session, pod_id):
     # Calculate cards due for this pod
     cards_due = calculate_pod_cards_due(session, pod_id)
     
+    # Calculate retention based on mode
+    retention_rate = calculate_pod_retention(session, pod_id, sessions)
+    
     return {
         'total_sessions': total_sessions,
         'cards_due': cards_due,
         'total_cards_studied': total_cards_studied,
-        'average_accuracy': round(accuracy, 1),
+        'average_accuracy': retention_rate,
         'total_study_time_minutes': total_minutes,
         'last_studied': sessions[0].started_at.isoformat() if sessions else None
     }
+
+def calculate_pod_retention(db_session, pod_id, sessions=None):
+    """
+    Calculate retention rate for a pod based on session mode.
+    For full-spaced: use session.cards_correct
+    For simple-spaced: use CardReview.response_quality
+    """
+    try:
+        thirty_days_ago = datetime.now() - timedelta(days=30)
+        
+        # Get sessions if not provided
+        if sessions is None:
+            sessions = db_session.query(StudySession).filter(
+                StudySession.pod_id == pod_id,
+                StudySession.started_at >= thirty_days_ago
+            ).all()
+        
+        if not sessions:
+            return 0
+        
+        # Separate sessions by mode
+        full_spaced_sessions = [s for s in sessions if s.mode == 'full-spaced']
+        simple_spaced_sessions = [s for s in sessions if s.mode == 'simple-spaced']
+        
+        total_studied = 0
+        total_correct = 0
+        
+        # Handle full-spaced sessions (use cards_correct from session)
+        for session in full_spaced_sessions:
+            if session.cards_studied and session.cards_studied > 0:
+                total_studied += session.cards_studied
+                total_correct += session.cards_correct or 0
+        
+        # Handle simple-spaced sessions (use CardReview data)
+        if simple_spaced_sessions:
+            # Get all session IDs
+            simple_session_ids = [s.id for s in simple_spaced_sessions]
+            
+            # Get reviews from these sessions
+            reviews = db_session.query(CardReview).filter(
+                and_(
+                    CardReview.session_id.in_(simple_session_ids),
+                    CardReview.response_quality.isnot(None)
+                )
+            ).all()
+            
+            if reviews:
+                total_studied += len(reviews)
+                total_correct += sum(1 for r in reviews if r.response_quality >= 3)
+        
+        return round((total_correct / total_studied) * 100, 1) if total_studied > 0 else 0
+        
+    except Exception as e:
+        print(f"Error calculating pod retention: {e}")
+        import traceback
+        traceback.print_exc()
+        return 0
 
 @pods_bp.route("/<pod_id:int>/decks", methods=["POST"])
 @require_auth 
