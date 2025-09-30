@@ -438,7 +438,10 @@ def calculate_pod_cards_due(session, pod_id):
         # Get all cards from all decks in this pod
         pod_cards = session.query(Card).join(
             PodDeck, Card.deck_id == PodDeck.deck_id
-        ).filter(PodDeck.pod_id == pod_id).all()
+        ).filter(
+            PodDeck.pod_id == pod_id,
+            Card.is_active == True
+        ).all()
         
         if not pod_cards:
             return 0

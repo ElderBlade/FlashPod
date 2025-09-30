@@ -399,7 +399,7 @@ def get_sm2_due_info(db_session, deck_id, user_id):
     
     try:
         # Get cards from this deck
-        deck_cards = db_session.query(Card).filter_by(deck_id=deck_id).all()
+        deck_cards = db_session.query(Card).filter_by(deck_id=deck_id, is_active=True).all()
         if not deck_cards:
             return None, 0
         
