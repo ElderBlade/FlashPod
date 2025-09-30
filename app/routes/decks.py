@@ -355,13 +355,6 @@ async def get_my_decks_with_stats(request):
             session_stats = None
             if latest_session:
                 duration_minutes = latest_session.duration_minutes or 0
-
-                # DEBUG: Print the session details
-                print(f"DEBUG: Deck {deck.id} ({deck.name}):")
-                print(f"  Latest session ID: {latest_session.id}")
-                print(f"  Session mode: '{latest_session.mode}'")
-                print(f"  Session type: {'pod' if latest_session.pod_id else 'deck'}")
-                print(f"  Ended at: {latest_session.ended_at}")
                 
                 if latest_session.mode == 'full-spaced':
                     # SM-2 mode stats

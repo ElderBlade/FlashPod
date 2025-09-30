@@ -306,8 +306,6 @@ export class FullSpaced {
     async _saveReview(cardId, rating, reviewResult) {
         try {
             const token = localStorage.getItem('token');
-            console.log('Saving review:', { cardId, rating, reviewResult });
-            console.log('Token exists:', !!token);
             
             const requestBody = {
                 card_id: cardId,
@@ -318,11 +316,6 @@ export class FullSpaced {
                 repetitions: reviewResult.repetitions,
                 next_review_date: reviewResult.next_review_date.toISOString()
             };
-
-            console.log('Session ID being sent:', this.manager.session.sessionId); // Add this
-            console.log('Manager session object:', this.manager.session); // Add this too
-            
-            console.log('Request body:', requestBody);
             
             const response = await fetch('/api/cards/reviews', {
                 method: 'POST',
@@ -332,9 +325,6 @@ export class FullSpaced {
                 },
                 body: JSON.stringify(requestBody)
             });
-            
-            console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers);
             
             if (!response.ok) {
                 const errorText = await response.text();
@@ -455,7 +445,6 @@ export class FullSpaced {
         if (sm2Buttons) sm2Buttons.classList.add('hidden');
         if (simpleButtons) simpleButtons.classList.add('hidden');
         
-        console.log('Response buttons hidden');
     }
 
     _endSession() {

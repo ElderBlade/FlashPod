@@ -122,34 +122,24 @@ async def update_session_progress(request, session_id):
     session = get_db_session()
     try:
         data = request.json
-        print(f"🔍 DEBUG: Progress update called for session {session_id}")
-        print(f"🔍 DEBUG: Request data: {data}")
         cards_studied = data.get("cards_studied")
         cards_correct = data.get("cards_correct")  # Add this
         mode = data.get("mode") 
-
-        print(f"🔍 DEBUG: Extracted values - cards_studied: {cards_studied}, cards_correct: {cards_correct}")
         
         # Get the study session
         study_session = session.query(StudySession).filter_by(id=session_id).first()
         if not study_session:
             return json({"error": "Study session not found"}, status=404)
         
-        print(f"🔍 DEBUG: Found session - current values: cards_studied={study_session.cards_studied}, cards_correct={study_session.cards_correct}")
-
         # Update progress
         if cards_studied is not None:
             study_session.cards_studied = cards_studied
-            print(f"🔍 DEBUG: Updated cards_studied to {cards_studied}")
         if cards_correct is not None:  # Add this
             study_session.cards_correct = cards_correct
-            print(f"🔍 DEBUG: Updated cards_correct to {cards_correct}")
         if mode is not None:  # Add this block
             study_session.mode = mode
-            print(f"🔍 DEBUG: Updated mode to {mode}")
         
         session.commit()
-        print(f"🔍 DEBUG: Committed changes to database")
 
         return json({
             "message": "Progress updated",
