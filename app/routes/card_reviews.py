@@ -187,18 +187,49 @@ async def get_pod_card_reviews(request, pod_id):
             return json([])
         
         # Verify pod belongs to user
-        
         pod = session.query(Pod).filter_by(id=pod_id, user_id=user_id).first()
         if not pod:
             return json({"error": "Pod not found"}, status=404)
         
-        # Get reviews for the specified cards
-        reviews = session.query(CardReview).filter(
+        # Get latest review for each card (same logic as deck endpoint)
+        from sqlalchemy import func
+        
+        latest_reviews_subquery = session.query(
+            CardReview.card_id,
+            func.max(CardReview.reviewed_at).label('latest_reviewed_at')
+        ).filter(
             CardReview.card_id.in_(card_ids),
             CardReview.user_id == user_id
+        ).group_by(CardReview.card_id).subquery()
+        
+        latest_reviews = session.query(CardReview).join(
+            latest_reviews_subquery,
+            (CardReview.card_id == latest_reviews_subquery.c.card_id) &
+            (CardReview.reviewed_at == latest_reviews_subquery.c.latest_reviewed_at) &
+            (CardReview.user_id == user_id)
         ).all()
         
-        reviews_data = [review.to_dict() for review in reviews]
+        # Convert to list of dictionaries with timezone conversion
+        reviews_data = []
+        for review in latest_reviews:
+            review_dict = review.to_dict()
+            
+            # Apply same timezone conversion logic as get_deck_reviews
+            if review.next_review_date:
+                # Ensure timezone info is present
+                review_date = review.next_review_date
+                if review_date.tzinfo is None:
+                    review_date = review_date.replace(tzinfo=timezone.utc)
+                
+                # Convert to server timezone (same logic as deck endpoint)
+                local_review_date = tz_config.utc_to_local(review_date)
+                
+                # Return the timezone-converted date
+                review_dict['next_review_date'] = local_review_date.isoformat()
+                
+                print(f"🔧 Pod review timezone conversion: {review.next_review_date} UTC → {local_review_date} local")
+            
+            reviews_data.append(review_dict)
         
         print(f"📊 Found {len(reviews_data)} review records for pod {pod_id}")
         return json(reviews_data)
