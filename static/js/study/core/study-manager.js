@@ -135,6 +135,9 @@ export class StudyManager {
             await this.currentMode.cleanup();
         }
 
+        // Store shuffle state before switching
+        const wasShuffled = this.state.isShuffled;
+
         // Switch mode
         this.state.mode = modeName;
         this.currentMode = this.modes[modeName];
@@ -142,9 +145,18 @@ export class StudyManager {
         // Initialize new mode
         await this.currentMode.initialize(this.state);
         
+        // Reapply shuffle if it was enabled
+        if (wasShuffled) {
+            this.state.cards = this._shuffleArray([...this.state.cards]);
+            this.state.isShuffled = true;
+            this.state.currentIndex = 0;
+            this.state.currentCardId = this.state.cards[0]?.id;
+        }
+        
         // Update interface
         this.interface.updateModeToggle(modeName);
         this.interface.updateModeSpecificUI(modeName, this.state.modeData[modeName]);
+        this.interface.updateShuffleButton(); 
         
         // Render current card with new mode
         await this.currentMode.renderCard();

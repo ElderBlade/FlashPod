@@ -256,8 +256,9 @@ class FlashPodApp {
             const podData = await podResponse.json();
             const pod = podData.pod;
             
-            // Check if pod has any decks
-            if (!pod.decks || pod.decks.length === 0 || pod.total_card_count === 0) {
+            // Check if pod has any decks using the denormalized counts
+            // The API returns deck_count and total_card_count, not a decks array
+            if (pod.deck_count === 0 || pod.total_card_count === 0) {
                 this.showEmptyPodModal(pod);
                 return;
             }

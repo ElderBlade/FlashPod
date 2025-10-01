@@ -230,6 +230,8 @@ export class StudyInterface {
             document.getElementById('shuffleBtnDesktop')
         ];
         shuffleBtns.forEach(shuffleBtn => {
+            if (!shuffleBtn) return;
+            
             if (this.manager.state.isShuffled) {
                 shuffleBtn.classList.remove('bg-gray-100', 'text-gray-500');
                 shuffleBtn.classList.add('bg-blue-100', 'text-blue-700', 'border-blue-200');
