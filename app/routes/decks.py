@@ -13,6 +13,7 @@ from models.user import User
 from models.deck import Deck
 from models.card import Card
 from models.pod_deck import PodDeck
+from models.pod import Pod
 from utils.statistics import calculate_sm2_retention, calculate_simple_retention
 from middleware.auth import require_auth
 from config.timezone import tz_config
@@ -110,6 +111,7 @@ async def update_deck(request, deck_id):
 
 
 @decks_bp.route("/<deck_id:int>", methods=["DELETE"])
+@require_auth 
 async def delete_deck(request, deck_id):
     """Delete a deck"""
     session = get_db_session()
@@ -119,6 +121,15 @@ async def delete_deck(request, deck_id):
         if not deck:
             return json({"error": "Deck not found"}, status=404)
         
+        # Update all pods that contain this deck BEFORE deletion
+        pod_decks = session.query(PodDeck).filter_by(deck_id=deck_id).all()
+        for pod_deck in pod_decks:
+            pod = session.query(Pod).filter_by(id=pod_deck.pod_id).first()
+            if pod:
+                pod.deck_count = max(0, pod.deck_count - 1)
+                pod.total_card_count = max(0, pod.total_card_count - deck.card_count)
+        
+        # Now delete the deck (cascade will handle pod_decks)
         deck_name = deck.name
         session.delete(deck)
         session.commit()

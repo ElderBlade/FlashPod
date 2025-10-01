@@ -233,18 +233,117 @@ class FlashPodApp {
         this.mobileNavigation.forceClose();
     }
 
-    studyPod(podId) {
+    async studyPod(podId) {
         // Close mobile nav if open before studying
         if (this.mobileNavigation.isNavigationOpen()) {
             this.mobileNavigation.forceClose();
         }
         
-        // Call the global studyPod function if available
-        if (window.studyPod) {
-            window.studyPod(podId);
-        } else {
-            MessageUI.show(`Pod study system not loaded`, 'error');
+        try {
+            // Fetch pod data to check if it has decks
+            const podResponse = await fetch(`/api/pods/${podId}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                credentials: 'include'
+            });
+            
+            if (!podResponse.ok) {
+                MessageUI.show('Failed to load pod', 'error');
+                return;
+            }
+            
+            const podData = await podResponse.json();
+            const pod = podData.pod;
+            
+            // Check if pod has any decks
+            if (!pod.decks || pod.decks.length === 0 || pod.total_card_count === 0) {
+                this.showEmptyPodModal(pod);
+                return;
+            }
+            
+            // Proceed with study
+            if (window.studyPod) {
+                window.studyPod(podId);
+            } else {
+                MessageUI.show('Pod study system not loaded', 'error');
+            }
+        } catch (error) {
+            console.error('Error checking pod:', error);
+            MessageUI.show('Error loading pod', 'error');
         }
+    }
+
+    showEmptyPodModal(pod) {
+        const modal = document.createElement('div');
+        modal.id = 'empty-pod-modal';
+        modal.className = 'modal-backdrop fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        
+        modal.innerHTML = `
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4">
+                <!-- Header -->
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Pod Empty</h3>
+                        <button onclick="this.closest('#empty-pod-modal').remove()" 
+                                class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Body -->
+                <div class="px-6 py-4">
+                    <div class="flex items-start space-x-3">
+                        <div class="flex-shrink-0">
+                            <svg class="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="text-base font-medium text-gray-900 dark:text-white mb-2">
+                                "${this.plibrary.escapeHtml(pod.name)}" has no decks
+                            </h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                This pod doesn't contain any decks yet. Add some decks to start studying!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
+                    <button onclick="this.closest('#empty-pod-modal').remove()" 
+                            class="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-md transition-colors cursor-pointer">
+                        Cancel
+                    </button>
+                    <button onclick="window.app.editPod(${pod.id}); this.closest('#empty-pod-modal').remove();" 
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors cursor-pointer">
+                        Add Decks
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Close modal when clicking outside
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+        
+        // Close on escape key
+        const escapeHandler = (e) => {
+            if (e.key === 'Escape') {
+                modal.remove();
+                document.removeEventListener('keydown', escapeHandler);
+            }
+        };
+        document.addEventListener('keydown', escapeHandler);
     }
 
 
