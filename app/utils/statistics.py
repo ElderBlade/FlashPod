@@ -88,11 +88,10 @@ def get_total_study_time(db_session, user_id):
             # Use the model's duration_minutes property which excludes pause time
             total_minutes += session.duration_minutes or 0
         
-        # Convert to hours
+        # Convert to hours - DON'T round here, let format_study_time handle it
         total_hours = total_minutes / 60
         
-        # Round to 1 decimal place
-        return round(total_hours, 1)
+        return total_hours 
         
     except Exception as e:
         print(f"Error calculating total study time: {e}")
@@ -116,9 +115,9 @@ def format_study_time(hours):
     Format study time for display (e.g., "2.3h", "45m")
     """
     if hours >= 1:
-        return f"{hours}h"
+        return f"{round(hours, 1)}h"
     else:
-        minutes = int(hours * 60)
+        minutes = round(hours * 60)
         return f"{minutes}m"
 
 
