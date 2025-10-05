@@ -212,12 +212,40 @@ export class StudyInterface {
         const prevBtn = document.getElementById('prevCardBtn');
         const nextBtn = document.getElementById('nextCardBtn');
 
+        // In SM-2 mode, always disable navigation buttons
+        if (state.mode === 'full-spaced') {
+            if (prevBtn) {
+                prevBtn.disabled = true;
+                prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+            if (nextBtn) {
+                nextBtn.disabled = true;
+                nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+            return;
+        }
+
+        // For other modes, use normal logic
         if (prevBtn) {
-            prevBtn.disabled = state.currentIndex === 0;
+            const shouldDisable = state.currentIndex === 0;
+            prevBtn.disabled = shouldDisable;
+            
+            if (shouldDisable) {
+                prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
         }
         
         if (nextBtn) {
-            nextBtn.disabled = state.currentIndex === state.totalCards - 1;
+            const shouldDisable = state.currentIndex === state.totalCards - 1;
+            nextBtn.disabled = shouldDisable;
+            
+            if (shouldDisable) {
+                nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
         }
     }
 
@@ -325,9 +353,15 @@ export class StudyInterface {
                 this._saveCardEdit();
                 break;
             case 'prevCardBtn':
+                // Block completely in SM-2 mode
+                if (this.manager.state.mode === 'full-spaced') return;
+                if (button.disabled) return;
                 this.manager.navigateCard(-1);
                 break;
             case 'nextCardBtn':
+                // Block completely in SM-2 mode
+                if (this.manager.state.mode === 'full-spaced') return;
+                if (button.disabled) return;
                 this.manager.navigateCard(1);
                 break;
             case 'shuffleBtn':

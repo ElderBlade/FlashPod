@@ -769,7 +769,13 @@ export class FullSpaced {
 
     // Navigation methods required by architecture
     async beforeNavigation(direction) {
-        // Allow navigation in SM-2 mode
+        const modeData = this.manager.state.modeData['full-spaced'];
+        
+        // Prevent navigation if we're collecting a response
+        if (modeData.isCollectingResponse) {
+            return false;
+        }
+        
         return true;
     }
 

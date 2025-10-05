@@ -73,9 +73,7 @@ async def get_deck_reviews(request, deck_id):
                 
                 # Return the timezone-converted date
                 review_dict['next_review_date'] = local_review_date.isoformat()
-                
-                print(f"🔧 Timezone conversion: {review.next_review_date} UTC → {local_review_date} local")
-            
+                            
             reviews_data.append(review_dict)
         
         print(f"✅ Found {len(reviews_data)} review records for deck {deck_id}")
@@ -226,9 +224,7 @@ async def get_pod_card_reviews(request, pod_id):
                 
                 # Return the timezone-converted date
                 review_dict['next_review_date'] = local_review_date.isoformat()
-                
-                print(f"🔧 Pod review timezone conversion: {review.next_review_date} UTC → {local_review_date} local")
-            
+                            
             reviews_data.append(review_dict)
         
         print(f"📊 Found {len(reviews_data)} review records for pod {pod_id}")
