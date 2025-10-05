@@ -59,7 +59,7 @@
             <!-- User Info -->
             <div class="px-6 py-4 border-gray-200 bg-gray-50 dark:border-gray-400 dark:bg-gray-700 transition-colors duration-300">
                 <div class="flex items-center">
-                    <div class="w-10 h-10 bg-blue-600 dark:bg-blue-500 rounded-full flex items-center justify-center">
+                    <div class="w-10 h-10 blue-gradient-bg rounded-full flex items-center justify-center">
                         <span id="userInitials" class="text-white font-semibold text-sm"></span>
                     </div>
                     <div class="ml-3">
@@ -248,7 +248,7 @@
                             </div>
                         </div>
 
-                        <!-- Reviews -->
+                        <!-- Sessions -->
                         <div class="stats-card-mobile bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 md:p-6 border border-gray-100 dark:border-gray-700 transition-colors duration-300">
                             <div class="flex items-center">
                                 <div class="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
@@ -258,7 +258,7 @@
                                 </div>
                                 <div class="stats-text ml-3 md:ml-4">
                                     <p class="stats-label text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400">Reviews</p>
-                                    <p id="total-reviews" class="stats-value text-lg md:text-2xl font-bold text-gray-900 dark:text-white">--</p>
+                                    <p id="total-sessions" class="stats-value text-lg md:text-2xl font-bold text-gray-900 dark:text-white">--</p>
                                 </div>
                             </div>
                         </div>
@@ -287,6 +287,9 @@
                                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recently Reviewed Decks</h3>
                                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Your most recently studied decks</p>
                                 </div>
+                                <a href="#" onclick="window.app.library.viewAllDecks(); return false;" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium">
+                                    View All
+                                </a>
                             </div>
                         </div>
                         <div class="p-4 md:p-6">
@@ -301,14 +304,149 @@
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Other Views (Hidden by default) -->
-                <div id="library-view" class="page-view hidden p-4 md:p-6">
-                    <div id="decks-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                        <!-- Decks will be loaded here -->
+                    <!-- Recently Used Pods -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-300 mt-6 md:mt-8">
+                        <div class="px-4 md:px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recently Used Pods</h3>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Your most recently studied pod collections</p>
+                                </div>
+                                <a href="#" onclick="window.app.plibrary.viewAllPods(); return false;" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium">
+                                    View All
+                                </a>
+                            </div>
+                        </div>
+                        <div class="p-4 md:p-6">
+                            <div id="recent-pods" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <!-- Recent pods will be loaded here -->
+                                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                                    <svg class="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                                    </svg>
+                                    <p class="text-sm md:text-base">Loading recent pods...</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Library View with Tabs -->
+                <div id="library-view" class="page-view hidden">
+                    <!-- Tab Navigation -->
+                    <div class="mb-6 px-4">
+                        <div class="inline-flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 relative">
+                            <div class="tab-indicator absolute bg-white dark:bg-gray-700 rounded-lg shadow-sm transition-all duration-300 ease-out"></div>
+                            <button 
+                                id="decks-tab"
+                                class="library-tab active relative z-10 px-6 py-3 font-medium text-sm transition-colors duration-200 rounded-lg"
+                                data-tab="decks">
+                                <span class="flex items-center space-x-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                    </svg>
+                                    <span>Decks</span>
+                                </span>
+                            </button>
+                            <button 
+                                id="pods-tab"
+                                class="library-tab relative z-10 px-6 py-3 font-medium text-sm transition-colors duration-200 rounded-lg"
+                                data-tab="pods">
+                                <span class="flex items-center space-x-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                                    </svg>
+                                    <span>Pods</span>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Decks Tab Content (original deck library) -->
+                    <div id="decks-tab-content" class="tab-content p-4">
+                        <!-- Original Deck Library Content -->
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <button id="bulk-select-mode" class="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                                    Select Multiple
+                                </button>
+                                <select id="deck-sort" class="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                    <option value="recent">Recently Modified</option>
+                                    <option value="name">Name (A-Z)</option>
+                                    <option value="cards">Card Count</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Bulk Actions Bar (hidden by default) -->
+                        <div id="bulk-actions-bar" class="hidden mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-blue-800 dark:text-blue-300">
+                                    <span id="selected-count">0</span> decks selected
+                                </span>
+                                <div class="flex items-center space-x-2">
+                                    <button id="add-to-pod-bulk" class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+                                        Add to Pod
+                                    </button>
+                                    <button id="cancel-bulk-select" class="px-3 py-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm rounded hover:bg-gray-400 dark:hover:bg-gray-500">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Original Deck Grid -->
+                        <div id="all-decks-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Decks will be loaded here by existing deck-library.js -->
+                        </div>
+                    </div>
+
+                    <!-- Pods Tab Content -->
+                    <div id="pods-tab-content" class="tab-content hidden p-4">
+                        <!-- Create New Pod Button -->
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="flex items-center space-x-3">
+                                <button 
+                                    id="create-pod-btn"
+                                    style="display: none;"
+                                    class="orange-gradient inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base text-white font-medium rounded-lg transition-all">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                    </svg>
+                                    Create New Pod
+                                </button>
+                                <select id="pod-sort" class="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                    <option value="recent">Recently Modified</option>
+                                    <option value="name">Name (A-Z)</option>
+                                    <option value="decks">Deck Count</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Pods Grid -->
+                        <div id="all-pods-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Pods will be loaded here -->
+                        </div>
+
+                        <!-- Empty State -->
+                        <div id="pods-empty-state" class="hidden text-center py-12">
+                            <svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                            </svg>
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No pods yet</h3>
+                            <p class="text-gray-500 dark:text-gray-400 mb-6">Create your first pod to organize your decks into collections.</p>
+                            <button 
+                                id="create-first-pod-btn"
+                                class="orange-gradient inline-flex items-center px-4 py-2 text-white font-medium rounded-lg transition-all">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                                Create Your First Pod
+                            </button>
+                        </div>
+                    </div>
+                </div> <!-- Library View End -->
 
                 <div id="flashcards-view" class="page-view hidden p-4 md:p-6 dark:text-white">
                     <p>Flash card study interface</p>
@@ -360,7 +498,7 @@
 
                             <!-- Form Actions -->
                             <div class="flex gap-4 pt-6 border-t dark:border-gray-700">
-                                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors dark:bg-blue-500 dark:hover:bg-blue-600">
+                                <button type="submit" class="blue-gradient text-white px-6 py-3 rounded-lg font-medium transition-all">
                                     Create Deck
                                 </button>
                                 <button type="button" id="cancelDeck" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition-colors dark:bg-gray-600 dark:hover:bg-gray-700">
@@ -437,7 +575,7 @@
                             <div class="flex gap-4 pt-4 border-t dark:border-gray-700">
                                 <button 
                                     id="parseImportBtn" 
-                                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                                    class="blue-gradient text-white px-4 py-2 rounded-lg font-medium transition-all"
                                 >
                                     Parse Cards
                                 </button>
@@ -526,7 +664,7 @@
 
                             <!-- Form Actions -->
                             <div class="flex gap-4 pt-6 border-t dark:border-gray-700">
-                                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors dark:bg-blue-500 dark:hover:bg-blue-600">
+                                <button type="submit" class="blue-gradient text-white px-6 py-3 rounded-lg font-medium transition-all">
                                     Save Changes
                                 </button>
                                 <button type="button" id="cancelEditDeck" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition-colors dark:bg-gray-600 dark:hover:bg-gray-700">

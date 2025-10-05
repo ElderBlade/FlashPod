@@ -58,6 +58,13 @@ export class APIClient {
     }
 
     /**
+     * Get pod information
+     */
+    async getPod(podId) {
+        return await this.request(`/pods/${podId}`);
+    }
+
+    /**
      * Get pod cards (all cards from all decks in pod)
      */
     async getPodCards(podId) {
@@ -130,6 +137,16 @@ export class APIClient {
         });
     }
 
+    /**
+     * Pause study session
+     */
+    async pauseSession(sessionId) {
+        return await this.request(`/study/session/${sessionId}/pause`, {
+            method: 'POST',
+            body: JSON.stringify({})
+        });
+    }
+
     // Statistics and Analytics
     /**
      * Get study statistics for user
@@ -150,6 +167,13 @@ export class APIClient {
      */
     async getPodStudyStats(podId) {
         return await this.request(`/study/stats/pod/${podId}`);
+    }
+
+    /**
+     * Get pod with enhanced data including study stats
+     */
+    async getPodWithStats(podId) {
+        return await this.request(`/pods/${podId}?include_stats=true`);
     }
 
     // Error Handling Helpers

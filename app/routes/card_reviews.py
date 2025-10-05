@@ -7,6 +7,7 @@ from models.card_review import CardReview
 from models.card import Card
 from models.deck import Deck
 from models.database import get_db_session
+from models.pod import Pod
 from middleware.auth import require_auth
 import traceback
 from config.timezone import tz_config
@@ -72,9 +73,7 @@ async def get_deck_reviews(request, deck_id):
                 
                 # Return the timezone-converted date
                 review_dict['next_review_date'] = local_review_date.isoformat()
-                
-                print(f"🔧 Timezone conversion: {review.next_review_date} UTC → {local_review_date} local")
-            
+                            
             reviews_data.append(review_dict)
         
         print(f"✅ Found {len(reviews_data)} review records for deck {deck_id}")
@@ -149,7 +148,6 @@ async def get_card_history(request, card_id):
     
     try:
         user_id = request.ctx.user['id']
-        
         # Verify user owns the card
         card = session.query(Card)\
             .join(Deck)\
@@ -171,3 +169,69 @@ async def get_card_history(request, card_id):
     except Exception as e:
         print(f"Error fetching card history: {e}")
         return json({"error": "Internal server error"}, status=500)
+
+
+@card_reviews.route('/pod/<pod_id:int>', methods=['POST'])
+@require_auth
+async def get_pod_card_reviews(request, pod_id):
+    """Get card reviews for cards in a pod"""
+    session = get_db_session()
+    try:
+        user_id = request.ctx.user['id']
+        data = request.json
+        card_ids = data.get('card_ids', [])
+        
+        if not card_ids:
+            return json([])
+        
+        # Verify pod belongs to user
+        pod = session.query(Pod).filter_by(id=pod_id, user_id=user_id).first()
+        if not pod:
+            return json({"error": "Pod not found"}, status=404)
+        
+        # Get latest review for each card (same logic as deck endpoint)
+        from sqlalchemy import func
+        
+        latest_reviews_subquery = session.query(
+            CardReview.card_id,
+            func.max(CardReview.reviewed_at).label('latest_reviewed_at')
+        ).filter(
+            CardReview.card_id.in_(card_ids),
+            CardReview.user_id == user_id
+        ).group_by(CardReview.card_id).subquery()
+        
+        latest_reviews = session.query(CardReview).join(
+            latest_reviews_subquery,
+            (CardReview.card_id == latest_reviews_subquery.c.card_id) &
+            (CardReview.reviewed_at == latest_reviews_subquery.c.latest_reviewed_at) &
+            (CardReview.user_id == user_id)
+        ).all()
+        
+        # Convert to list of dictionaries with timezone conversion
+        reviews_data = []
+        for review in latest_reviews:
+            review_dict = review.to_dict()
+            
+            # Apply same timezone conversion logic as get_deck_reviews
+            if review.next_review_date:
+                # Ensure timezone info is present
+                review_date = review.next_review_date
+                if review_date.tzinfo is None:
+                    review_date = review_date.replace(tzinfo=timezone.utc)
+                
+                # Convert to server timezone (same logic as deck endpoint)
+                local_review_date = tz_config.utc_to_local(review_date)
+                
+                # Return the timezone-converted date
+                review_dict['next_review_date'] = local_review_date.isoformat()
+                            
+            reviews_data.append(review_dict)
+        
+        print(f"📊 Found {len(reviews_data)} review records for pod {pod_id}")
+        return json(reviews_data)
+        
+    except Exception as e:
+        print(f"❌ Error in get_pod_card_reviews: {e}")
+        return json({"error": str(e)}, status=500)
+    finally:
+        session.close()

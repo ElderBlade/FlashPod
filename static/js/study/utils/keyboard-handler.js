@@ -67,16 +67,12 @@ export class KeyboardHandler {
      * Handle universal keyboard shortcuts
      */
     _handleUniversalShortcuts(e) {
-
-        // Check if simple-spaced mode is collecting responses
         const currentMode = this.manager.state.mode;
         const modeData = this.manager.state.modeData[currentMode];
         
         // In simple-spaced mode, arrow keys are response keys when collecting responses
         if (currentMode === 'simple-spaced' && modeData && modeData.isCollectingResponse) {
             if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-                // These will be handled by mode-specific handler
-                // return false;
                 if (modeData.isCollectingResponse || this.manager.state.isFlipped) {
                     return false; // Block - let mode-specific handler deal with it
                 }
@@ -99,12 +95,22 @@ export class KeyboardHandler {
                 this.manager.flipCard('vertical-down');
                 return true;
                 
-            case 'ArrowLeft': // Left arrow - previous card (only if not collecting response)
+            case 'ArrowLeft': // Left arrow - previous card
+                // Block completely in SM-2 mode
+                if (currentMode === 'full-spaced') {
+                    e.preventDefault();
+                    return true; // Blocked
+                }
                 e.preventDefault();
                 this.manager.navigateCard(-1);
                 return true;
                 
-            case 'ArrowRight': // Right arrow - next card (only if not collecting response)
+            case 'ArrowRight': // Right arrow - next card
+                // Block completely in SM-2 mode
+                if (currentMode === 'full-spaced') {
+                    e.preventDefault();
+                    return true; // Blocked
+                }
                 e.preventDefault();
                 this.manager.navigateCard(1);
                 return true;

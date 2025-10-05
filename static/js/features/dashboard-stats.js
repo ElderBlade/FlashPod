@@ -32,7 +32,7 @@ export class DashboardStats {
         const elements = {
             'cards-learned': stats.formatted.cards_learned,
             'retention-rate': stats.formatted.retention_rate,
-            'total-reviews': stats.formatted.total_reviews,
+            'total-sessions': stats.formatted.total_sessions,
             'study-time': stats.formatted.study_time
         };
 
@@ -45,7 +45,7 @@ export class DashboardStats {
     }
 
     showStatsError() {
-        const errorElements = ['cards-learned', 'retention-rate', 'total-reviews', 'study-time'];
+        const errorElements = ['cards-learned', 'retention-rate', 'total-sessions', 'study-time'];
         errorElements.forEach(id => {
             const element = document.getElementById(id);
             if (element) {

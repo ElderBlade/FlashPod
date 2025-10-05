@@ -4,6 +4,9 @@ from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, Foreign
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
+from models.pod_deck import PodDeck
+from models.pod import Pod
+from models.database import get_db_session
 
 class Deck(Base):
     __tablename__ = 'decks'
@@ -27,15 +30,35 @@ class Deck(Base):
     def __repr__(self):
         return f"<Deck(id={self.id}, name='{self.name}', cards={self.card_count})>"
     
-    def to_dict(self):
+    def to_dict(self, include_pods=False):
         """Convert to dictionary for JSON serialization"""
-        return {
+        result = {
             "id": self.id,
+            "user_id": self.user_id,
             "name": self.name,
             "description": self.description,
             "card_count": self.card_count,
             "is_public": self.is_public,
             "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
-            "study_settings": self.study_settings
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None
         }
+        
+        if include_pods:
+            
+            session = get_db_session()
+            try:
+                pod_memberships = session.query(PodDeck, Pod).join(
+                    Pod, PodDeck.pod_id == Pod.id
+                ).filter(PodDeck.deck_id == self.id).all()
+                
+                result['pods'] = []
+                for pod_deck, pod in pod_memberships:
+                    result['pods'].append({
+                        'id': pod.id,
+                        'name': pod.name,
+                        'display_order': pod_deck.display_order
+                    })
+            finally:
+                session.close()
+        
+        return result

@@ -56,9 +56,7 @@ class StudyController {
      * Exit current study session
      */
     async exitStudy() {
-        if (this.studyManager) {
-            return this.studyManager.exitStudy();
-        }
+        await this.studyManager.exitStudy();
     }
 
     /**

@@ -20,6 +20,7 @@ export class FullSpaced {
             modeData.sessionStats = {
                 sessionStartTime: timezoneHandler.getCurrentDateInServerTimezone(),
                 cardsReviewed: 0,
+                cardsCorrect: 0,
                 newCardsLearned: 0,
                 ratingsSum: 0,
                 timeSpent: 0,
@@ -34,9 +35,9 @@ export class FullSpaced {
 
         this._updateActiveCards();
 
-        // Store original session size for progress tracking (before cards are filtered)
+        // Store original session size for progress tracking (only due/new cards)
         if (!modeData.originalSessionSize) {
-            modeData.originalSessionSize = state.cards.length;
+            modeData.originalSessionSize = modeData.dueCards.length + modeData.newCards.length;
         }
 
         // Check if there are no cards to study
@@ -54,8 +55,13 @@ export class FullSpaced {
         const state = this.manager.state;
         const modeData = state.modeData['full-spaced'];
         
+        // Determine if this is a pod or deck study
+        const isPodStudy = !!state.pod;
+        
         // Fetch existing review data from backend
-        const reviewData = await this._fetchReviewData();
+        const reviewData = isPodStudy ? 
+            await this._fetchPodReviewData(state.pod.id, state.selectedDeckIds) :
+            await this._fetchReviewData();
         
         // Categorize cards based on review history
         modeData.dueCards = [];
@@ -102,6 +108,43 @@ export class FullSpaced {
             ratingsSum: 0,
             sessionStartTime: timezoneHandler.getCurrentDateInServerTimezone()
         };
+    }
+
+    /**
+     * Fetch review data for pod study across selected decks
+     */
+    async _fetchPodReviewData(podId, selectedDeckIds) {
+        try {
+            // Get all card IDs from the pod cards
+            const allCardIds = this.manager.state.originalCards.map(card => card.id);
+            
+            if (allCardIds.length === 0) {
+                return new Map();
+            }
+            
+            // Use the same approach as the deck review data fetch
+            const response = await fetch(`/api/cards/reviews/pod/${podId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({ card_ids: allCardIds })
+            });
+            
+            if (response.ok) {
+                const reviews = await response.json();
+                const reviewMap = new Map();
+                reviews.forEach(review => {
+                    reviewMap.set(review.card_id, review);
+                });
+                return reviewMap;
+            }
+        } catch (error) {
+            console.warn('Failed to fetch pod review data:', error);
+        }
+        
+        return new Map();
     }
 
     async _fetchReviewData() {
@@ -171,6 +214,27 @@ export class FullSpaced {
         // Update session stats
         modeData.sessionStats.cardsReviewed++;
         modeData.sessionStats.ratingsSum += rating;
+
+        // Track correct responses (ratings 3-4 are considered "correct")
+        if (!modeData.sessionStats.cardsCorrect) {
+            modeData.sessionStats.cardsCorrect = 0;
+        }
+        if (rating >= 3) {
+            modeData.sessionStats.cardsCorrect++;
+        }
+
+        if (this.manager.session.isActive) {
+            try {
+                await this.manager.session.updateProgress(
+                    modeData.sessionStats.cardsReviewed,
+                    modeData.sessionStats.cardsCorrect,
+                    'full-spaced'
+                );
+                console.log(`Updated backend progress: ${modeData.sessionStats.cardsReviewed} cards reviewed`);
+            } catch (error) {
+                console.warn('Failed to update session progress:', error);
+            }
+        }
         
         // Calculate SM-2 parameters
         const reviewResult = this._calculateSM2(currentCardId, rating);
@@ -180,8 +244,8 @@ export class FullSpaced {
         
         // Update local state
         modeData.reviews.set(currentCardId, reviewResult);
-        modeData.nextReviewDates.set(currentCardId, reviewResult.nextReviewDate);
-        modeData.difficulty.set(currentCardId, reviewResult.easeFactor);
+        modeData.nextReviewDates.set(currentCardId, reviewResult.next_review_date);
+        modeData.difficulty.set(currentCardId, reviewResult.ease_factor);
         
         // Update card categories
         this._updateCardCategories(currentCardId, reviewResult);
@@ -242,8 +306,6 @@ export class FullSpaced {
     async _saveReview(cardId, rating, reviewResult) {
         try {
             const token = localStorage.getItem('token');
-            console.log('Saving review:', { cardId, rating, reviewResult });
-            console.log('Token exists:', !!token);
             
             const requestBody = {
                 card_id: cardId,
@@ -254,11 +316,6 @@ export class FullSpaced {
                 repetitions: reviewResult.repetitions,
                 next_review_date: reviewResult.next_review_date.toISOString()
             };
-
-            console.log('Session ID being sent:', this.manager.session.sessionId); // Add this
-            console.log('Manager session object:', this.manager.session); // Add this too
-            
-            console.log('Request body:', requestBody);
             
             const response = await fetch('/api/cards/reviews', {
                 method: 'POST',
@@ -268,9 +325,6 @@ export class FullSpaced {
                 },
                 body: JSON.stringify(requestBody)
             });
-            
-            console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers);
             
             if (!response.ok) {
                 const errorText = await response.text();
@@ -391,7 +445,6 @@ export class FullSpaced {
         if (sm2Buttons) sm2Buttons.classList.add('hidden');
         if (simpleButtons) simpleButtons.classList.add('hidden');
         
-        console.log('Response buttons hidden');
     }
 
     _endSession() {
@@ -497,6 +550,17 @@ export class FullSpaced {
         this.manager.interface.renderCurrentCard();
         
         this.manager._showMessage('Session restarted!', 'info');
+    }
+
+    /**
+     * Check if session is complete
+     */
+    isSessionComplete() {
+        const state = this.manager.state;
+        const modeData = state.modeData['full-spaced'];
+        
+        // Session is complete when there are no more cards to study
+        return state.cards.length === 0;
     }
 
     _showNoCardsMessage() {
@@ -705,7 +769,13 @@ export class FullSpaced {
 
     // Navigation methods required by architecture
     async beforeNavigation(direction) {
-        // Allow navigation in SM-2 mode
+        const modeData = this.manager.state.modeData['full-spaced'];
+        
+        // Prevent navigation if we're collecting a response
+        if (modeData.isCollectingResponse) {
+            return false;
+        }
+        
         return true;
     }
 
@@ -721,6 +791,14 @@ export class FullSpaced {
      * Cleanup method called when switching modes or ending study
      */
     async cleanup() {
+
+        if (this.beforeUnloadHandler) {
+            window.removeEventListener('beforeunload', this.beforeUnloadHandler);
+        }
+        if (this.visibilityHandler) {
+            document.removeEventListener('visibilitychange', this.visibilityHandler);
+        }
+        
         const modeData = this.manager.state.modeData['full-spaced'];
         
         // Reset response collection state

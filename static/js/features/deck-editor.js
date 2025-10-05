@@ -249,10 +249,93 @@ export class DeckEditor {
         const deckId = document.getElementById('editDeckId').value;
         const deckName = document.getElementById('editDeckName').value;
         
-        if (!confirm(`Are you sure you want to delete "${deckName}"? This action cannot be undone.`)) {
-            return;
-        }
+        // Show custom modal instead of browser confirm
+        this.showDeleteDeckModal(deckId, deckName);
+    }
+
+    showDeleteDeckModal(deckId, deckName) {
+        const modal = document.createElement('div');
+        modal.id = 'delete-deck-modal';
+        modal.className = 'modal-backdrop fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
         
+        modal.innerHTML = `
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4">
+                <!-- Header -->
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Delete Deck</h3>
+                        <button onclick="this.closest('#delete-deck-modal').remove()" 
+                                class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Body -->
+                <div class="px-6 py-4">
+                    <div class="flex items-start space-x-3">
+                        <div class="flex-shrink-0">
+                            <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                                Are you sure you want to delete this deck?
+                            </h4>
+                            <div class="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+                                <p><strong>Deck:</strong> ${this.escapeHtml(deckName)}</p>
+                                <p class="text-red-600 dark:text-red-400 font-medium">
+                                    This action cannot be undone. All cards in this deck will be permanently deleted.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
+                    <button onclick="this.closest('#delete-deck-modal').remove()" 
+                            class="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-md transition-colors cursor-pointer">
+                        Cancel
+                    </button>
+                    <button id="confirm-delete-deck-btn"
+                            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors cursor-pointer">
+                        Delete Deck
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Set up the confirm delete button
+        const confirmBtn = modal.querySelector('#confirm-delete-deck-btn');
+        confirmBtn.onclick = async () => {
+            modal.remove();
+            await this.confirmDeleteDeck(deckId, deckName);
+        };
+        
+        // Close modal when clicking outside
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+        
+        // Close on escape key
+        const escapeHandler = (e) => {
+            if (e.key === 'Escape') {
+                modal.remove();
+                document.removeEventListener('keydown', escapeHandler);
+            }
+        };
+        document.addEventListener('keydown', escapeHandler);
+    }
+
+    async confirmDeleteDeck(deckId, deckName) {
         try {
             await DeckService.deleteDeck(deckId);
             MessageUI.show('Deck deleted successfully', 'success');
@@ -261,6 +344,12 @@ export class DeckEditor {
         } catch (error) {
             MessageUI.show('Error deleting deck: ' + error.message, 'error');
         }
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     onDeckUpdated() {

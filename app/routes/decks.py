@@ -1,5 +1,7 @@
 # app/routes/decks.py
 from datetime import datetime
+import csv
+import io
 from sanic import Blueprint
 from sanic.response import json, HTTPResponse
 from sqlalchemy import desc, func, and_
@@ -10,6 +12,8 @@ from models.card_review import CardReview
 from models.user import User
 from models.deck import Deck
 from models.card import Card
+from models.pod_deck import PodDeck
+from models.pod import Pod
 from utils.statistics import calculate_sm2_retention, calculate_simple_retention
 from middleware.auth import require_auth
 from config.timezone import tz_config
@@ -107,6 +111,7 @@ async def update_deck(request, deck_id):
 
 
 @decks_bp.route("/<deck_id:int>", methods=["DELETE"])
+@require_auth 
 async def delete_deck(request, deck_id):
     """Delete a deck"""
     session = get_db_session()
@@ -116,6 +121,15 @@ async def delete_deck(request, deck_id):
         if not deck:
             return json({"error": "Deck not found"}, status=404)
         
+        # Update all pods that contain this deck BEFORE deletion
+        pod_decks = session.query(PodDeck).filter_by(deck_id=deck_id).all()
+        for pod_deck in pod_decks:
+            pod = session.query(Pod).filter_by(id=pod_deck.pod_id).first()
+            if pod:
+                pod.deck_count = max(0, pod.deck_count - 1)
+                pod.total_card_count = max(0, pod.total_card_count - deck.card_count)
+        
+        # Now delete the deck (cascade will handle pod_decks)
         deck_name = deck.name
         session.delete(deck)
         session.commit()
@@ -132,22 +146,16 @@ async def delete_deck(request, deck_id):
 
 
 @decks_bp.route("/import-file", methods=["POST"])
-@require_auth
 async def import_file(request):
-    """Import cards from uploaded file"""
-    import csv
-    import io
-    
+    """Parse uploaded CSV/TSV file and return card data"""
     session = get_db_session()
     try:
-        # Get uploaded file
         upload_file = request.files.get('file')
         if not upload_file:
             return json({"error": "No file uploaded"}, status=400)
         
         # Read file content
         file_content = upload_file.body.decode('utf-8')
-        lines = file_content.splitlines()
         
         # Extract metadata from FlashPod export format
         metadata = {
@@ -156,33 +164,42 @@ async def import_file(request):
             'is_flashpod_export': False
         }
         
-        # Check for FlashPod export metadata
-        for line in lines:
-            if line.startswith('# FlashPod Export'):
-                metadata['is_flashpod_export'] = True
-            elif line.startswith('# Deck Name: '):
-                metadata['deck_name'] = line[13:].strip()  # Remove "# Deck Name: "
-            elif line.startswith('# Description: '):
-                metadata['description'] = line[15:].strip()  # Remove "# Description: "
+        # Remove comment lines while preserving empty lines in CSV data
+        # This is important for multi-line CSV fields
+        lines = []
+        for line in file_content.split('\n'):
+            stripped = line.strip()
+            if stripped.startswith('#'):
+                # Process metadata from comments
+                if line.startswith('# FlashPod Export'):
+                    metadata['is_flashpod_export'] = True
+                elif line.startswith('# Deck Name: '):
+                    metadata['deck_name'] = line[13:].strip()
+                elif line.startswith('# Description: '):
+                    metadata['description'] = line[15:].strip()
+                # Skip adding comment lines to filtered content
+            else:
+                # Keep all non-comment lines, including empty lines
+                lines.append(line)
+        
+        # Join back and parse as CSV
+        filtered_content = '\n'.join(lines)
+        csv_reader = csv.reader(io.StringIO(filtered_content))
         
         # Parse CSV with proper handling
         cards_data = []
 
-        # Filter out comment lines and empty lines before CSV parsing
-        filtered_lines = []
-        for line in lines:
-            stripped = line.strip()
-            if stripped and not stripped.startswith('#'):
-                filtered_lines.append(line)
+        # Skip any initial empty rows, then check for header
+        first_row = None
+        for row in csv_reader:
+            # Skip completely empty rows at the start
+            if row and any(cell.strip() for cell in row):
+                first_row = row
+                break
 
-        # Join the filtered lines back into CSV content
-        filtered_content = '\n'.join(filtered_lines)
-        csv_reader = csv.reader(io.StringIO(filtered_content))
-
-        # Skip header if present
-        first_row = next(csv_reader, None)
+        # Check if first non-empty row is a header
         if first_row and first_row[0].lower().strip() == 'term':
-            pass  # Skip header
+            pass  # Skip header, continue with remaining rows
         else:
             # Process first row as data if it's not a header
             if first_row and len(first_row) >= 2 and first_row[0].strip():
@@ -313,79 +330,76 @@ async def get_user_decks(request, user_id):
 @decks_bp.route('/my-decks-with-stats', methods=['GET'])
 @require_auth
 async def get_my_decks_with_stats(request):
-    """Get user's decks with last session statistics"""
+    """Get user's decks with last session statistics including pod sessions"""
     session = get_db_session()
     try:
         user_id = request.ctx.user['id']
         
         # Get user's decks
-        decks = session.query(Deck).filter_by(user_id=user_id).all()
-        
+        decks = session.query(Deck).filter_by(user_id=user_id).order_by(Deck.created_at.desc()).all()
         deck_data = []
+        
         for deck in decks:
-            
-            # Get latest session that has card reviews for this deck
-            latest_session = session.query(StudySession).filter(
-                StudySession.user_id == user_id,
-                StudySession.deck_id == deck.id
+            # Get latest session for this deck (direct deck sessions)
+            # ONLY consider sessions with trackable modes (not 'basic')
+            latest_deck_session = session.query(StudySession).filter_by(
+                deck_id=deck.id, 
+                user_id=user_id
             ).filter(
-                StudySession.id.in_(
-                    session.query(CardReview.session_id).join(Card).filter(
-                        Card.deck_id == deck.id,
-                        CardReview.user_id == user_id,
-                        CardReview.session_id.isnot(None)
-                    ).distinct()
-                )
-            ).order_by(desc(StudySession.started_at)).first()
+                StudySession.ended_at.isnot(None),
+                StudySession.mode.in_(['simple-spaced', 'full-spaced'])  # Only trackable modes
+            ).order_by(StudySession.ended_at.desc()).first()
             
-            # Get session stats
+            # Get latest pod session that included this deck
+            # ONLY consider sessions with trackable modes (not 'basic')
+            latest_pod_session = session.query(StudySession).join(
+                PodDeck, StudySession.pod_id == PodDeck.pod_id
+            ).filter(
+                PodDeck.deck_id == deck.id,
+                StudySession.user_id == user_id,
+                StudySession.ended_at.isnot(None),
+                StudySession.mode.in_(['simple-spaced', 'full-spaced'])  # Only trackable modes
+            ).order_by(StudySession.ended_at.desc()).first()
+            
+            # Determine which session is more recent
+            latest_session = None
+            if latest_deck_session and latest_pod_session:
+                latest_session = latest_deck_session if latest_deck_session.ended_at > latest_pod_session.ended_at else latest_pod_session
+            elif latest_deck_session:
+                latest_session = latest_deck_session
+            elif latest_pod_session:
+                latest_session = latest_pod_session
+            
             session_stats = None
             if latest_session:
-                # Calculate duration
-                duration_minutes = 0
-                if latest_session.ended_at and latest_session.started_at:
-                    delta = latest_session.ended_at - latest_session.started_at
-                    duration_minutes = round(delta.total_seconds() / 60)
+                duration_minutes = latest_session.duration_minutes or 0
                 
-                # Get card reviews from this session to determine mode
-                session_reviews = session.query(CardReview).filter_by(
-                    session_id=latest_session.id
-                ).all()
-                
-                if session_reviews:                    
-                    # Check if reviews have SM-2 data (ease_factor, next_review_date)
-                    has_sm2_data = any(review.ease_factor != 2.5 or review.next_review_date 
-                                     for review in session_reviews)
-                                        
-                    if has_sm2_data:
-                        # SM-2 mode
-                        next_review, cards_due = get_sm2_due_info(session, deck.id, user_id)
-                        session_stats = {
-                            'mode': 'full-spaced',
-                            'next_review': next_review.isoformat() if next_review else None,
-                            'cards_due': cards_due,
-                            'duration_minutes': duration_minutes,
-                            'retention_rate': calculate_sm2_retention(session, user_id, deck.id),
-                            'is_overdue': tz_config.utc_to_local(next_review).date() <= tz_config.now().date() if next_review else False
-                        }
-                    else:
-                        # Simple spaced mode
-                        session_stats = {
-                            'mode': 'simple-spaced',
-                            'last_reviewed': latest_session.started_at.isoformat(),
-                            'duration_minutes': duration_minutes,
-                            'retention_rate': calculate_simple_retention(session, deck.id, user_id),
-                            'total_cards': latest_session.cards_studied or 0
-                        }
-                        
-            deck_data.append({
-                'id': deck.id,
-                'name': deck.name,
-                'description': deck.description,
-                'card_count': deck.card_count,
-                'created_at': deck.created_at.isoformat(),
-                'session_stats': session_stats  # Will be None if no valid sessions
-            })
+                if latest_session.mode == 'full-spaced':
+                    # SM-2 mode stats
+                    next_review, cards_due = get_sm2_due_info(session, deck.id, user_id)
+                    session_stats = {
+                        'mode': 'full-spaced',
+                        'next_review': next_review.isoformat() if next_review else None,
+                        'cards_due': cards_due,
+                        'duration_minutes': duration_minutes,
+                        'retention_rate': calculate_sm2_retention(session, user_id, deck.id),
+                        'is_overdue': tz_config.utc_to_local(next_review).date() <= tz_config.now().date() if next_review else False,
+                        'last_studied': latest_session.ended_at.isoformat(),
+                        'session_type': 'pod' if latest_session.pod_id else 'deck'
+                    }
+                elif latest_session.mode == 'simple-spaced':
+                    session_stats = {
+                        'mode': 'simple-spaced',
+                        'last_reviewed': latest_session.ended_at.isoformat(),
+                        'duration_minutes': duration_minutes,
+                        'retention_rate': calculate_simple_retention_including_pods(session, deck.id, user_id),
+                        'total_cards': latest_session.cards_studied or 0,
+                        'session_type': 'pod' if latest_session.pod_id else 'deck'
+                    }
+            
+            deck_dict = deck.to_dict(include_pods=True)
+            deck_dict['session_stats'] = session_stats
+            deck_data.append(deck_dict)
         
         return json({'decks': deck_data})
         
@@ -403,7 +417,7 @@ def get_sm2_due_info(db_session, deck_id, user_id):
     
     try:
         # Get cards from this deck
-        deck_cards = db_session.query(Card).filter_by(deck_id=deck_id).all()
+        deck_cards = db_session.query(Card).filter_by(deck_id=deck_id, is_active=True).all()
         if not deck_cards:
             return None, 0
         
@@ -496,3 +510,43 @@ def get_sm2_due_info(db_session, deck_id, user_id):
         import traceback
         traceback.print_exc()
         return None, 0
+    
+
+def calculate_simple_retention_including_pods(db_session, deck_id, user_id):
+    """Calculate retention rate including both deck and pod sessions by looking at card reviews"""
+    try:
+        thirty_days_ago = datetime.now() - timedelta(days=30)
+        
+        # Get card IDs from this deck
+        deck_card_ids = [card.id for card in db_session.query(Card).filter_by(
+            deck_id=deck_id, 
+            is_active=True
+        ).all()]
+        
+        if not deck_card_ids:
+            return 0
+        
+        # Get all reviews for these cards in the last 30 days
+        # This automatically includes both direct deck sessions and pod sessions
+        reviews = db_session.query(CardReview).filter(
+            and_(
+                CardReview.card_id.in_(deck_card_ids),
+                CardReview.user_id == user_id,
+                CardReview.reviewed_at >= thirty_days_ago,
+                CardReview.response_quality.isnot(None)
+            )
+        ).all()
+        
+        if not reviews:
+            return 0
+        
+        # Count reviews where response_quality >= 3 (remembered)
+        remembered_reviews = sum(1 for review in reviews if review.response_quality >= 3)
+        
+        return round((remembered_reviews / len(reviews)) * 100, 1)
+        
+    except Exception as e:
+        print(f"Error calculating retention with pods: {e}")
+        import traceback
+        traceback.print_exc()
+        return 0

@@ -44,12 +44,18 @@ export class Navigation {
         const prevBtn = document.getElementById('prevCardBtn');
         const nextBtn = document.getElementById('nextCardBtn');
 
+        // Check if we're in a mode that's collecting responses
+        const currentMode = state.mode;
+        const modeData = state.modeData[currentMode];
+        const isCollectingResponse = modeData && modeData.isCollectingResponse;
+
         // Update previous button
         if (prevBtn) {
             const isFirstCard = state.currentIndex === 0;
-            prevBtn.disabled = isFirstCard;
+            const shouldDisable = isFirstCard || isCollectingResponse;
+            prevBtn.disabled = shouldDisable;
             
-            if (isFirstCard) {
+            if (shouldDisable) {
                 prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
             } else {
                 prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -59,16 +65,27 @@ export class Navigation {
         // Update next button
         if (nextBtn) {
             const isLastCard = state.currentIndex === state.totalCards - 1;
-            nextBtn.disabled = isLastCard;
+            const shouldDisable = isLastCard || isCollectingResponse;
+            nextBtn.disabled = shouldDisable;
             
-            if (isLastCard) {
+            if (shouldDisable) {
                 nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                nextBtn.innerHTML = `
-                    Complete
-                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                `;
+                if (!isLastCard) {
+                    // If disabled because of response collection, keep "Next" text
+                    nextBtn.innerHTML = `
+                        Next
+                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    `;
+                } else {
+                    nextBtn.innerHTML = `
+                        Complete
+                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    `;
+                }
             } else {
                 nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 nextBtn.innerHTML = `

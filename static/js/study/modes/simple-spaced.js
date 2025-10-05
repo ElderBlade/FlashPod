@@ -132,6 +132,11 @@ export class SimpleSpaced {
     async handleRoundCompletion() {
         const modeData = this.manager.state.modeData['simple-spaced'];
         
+        // Save progress before checking completion
+        await this._saveProgress();
+        
+        // Check if all cards have been moved to known (session complete)
+        // or if there are still cards to review in future rounds
         if (modeData.stillLearning.length === 0) {
             this.handleSessionCompletion();
         } else {
@@ -156,6 +161,13 @@ export class SimpleSpaced {
         
         // Update active cards and interface
         this.updateActiveCards();
+        
+        // Double-check: if no cards remain after updating, complete session
+        if (state.cards.length === 0 || modeData.stillLearning.length === 0) {
+            this.handleSessionCompletion();
+            return;
+        }
+        
         this.manager.interface.updateModeSpecificUI('simple-spaced', modeData);
         
         this.manager._showMessage(
@@ -163,7 +175,7 @@ export class SimpleSpaced {
             'info'
         );
         
-        // FIX: Render the first card of the new round
+        // Render the first card of the new round
         this.renderCard();
     }
 
@@ -202,12 +214,12 @@ export class SimpleSpaced {
         
         // Use event delegation
         const modal = document.getElementById('completionModal');
-        modal.addEventListener('click', (e) => {
+        modal.addEventListener('click', async (e) => {
             const action = e.target.dataset.action;
             if (action === 'study-again') {
                 this.restartSession();
             } else if (action === 'finish') {
-                this.finishSession();
+                await this.finishSession(); // Make this await
             }
         });
     }
@@ -245,7 +257,16 @@ export class SimpleSpaced {
         this.renderCard();
     }
 
-    finishSession() {
+    async finishSession() {
+        // Ensure session is marked as completed before exiting
+        try {
+            if (this.manager.session && this.manager.session.isActive) {
+                await this.manager.session.end();
+            }
+        } catch (error) {
+            console.error('Failed to complete session:', error);
+        }
+        
         document.getElementById('completionModal')?.remove();
         this.manager.exitStudy();
     }
@@ -260,7 +281,9 @@ export class SimpleSpaced {
         modeData.isCollectingResponse = false;
         this.manager.interface.hideResponseButtons();
         
-        // FIX: Ensure the new card is rendered after navigation
+        // Save progress periodically during navigation
+        await this._saveProgress();
+        
         await this.renderCard();
     }
 
@@ -290,13 +313,19 @@ export class SimpleSpaced {
     }
 
     async cleanup() {
+        if (this.beforeUnloadHandler) {
+            window.removeEventListener('beforeunload', this.beforeUnloadHandler);
+        }
+        if (this.visibilityHandler) {
+            document.removeEventListener('visibilitychange', this.visibilityHandler);
+        }
+        
         const modeData = this.manager.state.modeData['simple-spaced'];
         modeData.isCollectingResponse = false;
         this.manager.interface.hideResponseButtons();
         
-        if (this.manager.session) {
-            await this.manager.session.saveSimpleSpacedProgress(modeData);
-        }
+        // Save progress to backend and localStorage
+        await this._saveProgress();
 
         this.absorptionAnimator.cleanup();
     }
@@ -336,6 +365,35 @@ export class SimpleSpaced {
         } catch (error) {
             console.error('Error saving review:', error);
             // Continue anyway - we have local state
+        }
+    }
+
+    /**
+     * Save current progress to backend
+     */
+    async _saveProgress() {
+        const modeData = this.manager.state.modeData['simple-spaced'];
+        
+        // Calculate cards studied for simple spaced mode
+        const cardsStudied = modeData.known.length + 
+            (modeData.stillLearning.length > 0 ? Math.max(0, modeData.stillLearning.length - (this.manager.state.originalCards.length - modeData.currentRound)) : 0);
+        
+        // Update session progress if backend is available
+        if (this.manager.session.isActive) {
+            try {
+                await this.manager.session.updateProgress(
+                    Math.max(cardsStudied, modeData.known.length), // cards studied
+                    null, // cards correct (not tracked in simple mode)
+                    'simple-spaced' // mode
+                );
+            } catch (error) {
+                console.warn('Failed to save progress to backend:', error);
+            }
+        }
+        
+        // Save simple spaced specific progress to localStorage
+        if (this.manager.session) {
+            await this.manager.session.saveSimpleSpacedProgress(modeData);
         }
     }
 }
