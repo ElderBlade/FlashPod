@@ -189,10 +189,17 @@ async def import_file(request):
         # Parse CSV with proper handling
         cards_data = []
 
-        # Skip header if present
-        first_row = next(csv_reader, None)
+        # Skip any initial empty rows, then check for header
+        first_row = None
+        for row in csv_reader:
+            # Skip completely empty rows at the start
+            if row and any(cell.strip() for cell in row):
+                first_row = row
+                break
+
+        # Check if first non-empty row is a header
         if first_row and first_row[0].lower().strip() == 'term':
-            pass  # Skip header
+            pass  # Skip header, continue with remaining rows
         else:
             # Process first row as data if it's not a header
             if first_row and len(first_row) >= 2 and first_row[0].strip():
