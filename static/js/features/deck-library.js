@@ -11,8 +11,10 @@ export class DeckLibrary {
         this.bulkSelectMode = false;
         this.selectedDecks = new Set();
         this.decks = [];
+        this.sortBy = 'recent'; 
         this.setupTabSwitching();
         this.setupBulkSelection();
+        this.setupDeckSortListener();
     }
 
     setupTabSwitching() {
@@ -24,6 +26,16 @@ export class DeckLibrary {
                 this.switchTab(tabButton.dataset.tab);
             });
         });
+    }
+
+    setupDeckSortListener() {
+        const sortSelect = document.getElementById('deck-sort');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', (e) => {
+                this.sortBy = e.target.value;
+                this.renderAllDecks();
+            });
+        }
     }
 
     switchTab(tabName) {
@@ -251,7 +263,8 @@ export class DeckLibrary {
         try {
             const data = await DeckService.getMyDecksWithStats();
             this.decks = data.decks;
-            this.displayAllDecks(data.decks);
+            // this.displayAllDecks(data.decks);
+            this.renderAllDecks(); 
         } catch (error) {
             console.error('Failed to load decks:', error);
             MessageUI.show('Failed to load decks', 'error');
@@ -456,6 +469,23 @@ export class DeckLibrary {
 
     viewAllDecks() {
         window.app.navigation.navigateTo('library');
+    }
+
+    renderAllDecks() {
+        const sortedDecks = this.sortDecks([...this.decks]);
+        this.displayAllDecks(sortedDecks);
+    }
+
+    sortDecks(decks) {
+        switch (this.sortBy) {
+            case 'name':
+                return decks.sort((a, b) => a.name.localeCompare(b.name));
+            case 'cards':
+                return decks.sort((a, b) => (b.card_count || 0) - (a.card_count || 0));
+            case 'recent':
+            default:
+                return decks.sort((a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at));
+        }
     }
 
     escapeHtml(text) {

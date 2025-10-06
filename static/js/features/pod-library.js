@@ -7,18 +7,19 @@ export class PodLibrary {
         this.deckLibrary = deckLibrary; // Reference to parent DeckLibrary for cross-tab actions
         this.pods = [];
         this.sortBy = 'recent';
-        this.setupEventListeners();
+        // this.setupEventListeners();
     }
 
     setupEventListeners() {
-
-        // Sort dropdown
+        // This will be called by loadAllPods after pods are loaded
         const sortSelect = document.getElementById('pod-sort');
-        if (sortSelect) {
+        if (sortSelect && !sortSelect.dataset.listenerAttached) {
             sortSelect.addEventListener('change', (e) => {
                 this.sortBy = e.target.value;
+                console.log('Pod sort changed to:', this.sortBy, 'Pods count:', this.pods.length);
                 this.renderPods();
             });
+            sortSelect.dataset.listenerAttached = 'true'; // Prevent duplicate listeners
         }
     }
 
@@ -26,6 +27,7 @@ export class PodLibrary {
         try {
             const response = await PodService.getAllPods(true);
             this.pods = response.pods || [];
+            this.setupEventListeners();
             this.renderPods();
             this.updateEmptyState();
         } catch (error) {
@@ -71,7 +73,6 @@ export class PodLibrary {
         
         // Study statistics (if available)
         const studyStats = pod.study_stats;
-        console.log(`POD STATS ${studyStats}`);
         const hasStats = studyStats && studyStats.total_sessions > 0;
         
         return `
@@ -84,11 +85,9 @@ export class PodLibrary {
                     <div class="saiyan-pod ${isActive ? 'has-cards' : ''}">
                         <!-- Main Viewport -->
                         <div class="saiyan-viewport">
-                            <div class="saiyan-viewport">
-                                <svg class="bolt-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                    <path d="M13 2L3 14h7v8l11-14h-7V2z" fill="#facc15"/>
-                                </svg>
-                            </div>
+                            <svg class="bolt-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <path d="M13 2L3 14h7v8l11-14h-7V2z" fill="#facc15"/>
+                            </svg>
                         </div>
                         
                         <!-- Status Lights -->
