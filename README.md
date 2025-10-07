@@ -7,6 +7,8 @@
 <i>Study anywhere, sync everywhere, own your data</i>
 </p>
 
+<img src="design/flashpod-display.png" title="Main Screenshot">
+
 ## ✨ Features
 
 ### 🎯 Smart Learning
