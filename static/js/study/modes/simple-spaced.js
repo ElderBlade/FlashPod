@@ -32,12 +32,17 @@ export class SimpleSpaced {
     updateActiveCards() {
         const state = this.manager.state;
         const modeData = state.modeData['simple-spaced'];
-        
+
         // Filter to only still learning cards
-        const stillLearningCards = state.originalCards.filter(card => 
+        let stillLearningCards = state.originalCards.filter(card =>
             modeData.stillLearning.includes(card.id)
         );
-        
+
+        // Preserve shuffle state when filtering
+        if (state.isShuffled) {
+            stillLearningCards = this.manager._shuffleArray(stillLearningCards);
+        }
+
         state.cards = stillLearningCards;
         state.totalCards = stillLearningCards.length;
         state.currentIndex = 0;

@@ -175,21 +175,26 @@ export class FullSpaced {
     _updateActiveCards() {
         const state = this.manager.state;
         const modeData = state.modeData['full-spaced'];
-        
+
         // Combine due cards and new cards for current session
         // Priority: due cards first, then new cards
         const activeCardIds = [...modeData.dueCards, ...modeData.newCards];
-        
+
         // Filter original cards to only include active ones
-        const activeCards = state.originalCards.filter(card => 
+        let activeCards = state.originalCards.filter(card =>
             activeCardIds.includes(card.id)
         );
-        
+
+        // Preserve shuffle state when filtering
+        if (state.isShuffled) {
+            activeCards = this.manager._shuffleArray(activeCards);
+        }
+
         state.cards = activeCards;
         state.totalCards = activeCards.length;
         state.currentIndex = 0;
         state.currentCardId = activeCards[0]?.id;
-        
+
     }
 
     async onCardFlip(direction) {
