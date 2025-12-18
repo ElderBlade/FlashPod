@@ -7,6 +7,8 @@
 <i>Study anywhere, sync everywhere, own your data</i>
 </p>
 
+<img src="design/flashpod-display.png" title="Main Screenshot">
+
 ## ✨ Features
 
 ### 🎯 Smart Learning
@@ -21,6 +23,10 @@
 - **Flexible Organization** - Group decks into pods for structured learning
 - **Rich Content Support** - Text, HTML, and Markdown content types
 
+### 🫛 Pod Management
+- **Pod Creation** - Add multiple decks to a single pod
+- **Pod Study** - Study all your decks in one place
+  
 ### 🎮 Study Experience
 - **Multiple Flip Animations** - Horizontal, vertical-up, and vertical-down card flips
 - **Keyboard Navigation** - Full keyboard control for efficient studying
@@ -383,7 +389,6 @@ FlashPod is open source software licensed under the [MIT License](LICENSE).
 
 - 🐛 **Bug Reports:** [GitHub Issues](https://github.com/ElderBlade/FlashPod/issues)
 - 💬 **Discussions:** [GitHub Discussions](https://github.com/ElderBlade/FlashPod/discussions)
-- 📧 **Email:** support@flashpod.io
 
 ---
 
